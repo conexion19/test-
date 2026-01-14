@@ -11083,7 +11083,7 @@ function Library:AddSnowfallToWindow(Config)
         local snowflakes = {}
         local connections = {}
 
-        -- Создаем анимированные снежинки
+        -- Создаем анимированные снежинки (изображения)
         for i = 1, snowflakeCount do
             local snowflake = Instance.new("ImageLabel")
             snowflake.Name = "AnimatedSnowflake"..i
@@ -11097,18 +11097,18 @@ function Library:AddSnowfallToWindow(Config)
             local size = math.random(8, 14)
             snowflake.Size = UDim2.new(0, size, 0, size)
             
-            -- Разные начальные позиции
+            -- Начальная позиция СВЕРХУ
             snowflake.Position = UDim2.new(
                 math.random() * 0.5 - 0.3, 
                 0, 
-                -math.random(), -- Распределяем по всей высоте
+                -math.random() * 0.5, -- Сверху (как раньше)
                 0
             )
             snowflake.Parent = innerContainer
             
             -- Одинаковая скорость для всех
             local speed = fallSpeed * 0.8
-            local windSpeed = math.random(2, 4)
+            local windSpeed = math.random(2, 4) -- Движение вправо
             
             table.insert(snowflakes, {
                 frame = snowflake,
@@ -11116,8 +11116,7 @@ function Library:AddSnowfallToWindow(Config)
                 windSpeed = windSpeed,
                 size = size,
                 type = "animated",
-                transparency = snowflake.ImageTransparency,
-                originalY = snowflake.Position.Y.Scale -- Сохраняем оригинальную позицию
+                transparency = snowflake.ImageTransparency
             })
         end
         
@@ -11138,18 +11137,18 @@ function Library:AddSnowfallToWindow(Config)
             corner.CornerRadius = UDim.new(1, 0)
             corner.Parent = snowflake
             
-            -- Разные начальные позиции
+            -- Начальная позиция СВЕРХУ
             snowflake.Position = UDim2.new(
                 math.random() * 0.5 - 0.3,
                 0, 
-                -math.random(), -- Распределяем по всей высоте
+                -math.random() * 0.7, -- Сверху, выше чем анимированные
                 0
             )
             snowflake.Parent = innerContainer
             
             -- Одинаковая скорость как у анимированных
             local speed = fallSpeed * 0.8
-            local windSpeed = math.random(2, 4)
+            local windSpeed = math.random(2, 4) -- Движение вправо
             
             table.insert(snowflakes, {
                 frame = snowflake,
@@ -11157,10 +11156,16 @@ function Library:AddSnowfallToWindow(Config)
                 windSpeed = windSpeed,
                 size = size,
                 transparency = 0.7, -- Фиксированная прозрачность
-                type = "simple",
-                originalY = snowflake.Position.Y.Scale -- Сохраняем оригинальную позицию
+                type = "simple"
             })
         end
+        
+        local containerBounds = {
+            left = -0.3,
+            right = 1.2,
+            top = -0.2,
+            bottom = 1.1
+        }
         
         local lastUpdate = tick()
         local connection = game:GetService("RunService").Heartbeat:Connect(function()
@@ -11173,22 +11178,35 @@ function Library:AddSnowfallToWindow(Config)
                 local frame = snowflake.frame
                 local currentPos = frame.Position
 
-                -- Плавное движение вниз и вправо
                 local newY = currentPos.Y.Scale + (snowflake.speed * deltaTime / 100)
                 local newX = currentPos.X.Scale + (snowflake.windSpeed * deltaTime / 50)
                 
                 -- Когда снежинка выходит за нижнюю границу, возвращаем ее наверх
-                if newY > 1.1 then
-                    newY = snowflake.originalY -- Возвращаем к оригинальной позиции по Y
-                    newX = math.random() * 0.5 - 0.3 -- Новая позиция по X
+                if newY > containerBounds.bottom + 0.1 or newX > containerBounds.right + 0.2 then
+                    newY = -math.random() * 0.7 -- Возвращаем сверху
+                    newX = math.random() * 0.5 - 0.3 -- Новая позиция слева
                     
-                    -- Для плавности, можно сбросить позицию чуть выше
-                    newY = -0.1
-                end
-                
-                -- Когда снежинка выходит за правую границу, возвращаем ее налево
-                if newX > 1.2 then
-                    newX = math.random() * 0.5 - 0.3
+                    -- Для анимированных снежинок
+                    if snowflake.type == "animated" then
+                        local newSize = math.random(8, 14)
+                        frame.Size = UDim2.new(0, newSize, 0, newSize)
+                        snowflake.size = newSize
+                        snowflake.windSpeed = math.random(2, 4)
+                        
+                        local newTransparency = math.random(5, 15) / 100
+                        frame.ImageTransparency = newTransparency
+                        snowflake.transparency = newTransparency
+                        
+                    -- Для простых снежинок
+                    elseif snowflake.type == "simple" then
+                        local newSize = math.random(2, 6)
+                        frame.Size = UDim2.new(0, newSize, 0, newSize)
+                        snowflake.size = newSize
+                        snowflake.windSpeed = math.random(2, 4)
+                        
+                        -- Прозрачность остается 0.7
+                        frame.BackgroundTransparency = 0.7
+                    end
                 end
                 
                 frame.Position = UDim2.new(
@@ -11279,6 +11297,5 @@ function Library:AddSnowfallToWindow(Config)
     Library.Snowfall = snowfall
     return snowfall
 end
-
 if RunService:IsStudio() then task.wait(0.01) end
 return Library, SaveManager, InterfaceManager, Mobile
