@@ -3936,10 +3936,10 @@ Components.TitleBar = (function()
             Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
             TextTransparency = 0,
             FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-            TextSize = 18,
+            TextSize = 17,
             TextXAlignment = Enum.TextXAlignment.Left,
             Size = UDim2.new(0, 300, 1, 0),
-            Position = UDim2.new(0, 50, 0, 0),
+            Position = UDim2.new(0, 60, 0, 0), -- Moved right
             BackgroundTransparency = 1,
             TextColor3 = Color3.fromRGB(255, 255, 255),
         })
@@ -11068,7 +11068,7 @@ function Library:AddSnowfallToWindow(Config)
             snowflake.Position = UDim2.new(
                 math.random() * 0.95, 
                 0, 
-                math.random() * -0.5, 
+                math.random() * 1.5 - 0.5, -- Spread across screen initially
                 0
             )
             snowflake.Parent = innerContainer
