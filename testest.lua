@@ -11196,4 +11196,3 @@ end
 if RunService:IsStudio() then task.wait(0.01) end
 return Library, SaveManager, InterfaceManager, Mobile
 
-print("и") 
