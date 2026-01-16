@@ -1,4 +1,3 @@
-print("смсмсмсисмисиа")
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -3947,11 +3946,11 @@ Components.TitleBar = (function()
 
         local CheckGradient = New("UIGradient", {
             Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 100, 100)),
-                ColorSequenceKeypoint.new(0.2, Color3.fromRGB(100, 100, 100)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-                ColorSequenceKeypoint.new(0.8, Color3.fromRGB(100, 100, 100)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100)),
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+                ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 255)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 100, 100)),
+                ColorSequenceKeypoint.new(0.8, Color3.fromRGB(255, 255, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
             }),
             Parent = SubtitleLabel,
         })
@@ -3959,7 +3958,7 @@ Components.TitleBar = (function()
         task.spawn(function()
             local success, TweenService = pcall(game.GetService, game, "TweenService")
             if success and TweenService then
-                -- Move from -0.8 to 0.8 to minimize "dead time" (solid grey state)
+                -- Move from -0.8 to 0.8. Constant continuous loop.
                 local tInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, false)
                 CheckGradient.Offset = Vector2.new(-0.8, 0)
                 local tween = TweenService:Create(CheckGradient, tInfo, {Offset = Vector2.new(0.8, 0)})
