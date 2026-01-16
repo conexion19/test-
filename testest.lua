@@ -1,4 +1,3 @@
-print("а") 
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -3947,9 +3946,9 @@ Components.TitleBar = (function()
 
         local CheckGradient = New("UIGradient", {
             Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 25)),
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 100, 100)),
                 ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 25)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100)),
             }),
             Parent = SubtitleLabel,
         })
@@ -3957,7 +3956,8 @@ Components.TitleBar = (function()
         task.spawn(function()
             local success, TweenService = pcall(game.GetService, game, "TweenService")
             if success and TweenService then
-                local tInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
+                -- Reverses = true to make it ping-pong smoothly without resetting
+                local tInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true)
                 CheckGradient.Offset = Vector2.new(-1, 0)
                 local tween = TweenService:Create(CheckGradient, tInfo, {Offset = Vector2.new(1, 0)})
                 tween:Play()
