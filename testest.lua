@@ -4610,6 +4610,11 @@ Window.Root = New("Frame", {
 		})
 
 		if Config.UserInfo then
+			local function parseColor(value)
+				if typeof(value) == "Color3" then return value end
+				return Themes[Library.Theme].SubText or Color3.fromRGB(170,170,170)
+			end
+
 			local userInfoHeight = 56
 			Window.UserInfoHeight = userInfoHeight
 			Window.UserInfoTop = Config.UserInfoTop
@@ -4632,6 +4637,38 @@ Window.Root = New("Frame", {
 				ThemeTag = {
 					BackgroundColor3 = "TitleBarLine",
 				},
+			})
+
+			local titleText = tostring((Config.UserInfoTitle ~= nil and Config.UserInfoTitle) or (LocalPlayer.Name or "User"))
+			local subtitleText = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or ""
+
+			New("TextLabel", {
+				Name = "UserTitle",
+				BackgroundTransparency = 1,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextYAlignment = Enum.TextYAlignment.Bottom,
+				FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
+				TextSize = 13,
+				Text = titleText,
+				Size = UDim2.new(1, -12, 0.5, 0),
+				Position = UDim2.new(0, 12, 0, -2),
+				Parent = UserInfoSection,
+				ThemeTag = { TextColor3 = "Text" },
+			})
+
+			New("TextLabel", {
+				Name = "UserSubtitle",
+				BackgroundTransparency = 1,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextYAlignment = Enum.TextYAlignment.Top,
+				FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+				TextSize = 12,
+				TextTransparency = 0.2,
+				Text = subtitleText,
+				TextColor3 = parseColor(Config.UserInfoSubtitleColor),
+				Size = UDim2.new(1, -12, 0.5, 0),
+				Position = UDim2.new(0, 12, 0.5, 2),
+				Parent = UserInfoSection,
 			})
 
 			if Config.UserInfoTop then
