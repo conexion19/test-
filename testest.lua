@@ -1,3 +1,4 @@
+print("а") 
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -3941,24 +3942,26 @@ Components.TitleBar = (function()
             Size = UDim2.new(0, 300, 1, 0),
             Position = UDim2.new(0, 50, 0, 0),
             BackgroundTransparency = 1,
-            TextColor3 = Color3.new(1, 1, 1),
+            TextColor3 = Color3.fromRGB(255, 255, 255),
         })
 
         local CheckGradient = New("UIGradient", {
             Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.new(0.1, 0.1, 0.1)),
-                ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
-                ColorSequenceKeypoint.new(1, Color3.new(0.1, 0.1, 0.1)),
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 25)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 25)),
             }),
             Parent = SubtitleLabel,
         })
 
         task.spawn(function()
-            local TweenService = game:GetService("TweenService")
-			local tInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
-			CheckGradient.Offset = Vector2.new(-1, 0)
-			local tween = TweenService:Create(CheckGradient, tInfo, {Offset = Vector2.new(1, 0)})
-			tween:Play()
+            local success, TweenService = pcall(game.GetService, game, "TweenService")
+            if success and TweenService then
+                local tInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
+                CheckGradient.Offset = Vector2.new(-1, 0)
+                local tween = TweenService:Create(CheckGradient, tInfo, {Offset = Vector2.new(1, 0)})
+                tween:Play()
+            end
         end)
 
         TitleBar.Frame = New("Frame", {
@@ -11195,4 +11198,3 @@ end
 
 if RunService:IsStudio() then task.wait(0.01) end
 return Library, SaveManager, InterfaceManager, Mobile
-
