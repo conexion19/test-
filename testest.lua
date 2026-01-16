@@ -3935,7 +3935,7 @@ Components.TitleBar = (function()
             Name = "UserSubtitle",
             Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
             TextTransparency = 0,
-            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+            FontFace = Font.new("rbxasset://fonts/families/Sarpanch.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
             TextSize = 16,
             TextXAlignment = Enum.TextXAlignment.Left,
             Size = UDim2.new(0, 200, 1, 0),
