@@ -3939,6 +3939,19 @@ Components.TitleBar = (function()
             -- Logo no canto esquerdo (com animação)
             LogoIcon,
 
+            New("TextLabel", {
+                Name = "UserSubtitle",
+                Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
+                TextTransparency = 0.4,
+                FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Size = UDim2.new(0, 200, 1, 0),
+                Position = UDim2.new(0, 50, 0, 0),
+                BackgroundTransparency = 1,
+                TextColor3 = Config.UserInfoSubtitleColor or Color3.fromRGB(200, 200, 200),
+            }),
+
             -- Простой центральный контейнер
             New("Frame", {
                 Size = UDim2.new(1, 0, 1, 0),
@@ -4591,7 +4604,7 @@ Window.Root = New("Frame", {
 			UserInfoSubtitleColor = Config.UserInfoSubtitleColor,
 		})
 
-		if Config.UserInfo then
+		if false and Config.UserInfo then
 			local function parseColor(value)
 				if typeof(value) == "Color3" then return value end
 				return Themes[Library.Theme].SubText or Color3.fromRGB(170,170,170)
