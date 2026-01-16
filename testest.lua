@@ -1,3 +1,4 @@
+print("а")
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -3956,8 +3957,8 @@ Components.TitleBar = (function()
         task.spawn(function()
             local success, TweenService = pcall(game.GetService, game, "TweenService")
             if success and TweenService then
-                -- Reverses = true to make it ping-pong smoothly without resetting
-                local tInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true)
+
+                local tInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, false)
                 CheckGradient.Offset = Vector2.new(-1, 0)
                 local tween = TweenService:Create(CheckGradient, tInfo, {Offset = Vector2.new(1, 0)})
                 tween:Play()
