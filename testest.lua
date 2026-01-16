@@ -3939,23 +3939,6 @@ Components.TitleBar = (function()
             -- Logo no canto esquerdo (com animação)
             LogoIcon,
 
-            -- User text next to logo
-            New("TextLabel", {
-                Name = "UserText",
-                Text = Config.UserText or "User",
-                BackgroundTransparency = 1,
-                TextColor3 = Color3.fromRGB(255, 255, 255),
-                FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
-                TextSize = 14,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                TextYAlignment = Enum.TextYAlignment.Center,
-                Size = UDim2.new(0, 100, 0, 42),
-                Position = UDim2.new(0, 52, 0, 0),
-                ThemeTag = {
-                    TextColor3 = "Text",
-                },
-            }),
-
             -- Простой центральный контейнер
             New("Frame", {
                 Size = UDim2.new(1, 0, 1, 0),
@@ -4602,7 +4585,6 @@ Window.Root = New("Frame", {
 			Icon = Config.Icon,
 			Parent = Window.Root,
 			Window = Window,
-			UserText = Config.UserText,
 			UserInfoTitle = Config.UserInfoTitle,
 			UserInfo = Config.UserInfo,
 			UserInfoSubtitle = Config.UserInfoSubtitle,
@@ -4639,35 +4621,20 @@ Window.Root = New("Frame", {
 				},
 			})
 
-			local titleText = tostring((Config.UserInfoTitle ~= nil and Config.UserInfoTitle) or (LocalPlayer.Name or "User"))
-			local subtitleText = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or ""
-
-			New("TextLabel", {
-				Name = "UserTitle",
-				BackgroundTransparency = 1,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextYAlignment = Enum.TextYAlignment.Bottom,
-				FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium, Enum.FontStyle.Normal),
-				TextSize = 13,
-				Text = titleText,
-				Size = UDim2.new(1, -12, 0.5, 0),
-				Position = UDim2.new(0, 12, 0, -2),
-				Parent = UserInfoSection,
-				ThemeTag = { TextColor3 = "Text" },
-			})
+			local subtitleText = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "Premium"
 
 			New("TextLabel", {
 				Name = "UserSubtitle",
 				BackgroundTransparency = 1,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextYAlignment = Enum.TextYAlignment.Top,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				TextYAlignment = Enum.TextYAlignment.Center,
 				FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
 				TextSize = 12,
 				TextTransparency = 0.2,
 				Text = subtitleText,
 				TextColor3 = parseColor(Config.UserInfoSubtitleColor),
-				Size = UDim2.new(1, -12, 0.5, 0),
-				Position = UDim2.new(0, 12, 0.5, 2),
+				Size = UDim2.new(1, 0, 1, 0),
+				Position = UDim2.new(0, 0, 0, 0),
 				Parent = UserInfoSection,
 			})
 
@@ -9993,7 +9960,6 @@ function Library:CreateMinimizer(Config)
 
 
 					descendant.CornerRadius = desiredCorner
-
 
 				elseif descendant.ClassName == "ImageLabel" then
 
