@@ -1,4 +1,3 @@
-print("а")
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -3947,18 +3946,16 @@ Components.TitleBar = (function()
 
         local CheckGradient = New("UIGradient", {
             Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
-                ColorSequenceKeypoint.new(0.25, Color3.new(1, 1, 1)),
-                ColorSequenceKeypoint.new(0.5, Color3.new(0, 0, 0)),
-                ColorSequenceKeypoint.new(0.75, Color3.new(1, 1, 1)),
-                ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0)),
+                ColorSequenceKeypoint.new(0, Color3.new(0.1, 0.1, 0.1)),
+                ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
+                ColorSequenceKeypoint.new(1, Color3.new(0.1, 0.1, 0.1)),
             }),
             Parent = SubtitleLabel,
         })
 
         task.spawn(function()
             local TweenService = game:GetService("TweenService")
-			local tInfo = TweenInfo.new(2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
+			local tInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
 			CheckGradient.Offset = Vector2.new(-1, 0)
 			local tween = TweenService:Create(CheckGradient, tInfo, {Offset = Vector2.new(1, 0)})
 			tween:Play()
@@ -11198,3 +11195,5 @@ end
 
 if RunService:IsStudio() then task.wait(0.01) end
 return Library, SaveManager, InterfaceManager, Mobile
+
+print("и") 
