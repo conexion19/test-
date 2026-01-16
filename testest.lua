@@ -3935,20 +3935,30 @@ Components.TitleBar = (function()
             Name = "UserSubtitle",
             Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
             TextTransparency = 0,
-            FontFace = Font.new("rbxasset://fonts/families/Sarpanch.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
-            TextSize = 16,
+            FontFace = Font.new("rbxasset://fonts/families/Michroma.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+            TextSize = 32,
             TextXAlignment = Enum.TextXAlignment.Left,
-            Size = UDim2.new(0, 200, 1, 0),
+            Size = UDim2.new(0, 300, 1, 0),
             Position = UDim2.new(0, 50, 0, 0),
             BackgroundTransparency = 1,
-            TextColor3 = Color3.new(0, 0, 0),
+            TextColor3 = Color3.new(1, 1, 1),
+        })
+
+        local CheckGradient = New("UIGradient", {
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.new(0, 0, 0)),
+                ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
+                ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0)),
+            }),
+            Parent = SubtitleLabel,
         })
 
         task.spawn(function()
             local TweenService = game:GetService("TweenService")
-            local tInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-            local tween = TweenService:Create(SubtitleLabel, tInfo, {TextColor3 = Color3.new(1, 1, 1)})
-            tween:Play()
+			local tInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
+			CheckGradient.Offset = Vector2.new(-1, 0)
+			local tween = TweenService:Create(CheckGradient, tInfo, {Offset = Vector2.new(1, 0)})
+			tween:Play()
         end)
 
         TitleBar.Frame = New("Frame", {
