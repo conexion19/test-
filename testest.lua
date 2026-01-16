@@ -3931,6 +3931,26 @@ Components.TitleBar = (function()
             ImageColor3 = Color3.fromRGB(255, 255, 255),
         })
 
+        local SubtitleLabel = New("TextLabel", {
+            Name = "UserSubtitle",
+            Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
+            TextTransparency = 0,
+            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+            TextSize = 16,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Size = UDim2.new(0, 200, 1, 0),
+            Position = UDim2.new(0, 50, 0, 0),
+            BackgroundTransparency = 1,
+            TextColor3 = Color3.new(0, 0, 0),
+        })
+
+        task.spawn(function()
+            local TweenService = game:GetService("TweenService")
+            local tInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+            local tween = TweenService:Create(SubtitleLabel, tInfo, {TextColor3 = Color3.new(1, 1, 1)})
+            tween:Play()
+        end)
+
         TitleBar.Frame = New("Frame", {
             Size = UDim2.new(1, 0, 0, 42),
             BackgroundTransparency = 1,
@@ -3939,18 +3959,7 @@ Components.TitleBar = (function()
             -- Logo no canto esquerdo (com animação)
             LogoIcon,
 
-            New("TextLabel", {
-                Name = "UserSubtitle",
-                Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
-                TextTransparency = 0.4,
-                FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-                TextSize = 13,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Size = UDim2.new(0, 200, 1, 0),
-                Position = UDim2.new(0, 50, 0, 0),
-                BackgroundTransparency = 1,
-                TextColor3 = Config.UserInfoSubtitleColor or Color3.fromRGB(200, 200, 200),
-            }),
+            SubtitleLabel,
 
             -- Простой центральный контейнер
             New("Frame", {
