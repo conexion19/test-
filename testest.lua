@@ -4610,7 +4610,53 @@ Window.Root = New("Frame", {
 		})
 
 		if Config.UserInfo then
-			-- User info now displayed in TitleBar as "User" text
+			local userInfoHeight = 56
+			Window.UserInfoHeight = userInfoHeight
+			Window.UserInfoTop = Config.UserInfoTop
+			local UserInfoSection = New("Frame", {
+				Name = "UserInfoSection",
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, userInfoHeight),
+				Position = Config.UserInfoTop and UDim2.fromOffset(0, 0) or UDim2.new(0, 0, 1, -(userInfoHeight + 2)),
+				ZIndex = 15,
+				Parent = TabFrame,
+			})
+
+			New("Frame", {
+				Name = "UserInfoSeparator",
+				BackgroundTransparency = 0.5,
+				Size = UDim2.new(1, 0, 0, 1),
+				Position = Config.UserInfoTop and UDim2.fromOffset(0, userInfoHeight + 4) or UDim2.new(0, 0, 1, -(userInfoHeight + 4)),
+				ZIndex = 15,
+				Parent = TabFrame,
+				ThemeTag = {
+					BackgroundColor3 = "TitleBarLine",
+				},
+			})
+
+			if Config.UserInfoTop then
+				local topOffset = Window.TopOffset or 0
+				local imageOffset = hasImage and (imageSize + 10 + topOffset) or topOffset
+				TabFrame.Position = UDim2.new(0, 12, 0, 39)
+				TabFrame.Size = UDim2.new(0, Window.TabWidth, 1, -(31 + imageOffset + userInfoHeight))
+				local searchOffset = hasImage and (imageSize + 10 + topOffset) or topOffset
+				SearchFrame.Position = UDim2.new(0, 0, 0, userInfoHeight + 6 + searchOffset)
+				if ImageFrame then
+					ImageFrame.Position = UDim2.new(0.5, 0, 0, userInfoHeight + topOffset)
+				end
+				local newTabHolderTop = userInfoHeight + 6 + (hasImage and (imageSize + 10 + topOffset) or topOffset) + (Window.ShowSearch and (searchHeight + 6) or 0)
+				Window.TabHolderTop = newTabHolderTop
+				Window.TabHolder.Position = UDim2.new(0, 0, 0, newTabHolderTop)
+				Window.TabHolder.Size = UDim2.new(1, 0, 1, -(newTabHolderTop + 6 + userInfoHeight))
+				if Window.UpdateTabHolderLayout then
+					Window:UpdateTabHolderLayout(newTabHolderTop)
+				end
+			else
+				Window.TabHolder.Size = UDim2.new(1, 0, 1, -(tabHolderTop + 6 + userInfoHeight))
+				if Window.UpdateTabHolderLayout then
+					Window:UpdateTabHolderLayout(tabHolderTop)
+				end
+			end
 		end
 
 		if Library.UseAcrylic then
