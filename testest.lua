@@ -2689,10 +2689,12 @@ Components.Tab = (function()
 		Tab.Motor, Tab.SetTransparency = Creator.SpringMotor(0.92, Tab.Frame, "BackgroundTransparency")
 
 		Creator.AddSignal(Tab.Frame.MouseEnter, function()
-			Tab.SetTransparency(Tab.Selected and 0.85 or 0.87)
+			Tab.SetTransparency(Tab.Selected and 0.85 or 0.6)
+			game:GetService("TweenService"):Create(Tab.Frame, TweenInfo.new(0.3), {BackgroundColor3 = Creator.GetThemeProperty("Accent")}):Play()
 		end)
 		Creator.AddSignal(Tab.Frame.MouseLeave, function()
 			Tab.SetTransparency(Tab.Selected and 0.89 or 0.92)
+			game:GetService("TweenService"):Create(Tab.Frame, TweenInfo.new(0.3), {BackgroundColor3 = Creator.GetThemeProperty("Tab")}):Play()
 		end)
 		Creator.AddSignal(Tab.Frame.MouseButton1Down, function()
 			Tab.SetTransparency(0.92)
@@ -3936,10 +3938,10 @@ Components.TitleBar = (function()
             Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
             TextTransparency = 0,
             FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-            TextSize = 17,
+            TextSize = 16.1,
             TextXAlignment = Enum.TextXAlignment.Left,
             Size = UDim2.new(0, 300, 1, 0),
-            Position = UDim2.new(0, 60, 0, 0), -- Moved right
+            Position = UDim2.new(0, 60, 0, 0), 
             BackgroundTransparency = 1,
             TextColor3 = Color3.fromRGB(255, 255, 255),
         })
