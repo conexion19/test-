@@ -4117,13 +4117,11 @@ Components.Window = (function()
 			}),
 		})
 
-		--[[
 		local ResizeStartFrame = New("Frame", {
 			Size = UDim2.fromOffset(20, 20),
 			BackgroundTransparency = 1,
 			Position = UDim2.new(1, -20, 1, -2),
 		})
-		]]
 
 		local SearchElements = {}
 		local AllElements = {}
@@ -4604,7 +4602,7 @@ Window.ContainerCanvas = New("Frame", {
 		table.insert(rootChildren, Window.TabDisplay)
 		table.insert(rootChildren, Window.ContainerCanvas)
 		table.insert(rootChildren, TabFrame)
-		-- table.insert(rootChildren, ResizeStartFrame)
+		table.insert(rootChildren, ResizeStartFrame)
 
 Window.Root = New("Frame", {
     BackgroundTransparency = 1,
@@ -4843,7 +4841,6 @@ Window.Root = New("Frame", {
 			end
 		end)
 
-		--[[
 		Creator.AddSignal(ResizeStartFrame.InputBegan, function(Input)
 			if
 				Input.UserInputType == Enum.UserInputType.MouseButton1
@@ -4853,7 +4850,6 @@ Window.Root = New("Frame", {
 				ResizePos = Input.Position
 			end
 		end)
-		]]
 
 		Creator.AddSignal(UserInputService.InputChanged, function(Input)
 			if Input == DragInput and Dragging then
@@ -4865,7 +4861,6 @@ Window.Root = New("Frame", {
 				})
 			end
 
-			--[[
 			if
 				(Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch)
 				and Resizing
@@ -4882,16 +4877,13 @@ Window.Root = New("Frame", {
 					Y = Flipper.Instant.new(TargetSizeClamped.Y),
 				})
 			end
-			]]
 		end)
 
 		Creator.AddSignal(UserInputService.InputEnded, function(Input)
-			--[[
 			if Resizing == true or Input.UserInputType == Enum.UserInputType.Touch then
 				Resizing = false
 				Window.Size = UDim2.fromOffset(SizeMotor:getValue().X, SizeMotor:getValue().Y)
 			end
-			]]
 		end)
 
 		Creator.AddSignal(Window.TabHolder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
@@ -9007,7 +8999,6 @@ local SaveManager = {} do
 
 			})
 
-
 		end})
 
 
@@ -11005,7 +10996,6 @@ AddSignal(MinimizeButton.MouseButton1Click, function()
 
 
 	if not isDragging then
-
 
 		Library.Window:Minimize()
 
