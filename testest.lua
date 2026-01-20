@@ -1896,6 +1896,22 @@ local GUI = Creator.New("ScreenGui", {
 Library.GUI = GUI
 ProtectGui(GUI)
 
+local KeybindList = New("Frame", {
+	Position = UDim2.new(0, 10, 0.4, 0),
+	Size = UDim2.new(0, 200, 0, 0),
+	BackgroundTransparency = 1,
+	Visible = true,
+	Parent = GUI,
+	Name = "KeybindList"
+}, {
+	New("UIListLayout", {
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Padding = UDim.new(0, 5)
+	})
+})
+
+Library.KeybindList = KeybindList
+
 function Library:SafeCallback(Function, ...)
 	if not Function then
 		return
@@ -6743,6 +6759,57 @@ ElementsTable.Keybind = (function()
 			KeybindDisplayLabel,
 		})
 
+		local IndicatorLabel = New("TextLabel", {
+			Text = "",
+			Font = Enum.Font.GothamBold,
+			TextSize = 14,
+			TextColor3 = Color3.new(1, 1, 1),
+			BackgroundTransparency = 1,
+			Size = UDim2.new(1, -10, 1, 0),
+			Position = UDim2.new(0, 5, 0, 0),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			RichText = true,
+		})
+
+		local Indicator = New("Frame", {
+			Parent = Library.KeybindList,
+			Size = UDim2.new(1, 0, 0, 30),
+			BackgroundColor3 = Color3.new(0, 0, 0),
+			BackgroundTransparency = 0.6,
+			Visible = false,
+		}, {
+			New("UICorner", { CornerRadius = UDim.new(0, 4) }),
+			IndicatorLabel
+		})
+
+		function Keybind:UpdateIndicator()
+			if Keybind.Value == "None" then
+				Indicator.Visible = false
+				return
+			end
+
+			local keyName = Keybind.Value
+			if keyName:match("Mouse") then keyName = keyName:gsub("Mouse", "M") end
+
+			local stateStr = ""
+			local colorStr = "FFFFFF"
+
+			if Keybind.Mode == "Toggle" then
+				stateStr = Keybind.Toggled and "ON" or "OFF"
+				colorStr = Keybind.Toggled and "00FF00" or "FF0000"
+			elseif Keybind.Mode == "Hold" then
+				local held = Keybind:GetState()
+				stateStr = held and "Active" or "Inactive"
+				colorStr = held and "00FF00" or "FF0000"
+			elseif Keybind.Mode == "Always" then
+				stateStr = "Always"
+				colorStr = "00FF00"
+			end
+
+			IndicatorLabel.Text = string.format("<font color='#AAAAAA'>[</font>%s<font color='#AAAAAA'>]</font> %s: <font color='#%s'>%s</font>", keyName, Config.Title, colorStr, stateStr)
+			Indicator.Visible = true
+		end
+
 		function Keybind:GetState()
 			if UserInputService:GetFocusedTextBox() and Keybind.Mode ~= "Always" then
 				return false
@@ -6776,6 +6843,8 @@ ElementsTable.Keybind = (function()
 			KeybindDisplayLabel.Text = Key
 			Keybind.Value = Key
 			Keybind.Mode = Mode
+
+			Keybind:UpdateIndicator()
 		end
 
 		function Keybind:OnClick(Callback)
@@ -6790,9 +6859,11 @@ ElementsTable.Keybind = (function()
 		function Keybind:DoClick()
 			Library:SafeCallback(Keybind.Callback, Keybind.Toggled)
 			Library:SafeCallback(Keybind.Clicked, Keybind.Toggled)
+			Keybind:UpdateIndicator()
 		end
 
 		function Keybind:Destroy()
+			Indicator:Destroy()
 			KeybindFrame:Destroy()
 			Library.Options[Idx] = nil
 		end
@@ -6834,6 +6905,8 @@ ElementsTable.Keybind = (function()
 							Library:SafeCallback(Keybind.ChangedCallback, Input.KeyCode or Input.UserInputType)
 							Library:SafeCallback(Keybind.Changed, Input.KeyCode or Input.UserInputType)
 
+							Keybind:UpdateIndicator()
+
 							Event:Disconnect()
 							EndedEvent:Disconnect()
 						end
@@ -6844,6 +6917,9 @@ ElementsTable.Keybind = (function()
 
 		Creator.AddSignal(UserInputService.InputBegan, function(Input)
 			if not Picking and not UserInputService:GetFocusedTextBox() then
+				local Key = Keybind.Value
+				if Key == "None" then return end
+
 				if Keybind.Mode == "Toggle" then
 					local Key = Keybind.Value
 
@@ -6861,9 +6937,36 @@ ElementsTable.Keybind = (function()
 							Keybind:DoClick()
 						end
 					end
+				elseif Keybind.Mode == "Hold" then
+					local matches = false
+					if Key == "MouseLeft" and Input.UserInputType == Enum.UserInputType.MouseButton1 then matches = true end
+					if Key == "MouseRight" and Input.UserInputType == Enum.UserInputType.MouseButton2 then matches = true end
+					if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Key then matches = true end
+
+					if matches then
+						Keybind:UpdateIndicator()
+					end
 				end
 			end
 		end)
+
+		Creator.AddSignal(UserInputService.InputEnded, function(Input)
+			if not Picking and Keybind.Mode == "Hold" then
+				local Key = Keybind.Value
+				if Key == "None" then return end
+
+				local matches = false
+				if Key == "MouseLeft" and Input.UserInputType == Enum.UserInputType.MouseButton1 then matches = true end
+				if Key == "MouseRight" and Input.UserInputType == Enum.UserInputType.MouseButton2 then matches = true end
+				if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Key then matches = true end
+
+				if matches then
+					Keybind:UpdateIndicator()
+				end
+			end
+		end)
+		
+		Keybind:UpdateIndicator()
 
 		Library.Options[Idx] = Keybind
 		return Keybind
