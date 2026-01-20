@@ -45,6 +45,7 @@ local Themes = {
 		"Grape",
 		"Bloody",
 		"Arctic",
+		"DarkGrey",
 	},
 	Dark = {
 		Name = "Dark",
@@ -821,7 +822,41 @@ local Themes = {
 		Text = Color3.fromRGB(255, 255, 255),
 		SubText = Color3.fromRGB(170, 170, 170),
 		Hover = Color3.fromRGB(130, 130, 130),
+		,
+	DarkGrey = {
+		Accent = Color3.fromRGB(150, 150, 150),
+		AcrylicMain = Color3.fromRGB(40, 40, 40),
+		AcrylicBorder = Color3.fromRGB(80, 80, 80),
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(40, 40, 40)),
+		AcrylicNoise = 1,
+		TitleBarLine = Color3.fromRGB(80, 80, 80),
+		Tab = Color3.fromRGB(180, 180, 180),
+		Element = Color3.fromRGB(50, 50, 50),
+		ElementBorder = Color3.fromRGB(80, 80, 80),
+		InElementBorder = Color3.fromRGB(100, 100, 100),
+		ElementTransparency = 0.9,
+		ToggleSlider = Color3.fromRGB(180, 180, 180),
+		ToggleToggled = Color3.fromRGB(255, 255, 255),
+		SliderRail = Color3.fromRGB(100, 100, 100),
+		DropdownFrame = Color3.fromRGB(60, 60, 60),
+		DropdownHolder = Color3.fromRGB(50, 50, 50),
+		DropdownBorder = Color3.fromRGB(90, 90, 90),
+		DropdownOption = Color3.fromRGB(200, 200, 200),
+		Keybind = Color3.fromRGB(200, 200, 200),
+		Input = Color3.fromRGB(200, 200, 200),
+		InputFocused = Color3.fromRGB(30, 30, 30),
+		InputIndicator = Color3.fromRGB(200, 200, 200),
+		Dialog = Color3.fromRGB(50, 50, 50),
+		DialogButton = Color3.fromRGB(60, 60, 60),
+		DialogButtonBorder = Color3.fromRGB(90, 90, 90),
+		DialogBorder = Color3.fromRGB(80, 80, 80),
+		DialogInput = Color3.fromRGB(60, 60, 60),
+		DialogInputLine = Color3.fromRGB(200, 200, 200),
+		Text = Color3.fromRGB(240, 240, 240),
+		SubText = Color3.fromRGB(180, 180, 180),
+		Hover = Color3.fromRGB(100, 100, 100),
 		HoverChange = 0.05
+	}HoverChange = 0.05
 	}
 
 
@@ -11745,121 +11780,48 @@ function ESP:Enable()
                         drawings.HealthOutline.From = Vector2.new(x - 6, y)
                         drawings.HealthOutline.To = Vector2.new(x - 6, y + height)
                         drawings.HealthOutline.Visible = true
-                        
-                        drawings.HealthBar.From = Vector2.new(x - 6, y + height)
-                        drawings.HealthBar.To = Vector2.new(x - 6, y + height - (height * hp))
-                        drawings.HealthBar.Color = Color3.fromRGB(255, 0, 0):Lerp(Color3.fromRGB(0, 255, 0), hp)
-                        drawings.HealthBar.Visible = true
-                    else
-                        drawings.HealthOutline.Visible = false
-                        drawings.HealthBar.Visible = false
-                    end
-                    
-                else
-                    for _, d in pairs(drawings) do d.Visible = false end
-                end
-            else
-                 for _, d in pairs(drawings) do d.Visible = false end
-            end
-        end
-    end)
-end
+   Time Tracker (Session Time)
+local TimeTracker = {}
+TimeTracker.Enabled = false
+TimeTracker.StartTime = os.time()
 
-function ESP:Disable()
-    if self.RenderConnection then self.RenderConnection:Disconnect() end
-    if self.PlayerAdded then self.PlayerAdded:Disconnect() end
-    if self.PlayerRemoving then self.PlayerRemoving:Disconnect() end
-    
-    for _, cache in pairs(self.Cache) do
-        for _, d in pairs(cache) do
-            d.Visible = false
-        end
-    end
-end
-
-Library.ESP = ESP
-
--- Character View (3D Avatar)
-local CharacterView = {}
-CharacterView.Enabled = false
-CharacterView.Rotation = 0
-
-function CharacterView:Enable()
+function TimeTracker:Enable()
     self.Enabled = true
-    self:Update()
+    if self.Label then self.Label.Visible = true end
+    
+    if not self.Label then
+        self.Label = Instance.new("TextLabel")
+        self.Label.Name = "TimeTracker"
+        self.Label.Size = UDim2.new(0, 200, 0, 30)
+        self.Label.Position = UDim2.new(1, -210, 0, 35) -- Top Right
+        self.Label.BackgroundTransparency = 1
+        self.Label.TextColor3 = Color3.fromRGB(240, 240, 240)
+        self.Label.TextSize = 20
+        self.Label.Font = Enum.Font.GothamBold
+        self.Label.TextXAlignment = Enum.TextXAlignment.Right
+        self.Label.TextStrokeTransparency = 0.5
+        self.Label.ZIndex = 120
+        self.Label.Parent = Library.GUI
+    end
     
     if self.Connection then self.Connection:Disconnect() end
     self.Connection = RunService.RenderStepped:Connect(function()
         if not self.Enabled then return end
-        self:UpdatePosition()
+        local elapsed = os.time() - self.StartTime
+        local h = math.floor(elapsed / 3600)
+        local m = math.floor((elapsed % 3600) / 60)
+        local s = elapsed % 60
+        self.Label.Text = string.format("%02d:%02d:%02d", h, m, s)
     end)
 end
 
-function CharacterView:Disable()
+function TimeTracker:Disable()
     self.Enabled = false
-    if self.Frame then self.Frame.Visible = false end
+    if self.Label then self.Label.Visible = false end
     if self.Connection then self.Connection:Disconnect() end
 end
 
-function CharacterView:Update()
-    if not Library.Window or not Library.Window.Root then return end
-    
-    if not self.Frame then
-        self.Frame = Instance.new("Frame")
-        self.Frame.Name = "CharacterView"
-        self.Frame.Size = UDim2.new(0, 125, 0, 150)
-        self.Frame.Position = UDim2.new(1, -145, 1, -170)
-        self.Frame.BackgroundTransparency = 0.4
-        self.Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        self.Frame.BorderSizePixel = 0
-        self.Frame.Visible = false
-        self.Frame.ZIndex = 110
-        self.Frame.Parent = Library.Window.Root
-        
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 8)
-        UICorner.Parent = self.Frame
-        
-        self.Viewport = Instance.new("ViewportFrame")
-        self.Viewport.Size = UDim2.new(1, -10, 1, -10)
-        self.Viewport.Position = UDim2.new(0, 5, 0, 5)
-        self.Viewport.BackgroundTransparency = 1
-        self.Viewport.Parent = self.Frame
-        
-        self.WorldModel = Instance.new("WorldModel")
-        self.WorldModel.Parent = self.Viewport
-        
-        self.Camera = Instance.new("Camera")
-        self.Camera.FieldOfView = 30
-        self.Viewport.CurrentCamera = self.Camera
-        self.Camera.Parent = self.Viewport
-
-        self.Frame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                self.Dragging = true
-                self.LastX = input.Position.X
-            end
-        end)
-        
-        self.Frame.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                self.Dragging = false
-            end
-        end)
-        
-        UserInputService.InputChanged:Connect(function(input)
-            if self.Dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                local delta = input.Position.X - self.LastX
-                self.Rotation = self.Rotation + delta * 0.015
-                self.LastX = input.Position.X
-            end
-        end)
-    end
-    
-    self.Frame.Visible = true
-
-    local char = LocalPlayer.Character
-    if not char then return end
+Library.TimeTracker = TimeTracker
     
     if not self.Clone or self.Clone.Name ~= char.Name then
         if self.Clone then self.Clone:Destroy() end
