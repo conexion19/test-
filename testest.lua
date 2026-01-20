@@ -42,7 +42,8 @@ local Themes = {
 		"Cloud",
 		"Grape",
 		"Bloody",
-		"Arctic"
+		"Arctic",
+		"Black or White"
 	},
 	Dark = {
 		Name = "Dark",
@@ -747,7 +748,46 @@ local Themes = {
 		SubText = Color3.fromRGB(180, 200, 220),
 		Hover = Color3.fromRGB(90, 140, 180),
 		HoverChange = 0.04
+	},
+	["Black or White"] = {
+		Name = "Black or White",
+		Accent = Color3.fromRGB(240, 240, 240),
+		AcrylicMain = Color3.fromRGB(5, 5, 5),
+		AcrylicBorder = Color3.fromRGB(80, 80, 80),
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromRGB(15, 15, 15)),
+		AcrylicNoise = 1,
+		TitleBarLine = Color3.fromRGB(120, 120, 120),
+		Tab = Color3.fromRGB(180, 180, 180),
+		Element = Color3.fromRGB(20, 20, 20),
+		ElementBorder = Color3.fromRGB(50, 50, 50),
+		InElementBorder = Color3.fromRGB(80, 80, 80),
+		ElementTransparency = 0.9,
+		ToggleSlider = Color3.fromRGB(200, 200, 200),
+		ToggleToggled = Color3.fromRGB(10, 10, 10),
+		SliderRail = Color3.fromRGB(120, 120, 120),
+		DropdownFrame = Color3.fromRGB(220, 220, 220),
+		DropdownHolder = Color3.fromRGB(35, 35, 35),
+		DropdownBorder = Color3.fromRGB(60, 60, 60),
+		DropdownOption = Color3.fromRGB(200, 200, 200),
+		Keybind = Color3.fromRGB(200, 200, 200),
+		Input = Color3.fromRGB(200, 200, 200),
+		InputFocused = Color3.fromRGB(10, 10, 10),
+		InputIndicator = Color3.fromRGB(255, 255, 255),
+		InputIndicatorFocus = Color3.fromRGB(240, 240, 240),
+		Dialog = Color3.fromRGB(40, 40, 40),
+		DialogHolder = Color3.fromRGB(25, 25, 25),
+		DialogHolderLine = Color3.fromRGB(15, 15, 15),
+		DialogButton = Color3.fromRGB(50, 50, 50),
+		DialogButtonBorder = Color3.fromRGB(100, 100, 100),
+		DialogBorder = Color3.fromRGB(100, 100, 100),
+		DialogInput = Color3.fromRGB(30, 30, 30),
+		DialogInputLine = Color3.fromRGB(255, 255, 255),
+		Text = Color3.fromRGB(255, 255, 255),
+		SubText = Color3.fromRGB(170, 170, 170),
+		Hover = Color3.fromRGB(220, 220, 220),
+		HoverChange = 0.05
 	}
+
 
 }
 
@@ -3933,40 +3973,90 @@ Components.TitleBar = (function()
             ImageColor3 = Color3.fromRGB(255, 255, 255),
         })
 
-        local SubtitleLabel = New("TextLabel", {
-            Name = "UserSubtitle",
-            Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
-            TextTransparency = 0,
-            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-            TextSize = 16.1,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Size = UDim2.new(0, 300, 1, 0),
-            Position = UDim2.new(0, 60, 0, 0), 
-            BackgroundTransparency = 1,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-        })
+        local SubtitleLabel
+        local ExpiryLabel
 
-        local CheckGradient = New("UIGradient", {
-            Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-                ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 255)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 100, 100)),
-                ColorSequenceKeypoint.new(0.8, Color3.fromRGB(255, 255, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
-            }),
-            Parent = SubtitleLabel,
-        })
+        if Config.UserInfoSubtitle ~= false then
+            SubtitleLabel = New("TextLabel", {
+                Name = "UserSubtitle",
+                Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
+                TextTransparency = 0,
+                FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+                TextSize = 15,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Size = UDim2.new(0, 300, 0, 20),
+                Position = UDim2.new(0, 60, 0, 4), 
+                BackgroundTransparency = 1,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+            })
+            
+            ExpiryLabel = New("TextLabel", {
+                Name = "ExpirySubtitle",
+                Text = "Loading...",
+                TextTransparency = 0.4,
+                FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+                TextSize = 11,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Size = UDim2.new(0, 300, 0, 15),
+                Position = UDim2.new(0, 60, 0, 22), 
+                BackgroundTransparency = 1,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+            })
 
-        task.spawn(function()
-            local success, TweenService = pcall(game.GetService, game, "TweenService")
-            if success and TweenService then
-                -- Move from -0.8 to 0.8. Constant continuous loop.
-                local tInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, false)
-                CheckGradient.Offset = Vector2.new(-0.8, 0)
-                local tween = TweenService:Create(CheckGradient, tInfo, {Offset = Vector2.new(0.8, 0)})
-                tween:Play()
-            end
-        end)
+            local CheckGradient = New("UIGradient", {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+                    ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 255)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 100, 100)),
+                    ColorSequenceKeypoint.new(0.8, Color3.fromRGB(255, 255, 255)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+                }),
+                Parent = SubtitleLabel,
+            })
+
+            task.spawn(function()
+                local success, TweenService = pcall(game.GetService, game, "TweenService")
+                if success and TweenService then
+                    local tInfo = TweenInfo.new(3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, false)
+                    CheckGradient.Offset = Vector2.new(-0.8, 0)
+                    local tween = TweenService:Create(CheckGradient, tInfo, {Offset = Vector2.new(0.8, 0)})
+                    tween:Play()
+                end
+            end)
+            
+            task.spawn(function()
+                -- Wait for UI to mount
+                repeat task.wait() until ExpiryLabel.Parent
+                
+                while ExpiryLabel and ExpiryLabel.Parent do
+                    if _G.NEXUS_EXPIRY_TIME then
+                        if _G.NEXUS_EXPIRY_TIME == -1 then
+                             ExpiryLabel.Text = "Lifetime Key"
+                        else
+                             local diff = _G.NEXUS_EXPIRY_TIME - os.time()
+                             if diff <= 0 then
+                                 ExpiryLabel.Text = "Expired"
+                             else
+                                 local d = math.floor(diff / 86400)
+                                 local h = math.floor((diff % 86400) / 3600)
+                                 local m = math.floor((diff % 3600) / 60)
+                                 local s = diff % 60
+                                 if d > 0 then
+                                     ExpiryLabel.Text = string.format("%d Days, %02d:%02d:%02d", d, h, m, s)
+                                 else
+                                     ExpiryLabel.Text = string.format("%02d:%02d:%02d", h, m, s)
+                                 end
+                             end
+                        end
+                    elseif _G.NEXUS_IS_PREMIUM then
+                        ExpiryLabel.Text = "Lifetime Key"
+                    else
+                        ExpiryLabel.Text = "Waiting for Key..." -- Informative text before auth
+                    end
+                    task.wait(1)
+                end
+            end)
+        end
 
         TitleBar.Frame = New("Frame", {
             Size = UDim2.new(1, 0, 0, 42),
@@ -3977,6 +4067,7 @@ Components.TitleBar = (function()
             LogoIcon,
 
             SubtitleLabel,
+            ExpiryLabel,
 
             -- Простой центральный контейнер
             New("Frame", {
@@ -4121,6 +4212,7 @@ Components.Window = (function()
 			Size = UDim2.fromOffset(20, 20),
 			BackgroundTransparency = 1,
 			Position = UDim2.new(1, -20, 1, -2),
+			Visible = (Config.Resizable ~= false),
 		})
 
 		local SearchElements = {}
@@ -4842,6 +4934,7 @@ Window.Root = New("Frame", {
 		end)
 
 		Creator.AddSignal(ResizeStartFrame.InputBegan, function(Input)
+			if Config.Resizable == false then return end
 			if
 				Input.UserInputType == Enum.UserInputType.MouseButton1
 				or Input.UserInputType == Enum.UserInputType.Touch
@@ -6947,7 +7040,6 @@ ElementsTable.Colorpicker = (function()
 					ImageColor3 = "DialogInput",
 				},
 			})
-
 			local HueSlider = New("Frame", {
 				Size = UDim2.fromOffset(12, 190),
 				Position = UDim2.fromOffset(210, 55),
@@ -8949,7 +9041,6 @@ local SaveManager = {} do
 
 		section:AddButton({Title = "Load config", Callback = function()
 
-
 			local name = SaveManager.Options.SaveManager_ConfigList.Value
 
 
@@ -8998,7 +9089,6 @@ local SaveManager = {} do
 
 
 			})
-
 		end})
 
 
@@ -9666,22 +9756,20 @@ Library.CreateWindow = function(self, Config)
 
 
 		UserInfoSubtitle = Config.UserInfoSubtitle,
-
-
 		UserInfoSubtitleColor = Config.UserInfoSubtitleColor,
-
-
+		Resizable = Config.Resizable,
 	})
 
 
-    Library.Window = Window
-
-    table.insert(Library.Windows, Window)
-    
-    Window.SnowfallConfig = Config.SnowfallConfig or {
-        Count = 38,
-        Speed = 9.5
-    }
+    if Config.Snowfall ~= false then
+        Library.WindowSnowfallEnabled = true
+        Library.WindowSnowfallConfig = Config.SnowfallConfig or {
+            Count = 40,
+            Speed = 9.5
+        }
+    else
+        Library.WindowSnowfallEnabled = false
+    end
 
 	InterfaceManager:SetTheme(Config.Theme)
 	Library:SetTheme(Config.Theme)
@@ -9691,13 +9779,23 @@ Library.CreateWindow = function(self, Config)
     task.spawn(function()
         task.wait(1)
         if Library.Window and Library.Window.Root then
-            local snowfallEnabled = InterfaceManager.Settings.Snowfall == nil and true or InterfaceManager.Settings.Snowfall
-            Library:AddSnowfallToWindow({
-                Count = 38,
-                Speed = 9.5
-            })
-            if not snowfallEnabled and Library.Snowfall then
-                Library.Snowfall:SetVisible(false)
+            local userWantsSnow = InterfaceManager.Settings.Snowfall
+            if userWantsSnow == nil then userWantsSnow = true end
+            
+            local configAllowsSnow = Library.WindowSnowfallEnabled
+            local snowfallEnabled = configAllowsSnow and userWantsSnow
+            
+            -- Only add snowfall if enabled
+            if snowfallEnabled then
+                 Library:AddSnowfallToWindow({
+                    Count = 38,
+                    Speed = 9.5
+                })
+            else
+                -- If not enabled, make sure any existing snow is hidden (just in case)
+                if Library.Snowfall then
+                    Library.Snowfall:SetVisible(false)
+                end
             end
         end
     end)
@@ -9949,7 +10047,6 @@ function Library:CreateMinimizer(Config)
 
 
 			Size = Config.Size or UDim2.fromOffset(36, 36),
-
 			Position = Config.Position or UDim2.new(0, 300, 0, 20),
 
 
@@ -9998,7 +10095,6 @@ function Library:CreateMinimizer(Config)
 
 
 					descendant.CornerRadius = desiredCorner
-
 				elseif descendant.ClassName == "ImageLabel" then
 
 
@@ -10950,7 +11046,6 @@ Creator.AddSignal(RunService.Heartbeat, function()
 
 
 		local viewportSize = workspace.Camera.ViewportSize
-
 		local minimizerSize = activeMin.AbsoluteSize
 
 
@@ -10998,7 +11093,6 @@ AddSignal(MinimizeButton.MouseButton1Click, function()
 	if not isDragging then
 
 		Library.Window:Minimize()
-
 
 	end
 
