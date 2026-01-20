@@ -11583,4 +11583,200 @@ end
 
 Library.Chronos = Chronos
 
+-- ESP Engine v2 (Advanced Drawing API)
+local ESP = {
+    Enabled = false,
+    Boxes = false,
+    BoxColor = Color3.fromRGB(255, 255, 255),
+    Tracers = false,
+    TracerColor = Color3.fromRGB(255, 255, 255),
+    Names = false,
+    NameColor = Color3.fromRGB(255, 255, 255),
+    Distance = false,
+    HealthBar = false,
+    TeamCheck = false,
+    Cache = {}
+}
+
+-- Safe Drawing check
+local Drawing = Drawing or {new = function() return {} end} -- Fallback to prevent errors if not supported, but won't draw
+local DrawingAvailable = (rawget(_G, "Drawing") or rawget(getgenv and getgenv() or {}, "Drawing")) ~= nil
+
+function ESP:Create(player)
+    if self.Cache[player] then return end
+    if not DrawingAvailable then return end
+
+    self.Cache[player] = {
+        Box = Drawing.new("Square"),
+        BoxGlow = Drawing.new("Square"), -- New Glow Element
+        Tracer = Drawing.new("Line"),
+        Name = Drawing.new("Text"),
+        HealthBar = Drawing.new("Line"),
+        HealthOutline = Drawing.new("Line")
+    }
+
+    local c = self.Cache[player]
+    
+    c.Box.Transparency = 1
+    c.Box.Thickness = 1
+    c.Box.Filled = false
+    
+    -- Setup Glow (Thicker, semi-transparent box behind the main box)
+    c.BoxGlow.Transparency = 0.4 
+    c.BoxGlow.Thickness = 3
+    c.BoxGlow.Filled = false
+    
+    c.Tracer.Transparency = 1
+    c.Tracer.Thickness = 1
+    
+    c.Name.Center = true
+    c.Name.Outline = true
+    c.Name.Size = 13
+    
+    c.HealthBar.Transparency = 1
+    c.HealthBar.Thickness = 1
+    
+    c.HealthOutline.Transparency = 1
+    c.HealthOutline.Thickness = 3
+    c.HealthOutline.Color = Color3.new(0,0,0)
+end
+
+function ESP:Remove(player)
+    if self.Cache[player] then
+        for _, d in pairs(self.Cache[player]) do
+            if d.Remove then d:Remove() end
+        end
+        self.Cache[player] = nil
+    end
+end
+
+function ESP:Enable()
+    if not DrawingAvailable then return end
+    
+    -- Load current players
+    for _, p in pairs(game:GetService("Players"):GetPlayers()) do
+        if p ~= LocalPlayer then self:Create(p) end
+    end
+    
+    -- Listeners
+    self.PlayerAdded = game:GetService("Players").PlayerAdded:Connect(function(p) self:Create(p) end)
+    self.PlayerRemoving = game:GetService("Players").PlayerRemoving:Connect(function(p) self:Remove(p) end)
+    
+    self.RenderConnection = RunService.RenderStepped:Connect(function()
+        for player, drawings in pairs(self.Cache) do
+            local char = player.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            local hum = char and char:FindFirstChild("Humanoid")
+            
+            -- Visibility Check
+            local valid = self.Enabled and char and root and hum and hum.Health > 0
+            if self.TeamCheck and player.Team == LocalPlayer.Team then valid = false end
+            
+            if valid then
+                local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+                
+                if onScreen then
+                    local scaleFactor = 1000 / pos.Z -- Distance scaling
+                    local height = math.clamp(scaleFactor * 3, 10, 300) -- Heuristic size
+                    local width = height * 0.6
+                     
+                    -- More accurate bounding box calculation
+                    local head = char:FindFirstChild("Head")
+                    if head then
+                         local headPos = head.Position + Vector3.new(0, 0.5, 0)
+                         local legPos = root.Position - Vector3.new(0, 3, 0)
+                         local headSc = Camera:WorldToViewportPoint(headPos)
+                         local legSc = Camera:WorldToViewportPoint(legPos)
+                         if headSc.Z > 0 then
+                            height = math.abs(headSc.Y - legSc.Y)
+                            width = height * 0.6
+                            pos = Vector3.new((headSc.X + legSc.X)/2, (headSc.Y + legSc.Y)/2, pos.Z)
+                         end
+                    end
+                    
+                    local x = pos.X - width/2
+                    local y = pos.Y - height/2
+                    
+                    -- Box & Glow
+                    if self.Boxes then
+                        -- Main Box
+                        drawings.Box.Size = Vector2.new(width, height)
+                        drawings.Box.Position = Vector2.new(x, y)
+                        drawings.Box.Color = self.BoxColor
+                        drawings.Box.Visible = true
+                        
+                        -- Glow Box
+                        drawings.BoxGlow.Size = Vector2.new(width, height)
+                        drawings.BoxGlow.Position = Vector2.new(x, y)
+                        drawings.BoxGlow.Color = self.BoxColor
+                        drawings.BoxGlow.Visible = true
+                    else
+                        drawings.Box.Visible = false
+                        drawings.BoxGlow.Visible = false
+                    end
+                    
+                    -- Tracer
+                    if self.Tracers then
+                        drawings.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                        drawings.Tracer.To = Vector2.new(pos.X, pos.Y + height/2)
+                        drawings.Tracer.Color = self.TracerColor
+                        drawings.Tracer.Visible = true
+                    else
+                        drawings.Tracer.Visible = false
+                    end
+                    
+                    -- Name & Dist
+                    if self.Names then
+                        local text = player.Name
+                        if self.Distance then
+                            text = text .. string.format(" [%dm]", math.floor(pos.Z))
+                        end
+                        drawings.Name.Text = text
+                        drawings.Name.Position = Vector2.new(pos.X, y - 16)
+                        drawings.Name.Color = self.NameColor
+                        drawings.Name.Visible = true
+                    else
+                        drawings.Name.Visible = false
+                    end
+                    
+                    -- Health Bar
+                    if self.HealthBar then
+                        local hp = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+                        drawings.HealthOutline.From = Vector2.new(x - 6, y)
+                        drawings.HealthOutline.To = Vector2.new(x - 6, y + height)
+                        drawings.HealthOutline.Visible = true
+                        
+                        drawings.HealthBar.From = Vector2.new(x - 6, y + height)
+                        drawings.HealthBar.To = Vector2.new(x - 6, y + height - (height * hp))
+                        drawings.HealthBar.Color = Color3.fromRGB(255, 0, 0):Lerp(Color3.fromRGB(0, 255, 0), hp)
+                        drawings.HealthBar.Visible = true
+                    else
+                        drawings.HealthOutline.Visible = false
+                        drawings.HealthBar.Visible = false
+                    end
+                    
+                else
+                    for _, d in pairs(drawings) do d.Visible = false end
+                end
+            else
+                 for _, d in pairs(drawings) do d.Visible = false end
+            end
+        end
+    end)
+end
+
+function ESP:Disable()
+    if self.RenderConnection then self.RenderConnection:Disconnect() end
+    if self.PlayerAdded then self.PlayerAdded:Disconnect() end
+    if self.PlayerRemoving then self.PlayerRemoving:Disconnect() end
+    
+    for _, cache in pairs(self.Cache) do
+        for _, d in pairs(cache) do
+            d.Visible = false
+        end
+    end
+end
+
+Library.ESP = ESP
+
 return Library, SaveManager, InterfaceManager, Mobile
