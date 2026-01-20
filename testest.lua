@@ -11471,4 +11471,116 @@ task.spawn(function()
     end)
 end)
 
+
+-- Chronos Logic (Time Rewind)
+local Chronos = {}
+Chronos.Recording = false
+Chronos.Rewinding = false
+Chronos.History = {}
+Chronos.MaxTime = 5
+Chronos.Key = Enum.KeyCode.X
+Chronos.Visuals = {
+    Blur = Instance.new("BlurEffect"),
+    CC = Instance.new("ColorCorrectionEffect")
+}
+
+Chronos.Visuals.Blur.Size = 0
+Chronos.Visuals.Blur.Enabled = false
+Chronos.Visuals.Blur.Parent = Lighting
+
+Chronos.Visuals.CC.Saturation = -1
+Chronos.Visuals.CC.TintColor = Color3.fromRGB(200, 220, 255)
+Chronos.Visuals.CC.Enabled = false
+Chronos.Visuals.CC.Parent = Lighting
+
+function Chronos:StartRecording()
+    if self.Connection then self.Connection:Disconnect() end
+    
+    self.Connection = RunService.Heartbeat:Connect(function(dt)
+        if not self.Recording then return end
+        if self.Rewinding then return end
+        
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            -- Record frame
+            table.insert(self.History, {
+                CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame,
+                Velocity = LocalPlayer.Character.HumanoidRootPart.Velocity,
+                CamCFrame = Workspace.CurrentCamera.CFrame
+            })
+            
+            -- Cap history size (60 fps * MaxTime)
+            local maxFrames = 60 * self.MaxTime
+            if #self.History > maxFrames then
+                table.remove(self.History, 1) -- Remove oldest
+            end
+        end
+    end)
+    
+    -- Input Handler
+    if self.InputConnection then self.InputConnection:Disconnect() end
+    self.InputConnection = UserInputService.InputBegan:Connect(function(input, gpe)
+        if gpe then return end
+        if input.KeyCode == self.Key and self.Recording and #self.History > 10 then
+            self:Rewind()
+        end
+    end)
+end
+
+function Chronos:Rewind()
+    if self.Rewinding then return end
+    self.Rewinding = true
+    
+    -- Enable Visuals
+    self.Visuals.CC.Enabled = true
+    self.Visuals.Blur.Enabled = true
+    TweenService:Create(self.Visuals.Blur, TweenInfo.new(0.5), {Size = 24}):Play()
+    
+    local Char = LocalPlayer.Character
+    if Char and Char:FindFirstChild("Humanoid") and Char:FindFirstChild("HumanoidRootPart") then
+        local HRP = Char.HumanoidRootPart
+        local Hum = Char.Humanoid
+        
+        -- Disable Physics
+        local oldAnchor = HRP.Anchored
+        HRP.Anchored = true
+        Hum.PlatformStand = true
+        
+        -- Rewind Loop
+        while UserInputService:IsKeyDown(self.Key) and #self.History > 0 do
+            local snapshot = table.remove(self.History) -- Pop newest
+            
+            if snapshot then
+                HRP.CFrame = snapshot.CFrame
+                Workspace.CurrentCamera.CFrame = snapshot.CamCFrame
+            end
+            
+            -- Speed of rewind (skip frames to make it faster than real time?)
+            -- Taking 2 steps per frame makes rewind 2x speed
+            local secondStep = table.remove(self.History)
+            
+            RunService.RenderStepped:Wait()
+        end
+        
+        -- Restore
+        HRP.Anchored = oldAnchor
+        Hum.PlatformStand = false
+        if #self.History > 0 then
+             HRP.Velocity = self.History[#self.History].Velocity
+        else
+             HRP.Velocity = Vector3.new(0,0,0)
+        end
+    end
+    
+    -- Disable Visuals
+    TweenService:Create(self.Visuals.Blur, TweenInfo.new(0.5), {Size = 0}):Play()
+    task.delay(0.5, function() 
+        self.Visuals.Blur.Enabled = false 
+        self.Visuals.CC.Enabled = false 
+    end)
+    
+    self.Rewinding = false
+end
+
+Library.Chronos = Chronos
+
 return Library, SaveManager, InterfaceManager, Mobile
