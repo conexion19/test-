@@ -11779,4 +11779,120 @@ end
 
 Library.ESP = ESP
 
+-- Character View (3D Avatar)
+local CharacterView = {}
+CharacterView.Enabled = false
+CharacterView.Rotation = 0
+
+function CharacterView:Enable()
+    self.Enabled = true
+    self:Update()
+    
+    if self.Connection then self.Connection:Disconnect() end
+    self.Connection = RunService.RenderStepped:Connect(function()
+        if not self.Enabled then return end
+        self:UpdatePosition()
+    end)
+end
+
+function CharacterView:Disable()
+    self.Enabled = false
+    if self.Frame then self.Frame.Visible = false end
+    if self.Connection then self.Connection:Disconnect() end
+end
+
+function CharacterView:Update()
+    if not Library.Window or not Library.Window.Root then return end
+    
+    if not self.Frame then
+        self.Frame = Instance.new("Frame")
+        self.Frame.Name = "CharacterView"
+        self.Frame.Size = UDim2.new(0, 125, 0, 150)
+        self.Frame.Position = UDim2.new(1, -145, 1, -170)
+        self.Frame.BackgroundTransparency = 0.4
+        self.Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        self.Frame.BorderSizePixel = 0
+        self.Frame.Visible = false
+        self.Frame.ZIndex = 110
+        self.Frame.Parent = Library.Window.Root
+        
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 8)
+        UICorner.Parent = self.Frame
+        
+        self.Viewport = Instance.new("ViewportFrame")
+        self.Viewport.Size = UDim2.new(1, -10, 1, -10)
+        self.Viewport.Position = UDim2.new(0, 5, 0, 5)
+        self.Viewport.BackgroundTransparency = 1
+        self.Viewport.Parent = self.Frame
+        
+        self.WorldModel = Instance.new("WorldModel")
+        self.WorldModel.Parent = self.Viewport
+        
+        self.Camera = Instance.new("Camera")
+        self.Camera.FieldOfView = 30
+        self.Viewport.CurrentCamera = self.Camera
+        self.Camera.Parent = self.Viewport
+
+        self.Frame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                self.Dragging = true
+                self.LastX = input.Position.X
+            end
+        end)
+        
+        self.Frame.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                self.Dragging = false
+            end
+        end)
+        
+        UserInputService.InputChanged:Connect(function(input)
+            if self.Dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position.X - self.LastX
+                self.Rotation = self.Rotation + delta * 0.015
+                self.LastX = input.Position.X
+            end
+        end)
+    end
+    
+    self.Frame.Visible = true
+
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    if not self.Clone or self.Clone.Name ~= char.Name then
+        if self.Clone then self.Clone:Destroy() end
+        
+        char.Archivable = true
+        self.Clone = char:Clone()
+        self.Clone.Parent = self.WorldModel
+        
+        local root = self.Clone:FindFirstChild("HumanoidRootPart")
+        if root then
+             root.Anchored = true
+        end
+    end
+end
+
+function CharacterView:UpdatePosition()
+    if not self.Clone then 
+        self:Update() -- Try to re-init
+        return 
+    end
+    
+    if not self.Dragging then
+        self.Rotation = self.Rotation + 0.01
+    end
+    
+    local root = self.Clone:FindFirstChild("HumanoidRootPart") or self.Clone.PrimaryPart
+    if root then
+        self.Clone:SetPrimaryPartCFrame(CFrame.new(0,-3,0) * CFrame.Angles(0, self.Rotation, 0))
+    end
+    
+    self.Camera.CFrame = CFrame.new(0, 0, -8) * CFrame.Angles(0, math.pi, 0)
+end
+
+Library.CharacterView = CharacterView
+
 return Library, SaveManager, InterfaceManager, Mobile
