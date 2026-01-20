@@ -822,7 +822,8 @@ local Themes = {
 		Text = Color3.fromRGB(255, 255, 255),
 		SubText = Color3.fromRGB(170, 170, 170),
 		Hover = Color3.fromRGB(130, 130, 130),
-		,
+		HoverChange = 0.05
+	},
 	DarkGrey = {
 		Accent = Color3.fromRGB(150, 150, 150),
 		AcrylicMain = Color3.fromRGB(40, 40, 40),
@@ -856,8 +857,8 @@ local Themes = {
 		SubText = Color3.fromRGB(180, 180, 180),
 		Hover = Color3.fromRGB(100, 100, 100),
 		HoverChange = 0.05
-	}HoverChange = 0.05
 	}
+	},
 
 
 
