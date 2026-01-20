@@ -26,7 +26,9 @@ local Themes = {
 	Names = {
 		"Dark",
 		"Darker", 
+		"Monochrome",
 		"AMOLED",
+		"RGB",
 		"Light",
 		"Balloon",
 		"SoftCream",
@@ -43,7 +45,6 @@ local Themes = {
 		"Grape",
 		"Bloody",
 		"Arctic",
-		"Black or White"
 	},
 	Dark = {
 		Name = "Dark",
@@ -749,8 +750,8 @@ local Themes = {
 		Hover = Color3.fromRGB(90, 140, 180),
 		HoverChange = 0.04
 	},
-	["Black or White"] = {
-		Name = "Black or White",
+	Monochrome = {
+		Name = "Monochrome",
 		Accent = Color3.fromRGB(240, 240, 240),
 		AcrylicMain = Color3.fromRGB(5, 5, 5),
 		AcrylicBorder = Color3.fromRGB(80, 80, 80),
@@ -786,7 +787,43 @@ local Themes = {
 		SubText = Color3.fromRGB(170, 170, 170),
 		Hover = Color3.fromRGB(220, 220, 220),
 		HoverChange = 0.05
+	},
+	RGB = {
+		Name = "RGB",
+		Accent = Color3.fromRGB(255, 0, 0), -- Начальный цвет
+		AcrylicMain = Color3.fromRGB(30, 30, 30),
+		AcrylicBorder = Color3.fromRGB(60, 60, 60),
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(20, 20, 20), Color3.fromRGB(25, 25, 25)),
+		AcrylicNoise = 0.9,
+		TitleBarLine = Color3.fromRGB(75, 75, 75),
+		Tab = Color3.fromRGB(120, 120, 120),
+		Element = Color3.fromRGB(50, 50, 50),
+		ElementBorder = Color3.fromRGB(80, 80, 80),
+		InElementBorder = Color3.fromRGB(100, 100, 100),
+		ElementTransparency = 0.85,
+		ToggleSlider = Color3.fromRGB(120, 120, 120),
+		ToggleToggled = Color3.fromRGB(255, 255, 255),
+		SliderRail = Color3.fromRGB(100, 100, 100),
+		DropdownFrame = Color3.fromRGB(80, 80, 80),
+		DropdownHolder = Color3.fromRGB(45, 45, 45),
+		DropdownBorder = Color3.fromRGB(60, 60, 60),
+		DropdownOption = Color3.fromRGB(150, 150, 150),
+		Keybind = Color3.fromRGB(150, 150, 150),
+		Input = Color3.fromRGB(150, 150, 150),
+		InputFocused = Color3.fromRGB(10, 10, 10),
+		InputIndicator = Color3.fromRGB(150, 150, 150),
+		Dialog = Color3.fromRGB(45, 45, 45),
+		DialogButton = Color3.fromRGB(45, 45, 45),
+		DialogButtonBorder = Color3.fromRGB(80, 80, 80),
+		DialogBorder = Color3.fromRGB(70, 70, 70),
+		DialogInput = Color3.fromRGB(55, 55, 55),
+		DialogInputLine = Color3.fromRGB(160, 160, 160),
+		Text = Color3.fromRGB(255, 255, 255),
+		SubText = Color3.fromRGB(170, 170, 170),
+		Hover = Color3.fromRGB(130, 130, 130),
+		HoverChange = 0.05
 	}
+
 
 
 }
@@ -11293,4 +11330,42 @@ function Library:AddSnowfallToWindow(Config)
 end
 
 if RunService:IsStudio() then task.wait(0.01) end
+
+-- RGB Animation Loop
+task.spawn(function()
+    local hue = 0
+    RunService.Heartbeat:Connect(function(dt)
+        -- Проверяем, выбрана ли тема "RGB"
+        if Library.Theme == "RGB" then
+            hue = hue + dt * 0.1 -- Скорость переливания
+            if hue > 1 then hue = 0 end
+            
+            local rgbColor = Color3.fromHSV(hue, 0.8, 1) -- Насыщенные цвета
+            local rgbColor2 = Color3.fromHSV((hue + 0.5) % 1, 0.8, 1) -- Контрастный цвет
+
+            -- Обновляем таблицу темы "RGB". 
+            -- Важно: мы обновляем значения в самой таблице определений
+            local theme = Themes["RGB"]
+            if theme then
+                theme.Accent = rgbColor
+                theme.TitleBarLine = rgbColor
+                theme.Tab = rgbColor 
+                theme.ElementBorder = rgbColor
+                theme.ToggleToggled = rgbColor
+                theme.SliderRail = rgbColor
+                theme.DropdownFrame = rgbColor
+                theme.InputIndicatorFocus = rgbColor
+                
+                -- Можно добавить переливание текста
+                theme.Text = Color3.new(1,1,1) -- Текст лучше оставить белым для читаемости
+                
+                -- Если библиотека поддерживает горячее обновление:
+                if Library.Window then
+                    Library:SetTheme("RGB") 
+                end
+            end
+        end
+    end)
+end)
+
 return Library, SaveManager, InterfaceManager, Mobile
