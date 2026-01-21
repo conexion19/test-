@@ -45,7 +45,8 @@ local Themes = {
 		"Grape",
 		"Bloody",
 		"Arctic",
-		"DarkGrey",
+		"DarkGray",
+		"Gray",
 	},
 	Dark = {
 		Name = "Dark",
@@ -751,6 +752,80 @@ local Themes = {
 		Hover = Color3.fromRGB(90, 140, 180),
 		HoverChange = 0.04
 	},
+	DarkGray = {
+		Name = "DarkGray",
+		Accent = Color3.fromRGB(120, 120, 120),
+		AcrylicMain = Color3.fromRGB(45, 45, 45),
+		AcrylicBorder = Color3.fromRGB(75, 75, 75),
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(40, 40, 40)),
+		AcrylicNoise = 0.92,
+		TitleBarLine = Color3.fromRGB(65, 65, 65),
+		Tab = Color3.fromRGB(120, 120, 120),
+		Element = Color3.fromRGB(55, 55, 55),
+		ElementBorder = Color3.fromRGB(25, 25, 25),
+		InElementBorder = Color3.fromRGB(65, 65, 65),
+		ElementTransparency = 0.85,
+		ToggleSlider = Color3.fromRGB(120, 120, 120),
+		ToggleToggled = Color3.fromRGB(35, 35, 35),
+		SliderRail = Color3.fromRGB(120, 120, 120),
+		DropdownFrame = Color3.fromRGB(140, 140, 140),
+		DropdownHolder = Color3.fromRGB(35, 35, 35),
+		DropdownBorder = Color3.fromRGB(25, 25, 25),
+		DropdownOption = Color3.fromRGB(120, 120, 120),
+		Keybind = Color3.fromRGB(120, 120, 120),
+		Input = Color3.fromRGB(140, 140, 140),
+		InputFocused = Color3.fromRGB(10, 10, 10),
+		InputIndicator = Color3.fromRGB(140, 140, 140),
+		Dialog = Color3.fromRGB(35, 35, 35),
+		DialogHolder = Color3.fromRGB(25, 25, 25),
+		DialogHolderLine = Color3.fromRGB(20, 20, 20),
+		DialogButton = Color3.fromRGB(35, 35, 35),
+		DialogButtonBorder = Color3.fromRGB(60, 60, 60),
+		DialogBorder = Color3.fromRGB(50, 50, 50),
+		DialogInput = Color3.fromRGB(45, 45, 45),
+		DialogInputLine = Color3.fromRGB(140, 140, 140),
+		Text = Color3.fromRGB(240, 240, 240),
+		SubText = Color3.fromRGB(170, 170, 170),
+		Hover = Color3.fromRGB(120, 120, 120),
+		HoverChange = 0.05,
+	},
+	Gray = {
+		Name = "Gray",
+		Accent = Color3.fromRGB(150, 150, 150),
+		AcrylicMain = Color3.fromRGB(80, 80, 80),
+		AcrylicBorder = Color3.fromRGB(110, 110, 110),
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(75, 75, 75), Color3.fromRGB(75, 75, 75)),
+		AcrylicNoise = 0.85,
+		TitleBarLine = Color3.fromRGB(100, 100, 100),
+		Tab = Color3.fromRGB(150, 150, 150),
+		Element = Color3.fromRGB(100, 100, 100),
+		ElementBorder = Color3.fromRGB(60, 60, 60),
+		InElementBorder = Color3.fromRGB(120, 120, 120),
+		ElementTransparency = 0.85,
+		ToggleSlider = Color3.fromRGB(150, 150, 150),
+		ToggleToggled = Color3.fromRGB(60, 60, 60),
+		SliderRail = Color3.fromRGB(150, 150, 150),
+		DropdownFrame = Color3.fromRGB(170, 170, 170),
+		DropdownHolder = Color3.fromRGB(70, 70, 70),
+		DropdownBorder = Color3.fromRGB(60, 60, 60),
+		DropdownOption = Color3.fromRGB(150, 150, 150),
+		Keybind = Color3.fromRGB(150, 150, 150),
+		Input = Color3.fromRGB(170, 170, 170),
+		InputFocused = Color3.fromRGB(40, 40, 40),
+		InputIndicator = Color3.fromRGB(170, 170, 170),
+		Dialog = Color3.fromRGB(70, 70, 70),
+		DialogHolder = Color3.fromRGB(60, 60, 60),
+		DialogHolderLine = Color3.fromRGB(50, 50, 50),
+		DialogButton = Color3.fromRGB(70, 70, 70),
+		DialogButtonBorder = Color3.fromRGB(100, 100, 100),
+		DialogBorder = Color3.fromRGB(90, 90, 90),
+		DialogInput = Color3.fromRGB(80, 80, 80),
+		DialogInputLine = Color3.fromRGB(170, 170, 170),
+		Text = Color3.fromRGB(255, 255, 255),
+		SubText = Color3.fromRGB(200, 200, 200),
+		Hover = Color3.fromRGB(150, 150, 150),
+		HoverChange = 0.05,
+	},
 	Monochrome = {
 		Name = "Monochrome",
 		Accent = Color3.fromRGB(240, 240, 240),
@@ -822,42 +897,7 @@ local Themes = {
 		Text = Color3.fromRGB(255, 255, 255),
 		SubText = Color3.fromRGB(170, 170, 170),
 		Hover = Color3.fromRGB(130, 130, 130),
-		,
-	DarkGrey = {
-		Name = "DarkGrey",
-		Accent = Color3.fromRGB(180, 180, 180),
-		AcrylicMain = Color3.fromRGB(30, 30, 30),
-		AcrylicBorder = Color3.fromRGB(50, 50, 50),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(30, 30, 30), Color3.fromRGB(30, 30, 30)),
-		AcrylicNoise = 1,
-		TitleBarLine = Color3.fromRGB(60, 60, 60),
-		Tab = Color3.fromRGB(180, 180, 180),
-		Element = Color3.fromRGB(45, 45, 45),
-		ElementBorder = Color3.fromRGB(65, 65, 65),
-		InElementBorder = Color3.fromRGB(80, 80, 80),
-		ElementTransparency = 0.95,
-		ToggleSlider = Color3.fromRGB(150, 150, 150),
-		ToggleToggled = Color3.fromRGB(255, 255, 255),
-		SliderRail = Color3.fromRGB(80, 80, 80),
-		DropdownFrame = Color3.fromRGB(50, 50, 50),
-		DropdownHolder = Color3.fromRGB(40, 40, 40),
-		DropdownBorder = Color3.fromRGB(70, 70, 70),
-		DropdownOption = Color3.fromRGB(220, 220, 220),
-		Keybind = Color3.fromRGB(220, 220, 220),
-		Input = Color3.fromRGB(220, 220, 220),
-		InputFocused = Color3.fromRGB(35, 35, 35),
-		InputIndicator = Color3.fromRGB(220, 220, 220),
-		Dialog = Color3.fromRGB(40, 40, 40),
-		DialogButton = Color3.fromRGB(50, 50, 50),
-		DialogButtonBorder = Color3.fromRGB(70, 70, 70),
-		DialogBorder = Color3.fromRGB(60, 60, 60),
-		DialogInput = Color3.fromRGB(50, 50, 50),
-		DialogInputLine = Color3.fromRGB(180, 180, 180),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(160, 160, 160),
-		Hover = Color3.fromRGB(60, 60, 60),
 		HoverChange = 0.05
-	}HoverChange = 0.05
 	}
 
 
@@ -11359,6 +11399,127 @@ function Library:AddSnowfallToWindow(Config)
     
     Library.Snowfall = snowfall
     return snowfall
+end
+
+-- Custom Cursor Implementation
+do
+    local MouseScreen = Instance.new("ScreenGui")
+    MouseScreen.Name = "NexusCursor"
+    MouseScreen.DisplayOrder = 10000
+    MouseScreen.IgnoreGuiInset = true
+    if gethui then
+        MouseScreen.Parent = gethui()
+    elseif syn and syn.protect_gui then 
+        syn.protect_gui(MouseScreen)
+        MouseScreen.Parent = game:GetService("CoreGui")
+    else
+        MouseScreen.Parent = game:GetService("CoreGui")
+    end
+    
+    local CursorImage = Instance.new("ImageLabel")
+    CursorImage.Name = "Cursor"
+    CursorImage.Size = UDim2.fromOffset(32, 32)
+    CursorImage.BackgroundTransparency = 1
+    CursorImage.Image = "rbxassetid://13475062575" -- Futuristic Cursor
+    CursorImage.ZIndex = 100
+    CursorImage.Parent = MouseScreen
+    
+    local TrailFolder = Instance.new("Folder")
+    TrailFolder.Name = "Trail"
+    TrailFolder.Parent = MouseScreen
+    
+    Library.CustomCursor = {
+        Enabled = true,
+        TrailEnabled = true,
+        CursorParams = {
+            Image = "rbxassetid://13475062575",
+            Size = UDim2.fromOffset(32, 32),
+        },
+        TrailParams = {
+            Image = "rbxassetid://13475062575", 
+            Color = Color3.fromRGB(0, 255, 255), -- Cyan trail
+            Lifetime = 0.4,
+            SizeStart = 24,
+            SizeEnd = 0,
+            Frequency = 0.03
+        }
+    }
+    
+    local lastTrailTime = 0
+    
+    RunService.RenderStepped:Connect(function(dt)
+        local windowVisible = Library.Window and Library.Window.Root and Library.Window.Root.Visible
+        local config = Library.CustomCursor
+        
+        if windowVisible and config.Enabled then
+            UserInputService.MouseIconEnabled = false
+            CursorImage.Visible = true
+            
+            local mousePos = UserInputService:GetMouseLocation()
+            -- Center the cursor image on the mouse tip? Usually cursors top-left is the point.
+            -- This specific asset seems to be a standard cursor where top-left is 0,0.
+            CursorImage.Position = UDim2.fromOffset(mousePos.X, mousePos.Y)
+            CursorImage.Image = config.CursorParams.Image
+            CursorImage.Size = config.CursorParams.Size
+            
+            -- Set color to match theme if possible
+            local themeAccent = Library:GetThemeProperty("Accent")
+            if themeAccent then
+                 -- Tint the cursor? Maybe not, usually white is best.
+                 -- Tint the trail!
+                 config.TrailParams.Color = themeAccent
+            end
+
+            -- Trail Logic
+            if config.TrailEnabled then
+                lastTrailTime = lastTrailTime + dt
+                if lastTrailTime >= config.TrailParams.Frequency then
+                    lastTrailTime = 0
+                    
+                    local trailPart = Instance.new("ImageLabel")
+                    trailPart.Image = config.TrailParams.Image
+                    trailPart.ImageColor3 = config.TrailParams.Color
+                    trailPart.BackgroundTransparency = 1
+                    trailPart.Size = UDim2.fromOffset(config.TrailParams.SizeStart, config.TrailParams.SizeStart)
+                    trailPart.Position = CursorImage.Position
+                    trailPart.ZIndex = 99 -- Below cursor
+                    trailPart.Parent = TrailFolder
+                    
+                    local TweenService = game:GetService("TweenService")
+                    local tweenInfo = TweenInfo.new(config.TrailParams.Lifetime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                    
+                    local goal = {
+                        Size = UDim2.fromOffset(config.TrailParams.SizeEnd, config.TrailParams.SizeEnd),
+                        ImageTransparency = 1,
+                        Rotation = math.random(-30, 30)
+                    }
+                    
+                    local tween = TweenService:Create(trailPart, tweenInfo, goal)
+                    tween:Play()
+                    tween.Completed:Connect(function()
+                        trailPart:Destroy()
+                    end)
+                end
+            end
+        else
+            if CursorImage.Visible then
+                CursorImage.Visible = false
+                -- Restore mouse if menu is hidden
+                -- Note: InterfaceManager might handle this too, but we ensure it's visible when menu is gone
+                if not windowVisible then
+                     UserInputService.MouseIconEnabled = true
+                end
+            end
+        end
+    end)
+    
+    function Library:SetCustomCursor(NewConfig)
+         for k, v in pairs(NewConfig) do
+             if Library.CustomCursor[k] ~= nil then
+                 Library.CustomCursor[k] = v
+             end
+         end
+    end
 end
 
 if RunService:IsStudio() then task.wait(0.01) end
