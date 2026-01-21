@@ -822,43 +822,43 @@ local Themes = {
 		Text = Color3.fromRGB(255, 255, 255),
 		SubText = Color3.fromRGB(170, 170, 170),
 		Hover = Color3.fromRGB(130, 130, 130),
-		HoverChange = 0.05
-	},
+		,
 	DarkGrey = {
-		Accent = Color3.fromRGB(150, 150, 150),
-		AcrylicMain = Color3.fromRGB(40, 40, 40),
-		AcrylicBorder = Color3.fromRGB(80, 80, 80),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(40, 40, 40)),
+		Name = "DarkGrey",
+		Accent = Color3.fromRGB(180, 180, 180),
+		AcrylicMain = Color3.fromRGB(30, 30, 30),
+		AcrylicBorder = Color3.fromRGB(50, 50, 50),
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(30, 30, 30), Color3.fromRGB(30, 30, 30)),
 		AcrylicNoise = 1,
-		TitleBarLine = Color3.fromRGB(80, 80, 80),
+		TitleBarLine = Color3.fromRGB(60, 60, 60),
 		Tab = Color3.fromRGB(180, 180, 180),
-		Element = Color3.fromRGB(50, 50, 50),
-		ElementBorder = Color3.fromRGB(80, 80, 80),
-		InElementBorder = Color3.fromRGB(100, 100, 100),
-		ElementTransparency = 0.9,
-		ToggleSlider = Color3.fromRGB(180, 180, 180),
+		Element = Color3.fromRGB(45, 45, 45),
+		ElementBorder = Color3.fromRGB(65, 65, 65),
+		InElementBorder = Color3.fromRGB(80, 80, 80),
+		ElementTransparency = 0.95,
+		ToggleSlider = Color3.fromRGB(150, 150, 150),
 		ToggleToggled = Color3.fromRGB(255, 255, 255),
-		SliderRail = Color3.fromRGB(100, 100, 100),
-		DropdownFrame = Color3.fromRGB(60, 60, 60),
-		DropdownHolder = Color3.fromRGB(50, 50, 50),
-		DropdownBorder = Color3.fromRGB(90, 90, 90),
-		DropdownOption = Color3.fromRGB(200, 200, 200),
-		Keybind = Color3.fromRGB(200, 200, 200),
-		Input = Color3.fromRGB(200, 200, 200),
-		InputFocused = Color3.fromRGB(30, 30, 30),
-		InputIndicator = Color3.fromRGB(200, 200, 200),
-		Dialog = Color3.fromRGB(50, 50, 50),
-		DialogButton = Color3.fromRGB(60, 60, 60),
-		DialogButtonBorder = Color3.fromRGB(90, 90, 90),
-		DialogBorder = Color3.fromRGB(80, 80, 80),
-		DialogInput = Color3.fromRGB(60, 60, 60),
-		DialogInputLine = Color3.fromRGB(200, 200, 200),
+		SliderRail = Color3.fromRGB(80, 80, 80),
+		DropdownFrame = Color3.fromRGB(50, 50, 50),
+		DropdownHolder = Color3.fromRGB(40, 40, 40),
+		DropdownBorder = Color3.fromRGB(70, 70, 70),
+		DropdownOption = Color3.fromRGB(220, 220, 220),
+		Keybind = Color3.fromRGB(220, 220, 220),
+		Input = Color3.fromRGB(220, 220, 220),
+		InputFocused = Color3.fromRGB(35, 35, 35),
+		InputIndicator = Color3.fromRGB(220, 220, 220),
+		Dialog = Color3.fromRGB(40, 40, 40),
+		DialogButton = Color3.fromRGB(50, 50, 50),
+		DialogButtonBorder = Color3.fromRGB(70, 70, 70),
+		DialogBorder = Color3.fromRGB(60, 60, 60),
+		DialogInput = Color3.fromRGB(50, 50, 50),
+		DialogInputLine = Color3.fromRGB(180, 180, 180),
 		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(180, 180, 180),
-		Hover = Color3.fromRGB(100, 100, 100),
+		SubText = Color3.fromRGB(160, 160, 160),
+		Hover = Color3.fromRGB(60, 60, 60),
 		HoverChange = 0.05
+	}HoverChange = 0.05
 	}
-	},
 
 
 
@@ -1931,22 +1931,6 @@ local GUI = Creator.New("ScreenGui", {
 
 Library.GUI = GUI
 ProtectGui(GUI)
-
-local KeybindList = New("Frame", {
-	Position = UDim2.new(0, 10, 0.4, 0),
-	Size = UDim2.new(0, 200, 0, 0),
-	BackgroundTransparency = 1,
-	Visible = true,
-	Parent = GUI,
-	Name = "KeybindList"
-}, {
-	New("UIListLayout", {
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		Padding = UDim.new(0, 5)
-	})
-})
-
-Library.KeybindList = KeybindList
 
 function Library:SafeCallback(Function, ...)
 	if not Function then
@@ -3050,7 +3034,6 @@ Components.Tab = (function()
 			Creator.AddSignal(SubTabButton.MouseLeave, function()
 				UpdateSubTabAppearance()
 			end)
-
 			Creator.AddSignal(SubTabButton.MouseButton1Down, function()
 				SubTabSetTransparency(0.92)
 			end)
@@ -6795,57 +6778,6 @@ ElementsTable.Keybind = (function()
 			KeybindDisplayLabel,
 		})
 
-		local IndicatorLabel = New("TextLabel", {
-			Text = "",
-			Font = Enum.Font.GothamBold,
-			TextSize = 14,
-			TextColor3 = Color3.new(1, 1, 1),
-			BackgroundTransparency = 1,
-			Size = UDim2.new(1, -10, 1, 0),
-			Position = UDim2.new(0, 5, 0, 0),
-			TextXAlignment = Enum.TextXAlignment.Left,
-			RichText = true,
-		})
-
-		local Indicator = New("Frame", {
-			Parent = Library.KeybindList,
-			Size = UDim2.new(1, 0, 0, 30),
-			BackgroundColor3 = Color3.new(0, 0, 0),
-			BackgroundTransparency = 0.6,
-			Visible = false,
-		}, {
-			New("UICorner", { CornerRadius = UDim.new(0, 4) }),
-			IndicatorLabel
-		})
-
-		function Keybind:UpdateIndicator()
-			if Keybind.Value == "None" then
-				Indicator.Visible = false
-				return
-			end
-
-			local keyName = Keybind.Value
-			if keyName:match("Mouse") then keyName = keyName:gsub("Mouse", "M") end
-
-			local stateStr = ""
-			local colorStr = "FFFFFF"
-
-			if Keybind.Mode == "Toggle" then
-				stateStr = Keybind.Toggled and "ON" or "OFF"
-				colorStr = Keybind.Toggled and "00FF00" or "FF0000"
-			elseif Keybind.Mode == "Hold" then
-				local held = Keybind:GetState()
-				stateStr = held and "Active" or "Inactive"
-				colorStr = held and "00FF00" or "FF0000"
-			elseif Keybind.Mode == "Always" then
-				stateStr = "Always"
-				colorStr = "00FF00"
-			end
-
-			IndicatorLabel.Text = string.format("<font color='#AAAAAA'>[</font>%s<font color='#AAAAAA'>]</font> %s: <font color='#%s'>%s</font>", keyName, Config.Title, colorStr, stateStr)
-			Indicator.Visible = true
-		end
-
 		function Keybind:GetState()
 			if UserInputService:GetFocusedTextBox() and Keybind.Mode ~= "Always" then
 				return false
@@ -6879,8 +6811,6 @@ ElementsTable.Keybind = (function()
 			KeybindDisplayLabel.Text = Key
 			Keybind.Value = Key
 			Keybind.Mode = Mode
-
-			Keybind:UpdateIndicator()
 		end
 
 		function Keybind:OnClick(Callback)
@@ -6895,11 +6825,9 @@ ElementsTable.Keybind = (function()
 		function Keybind:DoClick()
 			Library:SafeCallback(Keybind.Callback, Keybind.Toggled)
 			Library:SafeCallback(Keybind.Clicked, Keybind.Toggled)
-			Keybind:UpdateIndicator()
 		end
 
 		function Keybind:Destroy()
-			Indicator:Destroy()
 			KeybindFrame:Destroy()
 			Library.Options[Idx] = nil
 		end
@@ -6941,8 +6869,6 @@ ElementsTable.Keybind = (function()
 							Library:SafeCallback(Keybind.ChangedCallback, Input.KeyCode or Input.UserInputType)
 							Library:SafeCallback(Keybind.Changed, Input.KeyCode or Input.UserInputType)
 
-							Keybind:UpdateIndicator()
-
 							Event:Disconnect()
 							EndedEvent:Disconnect()
 						end
@@ -6953,9 +6879,6 @@ ElementsTable.Keybind = (function()
 
 		Creator.AddSignal(UserInputService.InputBegan, function(Input)
 			if not Picking and not UserInputService:GetFocusedTextBox() then
-				local Key = Keybind.Value
-				if Key == "None" then return end
-
 				if Keybind.Mode == "Toggle" then
 					local Key = Keybind.Value
 
@@ -6973,36 +6896,9 @@ ElementsTable.Keybind = (function()
 							Keybind:DoClick()
 						end
 					end
-				elseif Keybind.Mode == "Hold" then
-					local matches = false
-					if Key == "MouseLeft" and Input.UserInputType == Enum.UserInputType.MouseButton1 then matches = true end
-					if Key == "MouseRight" and Input.UserInputType == Enum.UserInputType.MouseButton2 then matches = true end
-					if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Key then matches = true end
-
-					if matches then
-						Keybind:UpdateIndicator()
-					end
 				end
 			end
 		end)
-
-		Creator.AddSignal(UserInputService.InputEnded, function(Input)
-			if not Picking and Keybind.Mode == "Hold" then
-				local Key = Keybind.Value
-				if Key == "None" then return end
-
-				local matches = false
-				if Key == "MouseLeft" and Input.UserInputType == Enum.UserInputType.MouseButton1 then matches = true end
-				if Key == "MouseRight" and Input.UserInputType == Enum.UserInputType.MouseButton2 then matches = true end
-				if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Key then matches = true end
-
-				if matches then
-					Keybind:UpdateIndicator()
-				end
-			end
-		end)
-		
-		Keybind:UpdateIndicator()
 
 		Library.Options[Idx] = Keybind
 		return Keybind
@@ -9138,7 +9034,6 @@ local SaveManager = {} do
 
 						SubContent = "Invalid config name (empty)",
 
-
 						Duration = 7
 
 
@@ -10138,7 +10033,6 @@ function Library:CreateMinimizer(Config)
 
 				Size = UDim2.new(0.8, 0, 0.8, 0),
 
-
 				Position = UDim2.new(0.5, 0, 0.5, 0),
 
 
@@ -11137,7 +11031,6 @@ end)
 
 Creator.AddSignal(MobileMinimizeButton.InputBegan, function(Input)
 
-
 	if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
 
 
@@ -11506,356 +11399,5 @@ task.spawn(function()
         end
     end)
 end)
-
-
--- Chronos Logic (Time Rewind)
-local Chronos = {}
-Chronos.Recording = false
-Chronos.Rewinding = false
-Chronos.History = {}
-Chronos.MaxTime = 5
-Chronos.Key = Enum.KeyCode.X
-Chronos.Visuals = {
-    Blur = Instance.new("BlurEffect"),
-    CC = Instance.new("ColorCorrectionEffect")
-}
-
-Chronos.Visuals.Blur.Size = 0
-Chronos.Visuals.Blur.Enabled = false
-Chronos.Visuals.Blur.Parent = Lighting
-
-Chronos.Visuals.CC.Saturation = -1
-Chronos.Visuals.CC.TintColor = Color3.fromRGB(200, 220, 255)
-Chronos.Visuals.CC.Enabled = false
-Chronos.Visuals.CC.Parent = Lighting
-
-function Chronos:StartRecording()
-    if self.Connection then self.Connection:Disconnect() end
-    
-    self.Connection = RunService.Heartbeat:Connect(function(dt)
-        if not self.Recording then return end
-        if self.Rewinding then return end
-        
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            -- Record frame
-            table.insert(self.History, {
-                CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame,
-                Velocity = LocalPlayer.Character.HumanoidRootPart.Velocity,
-                CamCFrame = Workspace.CurrentCamera.CFrame
-            })
-            
-            -- Cap history size (60 fps * MaxTime)
-            local maxFrames = 60 * self.MaxTime
-            if #self.History > maxFrames then
-                table.remove(self.History, 1) -- Remove oldest
-            end
-        end
-    end)
-    
-    -- Input Handler
-    if self.InputConnection then self.InputConnection:Disconnect() end
-    self.InputConnection = UserInputService.InputBegan:Connect(function(input, gpe)
-        if gpe then return end
-        if input.KeyCode == self.Key and self.Recording and #self.History > 10 then
-            self:Rewind()
-        end
-    end)
-end
-
-function Chronos:Rewind()
-    if self.Rewinding then return end
-    self.Rewinding = true
-    
-    -- Enable Visuals
-    self.Visuals.CC.Enabled = true
-    self.Visuals.Blur.Enabled = true
-    TweenService:Create(self.Visuals.Blur, TweenInfo.new(0.5), {Size = 24}):Play()
-    
-    local Char = LocalPlayer.Character
-    if Char and Char:FindFirstChild("Humanoid") and Char:FindFirstChild("HumanoidRootPart") then
-        local HRP = Char.HumanoidRootPart
-        local Hum = Char.Humanoid
-        
-        -- Disable Physics
-        local oldAnchor = HRP.Anchored
-        HRP.Anchored = true
-        Hum.PlatformStand = true
-        
-        -- Rewind Loop
-        while UserInputService:IsKeyDown(self.Key) and #self.History > 0 do
-            local snapshot = table.remove(self.History) -- Pop newest
-            
-            if snapshot then
-                HRP.CFrame = snapshot.CFrame
-                Workspace.CurrentCamera.CFrame = snapshot.CamCFrame
-            end
-            
-            -- Speed of rewind (skip frames to make it faster than real time?)
-            -- Taking 2 steps per frame makes rewind 2x speed
-            local secondStep = table.remove(self.History)
-            
-            RunService.RenderStepped:Wait()
-        end
-        
-        -- Restore
-        HRP.Anchored = oldAnchor
-        Hum.PlatformStand = false
-        if #self.History > 0 then
-             HRP.Velocity = self.History[#self.History].Velocity
-        else
-             HRP.Velocity = Vector3.new(0,0,0)
-        end
-    end
-    
-    -- Disable Visuals
-    TweenService:Create(self.Visuals.Blur, TweenInfo.new(0.5), {Size = 0}):Play()
-    task.delay(0.5, function() 
-        self.Visuals.Blur.Enabled = false 
-        self.Visuals.CC.Enabled = false 
-    end)
-    
-    self.Rewinding = false
-end
-
-Library.Chronos = Chronos
-
--- ESP Engine v2 (Advanced Drawing API)
-local ESP = {
-    Enabled = false,
-    Boxes = false,
-    BoxColor = Color3.fromRGB(255, 255, 255),
-    Tracers = false,
-    TracerColor = Color3.fromRGB(255, 255, 255),
-    Names = false,
-    NameColor = Color3.fromRGB(255, 255, 255),
-    Distance = false,
-    HealthBar = false,
-    TeamCheck = false,
-    Cache = {}
-}
-
--- Safe Drawing check
-local Drawing = Drawing or {new = function() return {} end} -- Fallback to prevent errors if not supported, but won't draw
-local DrawingAvailable = (rawget(_G, "Drawing") or rawget(getgenv and getgenv() or {}, "Drawing")) ~= nil
-
-function ESP:Create(player)
-    if self.Cache[player] then return end
-    if not DrawingAvailable then return end
-
-    self.Cache[player] = {
-        Box = Drawing.new("Square"),
-        BoxGlow = Drawing.new("Square"), -- New Glow Element
-        Tracer = Drawing.new("Line"),
-        Name = Drawing.new("Text"),
-        HealthBar = Drawing.new("Line"),
-        HealthOutline = Drawing.new("Line")
-    }
-
-    local c = self.Cache[player]
-    
-    c.Box.Transparency = 1
-    c.Box.Thickness = 1
-    c.Box.Filled = false
-    
-    -- Setup Glow (Thicker, semi-transparent box behind the main box)
-    c.BoxGlow.Transparency = 0.4 
-    c.BoxGlow.Thickness = 3
-    c.BoxGlow.Filled = false
-    
-    c.Tracer.Transparency = 1
-    c.Tracer.Thickness = 1
-    
-    c.Name.Center = true
-    c.Name.Outline = true
-    c.Name.Size = 13
-    
-    c.HealthBar.Transparency = 1
-    c.HealthBar.Thickness = 1
-    
-    c.HealthOutline.Transparency = 1
-    c.HealthOutline.Thickness = 3
-    c.HealthOutline.Color = Color3.new(0,0,0)
-end
-
-function ESP:Remove(player)
-    if self.Cache[player] then
-        for _, d in pairs(self.Cache[player]) do
-            if d.Remove then d:Remove() end
-        end
-        self.Cache[player] = nil
-    end
-end
-
-function ESP:Enable()
-    if not DrawingAvailable then return end
-    
-    -- Load current players
-    for _, p in pairs(game:GetService("Players"):GetPlayers()) do
-        if p ~= LocalPlayer then self:Create(p) end
-    end
-    
-    -- Listeners
-    self.PlayerAdded = game:GetService("Players").PlayerAdded:Connect(function(p) self:Create(p) end)
-    self.PlayerRemoving = game:GetService("Players").PlayerRemoving:Connect(function(p) self:Remove(p) end)
-    
-    self.RenderConnection = RunService.RenderStepped:Connect(function()
-        for player, drawings in pairs(self.Cache) do
-            local char = player.Character
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-            local hum = char and char:FindFirstChild("Humanoid")
-            
-            -- Visibility Check
-            local valid = self.Enabled and char and root and hum and hum.Health > 0
-            if self.TeamCheck and player.Team == LocalPlayer.Team then valid = false end
-            
-            if valid then
-                local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
-                
-                if onScreen then
-                    local scaleFactor = 1000 / pos.Z -- Distance scaling
-                    local height = math.clamp(scaleFactor * 3, 10, 300) -- Heuristic size
-                    local width = height * 0.6
-                     
-                    -- More accurate bounding box calculation
-                    local head = char:FindFirstChild("Head")
-                    if head then
-                         local headPos = head.Position + Vector3.new(0, 0.5, 0)
-                         local legPos = root.Position - Vector3.new(0, 3, 0)
-                         local headSc = Camera:WorldToViewportPoint(headPos)
-                         local legSc = Camera:WorldToViewportPoint(legPos)
-                         if headSc.Z > 0 then
-                            height = math.abs(headSc.Y - legSc.Y)
-                            width = height * 0.6
-                            pos = Vector3.new((headSc.X + legSc.X)/2, (headSc.Y + legSc.Y)/2, pos.Z)
-                         end
-                    end
-                    
-                    local x = pos.X - width/2
-                    local y = pos.Y - height/2
-                    
-                    -- Box & Glow
-                    if self.Boxes then
-                        -- Main Box
-                        drawings.Box.Size = Vector2.new(width, height)
-                        drawings.Box.Position = Vector2.new(x, y)
-                        drawings.Box.Color = self.BoxColor
-                        drawings.Box.Visible = true
-                        
-                        -- Glow Box
-                        drawings.BoxGlow.Size = Vector2.new(width, height)
-                        drawings.BoxGlow.Position = Vector2.new(x, y)
-                        drawings.BoxGlow.Color = self.BoxColor
-                        drawings.BoxGlow.Visible = true
-                    else
-                        drawings.Box.Visible = false
-                        drawings.BoxGlow.Visible = false
-                    end
-                    
-                    -- Tracer
-                    if self.Tracers then
-                        drawings.Tracer.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
-                        drawings.Tracer.To = Vector2.new(pos.X, pos.Y + height/2)
-                        drawings.Tracer.Color = self.TracerColor
-                        drawings.Tracer.Visible = true
-                    else
-                        drawings.Tracer.Visible = false
-                    end
-                    
-                    -- Name & Dist
-                    if self.Names then
-                        local text = player.Name
-                        if self.Distance then
-                            text = text .. string.format(" [%dm]", math.floor(pos.Z))
-                        end
-                        drawings.Name.Text = text
-                        drawings.Name.Position = Vector2.new(pos.X, y - 16)
-                        drawings.Name.Color = self.NameColor
-                        drawings.Name.Visible = true
-                    else
-                        drawings.Name.Visible = false
-                    end
-                    
-                    -- Health Bar
-                    if self.HealthBar then
-                        local hp = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
-                        drawings.HealthOutline.From = Vector2.new(x - 6, y)
-                        drawings.HealthOutline.To = Vector2.new(x - 6, y + height)
-                        drawings.HealthOutline.Visible = true
-   Time Tracker (Session Time)
-local TimeTracker = {}
-TimeTracker.Enabled = false
-TimeTracker.StartTime = os.time()
-
-function TimeTracker:Enable()
-    self.Enabled = true
-    if self.Label then self.Label.Visible = true end
-    
-    if not self.Label then
-        self.Label = Instance.new("TextLabel")
-        self.Label.Name = "TimeTracker"
-        self.Label.Size = UDim2.new(0, 200, 0, 30)
-        self.Label.Position = UDim2.new(1, -210, 0, 35) -- Top Right
-        self.Label.BackgroundTransparency = 1
-        self.Label.TextColor3 = Color3.fromRGB(240, 240, 240)
-        self.Label.TextSize = 20
-        self.Label.Font = Enum.Font.GothamBold
-        self.Label.TextXAlignment = Enum.TextXAlignment.Right
-        self.Label.TextStrokeTransparency = 0.5
-        self.Label.ZIndex = 120
-        self.Label.Parent = Library.GUI
-    end
-    
-    if self.Connection then self.Connection:Disconnect() end
-    self.Connection = RunService.RenderStepped:Connect(function()
-        if not self.Enabled then return end
-        local elapsed = os.time() - self.StartTime
-        local h = math.floor(elapsed / 3600)
-        local m = math.floor((elapsed % 3600) / 60)
-        local s = elapsed % 60
-        self.Label.Text = string.format("%02d:%02d:%02d", h, m, s)
-    end)
-end
-
-function TimeTracker:Disable()
-    self.Enabled = false
-    if self.Label then self.Label.Visible = false end
-    if self.Connection then self.Connection:Disconnect() end
-end
-
-Library.TimeTracker = TimeTracker
-    
-    if not self.Clone or self.Clone.Name ~= char.Name then
-        if self.Clone then self.Clone:Destroy() end
-        
-        char.Archivable = true
-        self.Clone = char:Clone()
-        self.Clone.Parent = self.WorldModel
-        
-        local root = self.Clone:FindFirstChild("HumanoidRootPart")
-        if root then
-             root.Anchored = true
-        end
-    end
-end
-
-function CharacterView:UpdatePosition()
-    if not self.Clone then 
-        self:Update() -- Try to re-init
-        return 
-    end
-    
-    if not self.Dragging then
-        self.Rotation = self.Rotation + 0.01
-    end
-    
-    local root = self.Clone:FindFirstChild("HumanoidRootPart") or self.Clone.PrimaryPart
-    if root then
-        self.Clone:SetPrimaryPartCFrame(CFrame.new(0,-3,0) * CFrame.Angles(0, self.Rotation, 0))
-    end
-    
-    self.Camera.CFrame = CFrame.new(0, 0, -8) * CFrame.Angles(0, math.pi, 0)
-end
-
-Library.CharacterView = CharacterView
 
 return Library, SaveManager, InterfaceManager, Mobile
