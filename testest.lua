@@ -9358,8 +9358,131 @@ local SaveManager = {} do
 
 end
 
+-- Features Integration
+local DiscordRPC = {} do
+    DiscordRPC.__index = DiscordRPC
+    function DiscordRPC.new()
+        local self = setmetatable({}, DiscordRPC)
+        self.Details = "Using Nexus Library"
+        self.State = "In Game"
+        self.LargeImageKey = "roblox"
+        self.LargeImageText = "Roblox"
+        self.SmallImageKey = "nexus"
+        self.SmallImageText = "Nexus Lib"
+        self.Enabled = false
+        return self
+    end
+    function DiscordRPC:Update()
+        if not self.Enabled then return end
+        if getgenv and getgenv().setdiscordrpc then
+            getgenv().setdiscordrpc(self.Details, self.State, self.LargeImageKey, self.LargeImageText, self.SmallImageKey, self.SmallImageText)
+        elseif getgenv and getgenv().rpc and getgenv().rpc.set_activity then
+            getgenv().rpc.set_activity({
+                details = self.Details,
+                state = self.State,
+                assets = {large_image = self.LargeImageKey, large_text = self.LargeImageText, small_image = self.SmallImageKey, small_text = self.SmallImageText}
+            })
+        end
+    end
+    function DiscordRPC:Start(Window)
+        local Tab = Window:AddTab({ Title = "Discord RPC", Icon = "gamepad-2" })
+        local Section = Tab:AddSection("Rich Presence Settings")
+        Section:AddToggle("EnableRPC", {
+            Title = "Enable RPC", Description = "Toggle Discord Rich Presence", Default = false,
+            Callback = function(Value) self.Enabled = Value; if Value then self:Update() end end
+        })
+        Section:AddInput("RPCDetails", {
+            Title = "Details", Default = "Using Nexus Library", Callback = function(Value) self.Details = Value; self:Update() end
+        })
+        Section:AddInput("RPCState", {
+            Title = "State", Default = "Hacking on Server", Callback = function(Value) self.State = Value; self:Update() end
+        })
+        Section:AddButton({ Title = "Force Update", Callback = function() self:Update() end })
+    end
+end
+Library.DiscordRPC = DiscordRPC.new()
 
+local RemoteSpy = {} do
+    RemoteSpy.__index = RemoteSpy
+    function RemoteSpy.new()
+        local self = setmetatable({}, RemoteSpy)
+        self.Enabled = false; self.IgnoredRemotes = {}; self.BlockedRemotes = {}; self.Logs = {}; self.MaxLogs = 50
+        return self
+    end
+    function RemoteSpy:Log(remote, args)
+        if not self.Enabled then return end
+        if self.IgnoredRemotes[remote.Name] then return end
+        local argsStr = ""
+        for i, v in ipairs(args) do argsStr = argsStr .. tostring(v) .. ", " end
+        local logEntry = string.format("[%s] %s Args: %s", os.date("%X"), remote.Name, argsStr)
+        table.insert(self.Logs, 1, logEntry)
+        if #self.Logs > self.MaxLogs then table.remove(self.Logs) end
+        if self.UpdateUI then task.defer(self.UpdateUI) end
+    end
+    function RemoteSpy:Init(Window)
+        local Tab = Window:AddTab({ Title = "Remote Spy", Icon = "radar" })
+        local LogParagraph = Tab:AddParagraph({ Title = "Logs", Content = "Waiting..." })
+        Tab:AddToggle("EnableSpy", {
+            Title = "Enable Spy", Default = false,
+            Callback = function(Value) self.Enabled = Value; if Value then self:Hook() end end
+        })
+        Tab:AddButton({ Title = "Clear Logs", Callback = function() self.Logs = {}; LogParagraph:SetDesc("Cleared") end })
+        Tab:AddButton({ Title = "Copy Logs", Callback = function() 
+             if setclipboard then setclipboard(table.concat(self.Logs, "\n")) end 
+        end })
+        self.UpdateUI = function()
+            local content = ""; for i = 1, math.min(#self.Logs, 10) do content = content .. self.Logs[i] .. "\n---\n" end
+            LogParagraph:SetDesc(content == "" and "Waiting..." or content)
+        end
+    end
+    function RemoteSpy:Hook()
+        if self.Hooked then return end
+        self.Hooked = true
+        local mt = getrawmetatable(game)
+        local oldNamecall = mt.__namecall
+        if setreadonly then setreadonly(mt, false) end
+        mt.__namecall = newcclosure(function(selfInstance, ...)
+            local method = getnamecallmethod()
+            local args = {...}
+            if (method == "FireServer" or method == "InvokeServer") and (selfInstance:IsA("RemoteEvent") or selfInstance:IsA("RemoteFunction")) then
+                if self.Enabled then self:Log(selfInstance, args) end
+            end
+            return oldNamecall(selfInstance, ...)
+        end)
+        if setreadonly then setreadonly(mt, true) end
+    end
+end
+Library.RemoteSpy = RemoteSpy.new()
 
+local DexLite = {} do
+    DexLite.__index = DexLite
+    function DexLite.new() return setmetatable({CurrentPath = game}, DexLite) end
+    function DexLite:GetChildrenNames(obj)
+        local names = {}
+        if not obj then return {"Nil"} end
+        local children = obj:GetChildren()
+        for i = 1, math.min(#children, 100) do table.insert(names, children[i].Name) end
+        if #names == 0 then table.insert(names, "<Empty>") end
+        table.sort(names)
+        return names
+    end
+    function DexLite:Init(Window)
+        local Tab = Window:AddTab({ Title = "Dex Lite", Icon = "folder-tree" })
+        local PathLbl = Tab:AddParagraph({ Title = "Path", Content = "game" })
+        local Dropdown = Tab:AddDropdown("Explorer", { Title = "Children", Values = self:GetChildrenNames(game), Multi = false })
+        local Selected = nil
+        Dropdown:OnChanged(function(Val) if Val and self.CurrentPath:FindFirstChild(Val) then Selected = self.CurrentPath[Val] end end)
+        Tab:AddButton({ Title = "Step Into", Callback = function() 
+            if Selected then self.CurrentPath = Selected; PathLbl:SetDesc(self.CurrentPath:GetFullName()); Dropdown:SetValues(self:GetChildrenNames(self.CurrentPath)); Dropdown:SetValue(nil); Selected = nil end 
+        end })
+        Tab:AddButton({ Title = "Up", Callback = function() 
+             if self.CurrentPath.Parent then self.CurrentPath = self.CurrentPath.Parent; PathLbl:SetDesc(self.CurrentPath:GetFullName()); Dropdown:SetValues(self:GetChildrenNames(self.CurrentPath)); Dropdown:SetValue(nil); Selected = nil end
+        end })
+        Tab:AddButton({ Title = "Destroy", Callback = function() if Selected then Selected:Destroy(); Dropdown:SetValues(self:GetChildrenNames(self.CurrentPath)) end end })
+        Tab:AddButton({ Title = "Copy Path", Callback = function() if setclipboard then setclipboard((Selected or self.CurrentPath):GetFullName()) end end })
+    end
+end
+Library.Dex = DexLite.new()
 
 
 local InterfaceManager = {} do
