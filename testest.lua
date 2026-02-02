@@ -22,31 +22,10 @@ local RenderStepped = RunService.RenderStepped
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or function() end
 
+local Executor = identifyexecutor and identifyexecutor() or "Unknown"
 local Themes = {
 	Names = {
-		"Dark",
-		"Darker", 
-		"Monochrome",
-		"AMOLED",
-		"RGB",
-		"Light",
-		"Balloon",
-		"SoftCream",
-		"Aqua", 
-		"Amethyst",
-		"Rose",
-		"Midnight",
-		"Forest",
-		"Sunset", 
-		"Ocean",
-		"Emerald",
-		"Sapphire",
-		"Cloud",
-		"Grape",
-		"Bloody",
-		"Arctic",
-		"DarkGray",
-		"Gray",
+		"Slate",
 	},
 	Dark = {
 		Name = "Dark",
@@ -752,42 +731,42 @@ local Themes = {
 		Hover = Color3.fromRGB(90, 140, 180),
 		HoverChange = 0.04
 	},
-	DarkGray = {
-		Name = "DarkGray",
-		Accent = Color3.fromRGB(120, 120, 120),
-		AcrylicMain = Color3.fromRGB(45, 45, 45),
-		AcrylicBorder = Color3.fromRGB(75, 75, 75),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(40, 40, 40)),
-		AcrylicNoise = 0.92,
-		TitleBarLine = Color3.fromRGB(65, 65, 65),
-		Tab = Color3.fromRGB(120, 120, 120),
-		Element = Color3.fromRGB(55, 55, 55),
-		ElementBorder = Color3.fromRGB(25, 25, 25),
-		InElementBorder = Color3.fromRGB(65, 65, 65),
-		ElementTransparency = 0.85,
-		ToggleSlider = Color3.fromRGB(120, 120, 120),
-		ToggleToggled = Color3.fromRGB(35, 35, 35),
-		SliderRail = Color3.fromRGB(120, 120, 120),
-		DropdownFrame = Color3.fromRGB(140, 140, 140),
-		DropdownHolder = Color3.fromRGB(35, 35, 35),
-		DropdownBorder = Color3.fromRGB(25, 25, 25),
-		DropdownOption = Color3.fromRGB(120, 120, 120),
-		Keybind = Color3.fromRGB(120, 120, 120),
-		Input = Color3.fromRGB(140, 140, 140),
-		InputFocused = Color3.fromRGB(10, 10, 10),
-		InputIndicator = Color3.fromRGB(140, 140, 140),
-		Dialog = Color3.fromRGB(35, 35, 35),
-		DialogHolder = Color3.fromRGB(25, 25, 25),
-		DialogHolderLine = Color3.fromRGB(20, 20, 20),
-		DialogButton = Color3.fromRGB(35, 35, 35),
-		DialogButtonBorder = Color3.fromRGB(60, 60, 60),
-		DialogBorder = Color3.fromRGB(50, 50, 50),
-		DialogInput = Color3.fromRGB(45, 45, 45),
-		DialogInputLine = Color3.fromRGB(140, 140, 140),
+	Slate = {
+		Name = "Slate",
+		Accent = Color3.fromRGB(255, 255, 255),
+		AcrylicMain = Color3.fromRGB(35, 35, 38),
+		AcrylicBorder = Color3.fromRGB(35, 35, 38),
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(30, 30, 33), Color3.fromRGB(35, 35, 38)),
+		AcrylicNoise = 0.95,
+		TitleBarLine = Color3.fromRGB(0, 0, 0),
+		Tab = Color3.fromRGB(80, 80, 80),
+		Element = Color3.fromRGB(35, 35, 38),
+		ElementBorder = Color3.fromRGB(0, 0, 0),
+		InElementBorder = Color3.fromRGB(0, 0, 0),
+		ElementTransparency = 0.92,
+		ToggleSlider = Color3.fromRGB(65, 65, 65),
+		ToggleToggled = Color3.fromRGB(255, 255, 255),
+		SliderRail = Color3.fromRGB(65, 65, 65),
+		DropdownFrame = Color3.fromRGB(65, 65, 65),
+		DropdownHolder = Color3.fromRGB(35, 35, 38),
+		DropdownBorder = Color3.fromRGB(0, 0, 0),
+		DropdownOption = Color3.fromRGB(65, 65, 65),
+		Keybind = Color3.fromRGB(65, 65, 65),
+		Input = Color3.fromRGB(65, 65, 65),
+		InputFocused = Color3.fromRGB(30, 30, 33),
+		InputIndicator = Color3.fromRGB(65, 65, 65),
+		Dialog = Color3.fromRGB(35, 35, 38),
+		DialogHolder = Color3.fromRGB(35, 35, 38),
+		DialogHolderLine = Color3.fromRGB(0, 0, 0),
+		DialogButton = Color3.fromRGB(40, 40, 43),
+		DialogButtonBorder = Color3.fromRGB(0, 0, 0),
+		DialogBorder = Color3.fromRGB(0, 0, 0),
+		DialogInput = Color3.fromRGB(35, 35, 38),
+		DialogInputLine = Color3.fromRGB(80, 80, 80),
 		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(120, 120, 120),
-		HoverChange = 0.05,
+		SubText = Color3.fromRGB(160, 160, 160),
+		Hover = Color3.fromRGB(65, 65, 68),
+		HoverChange = 0.03,
 	},
 	Gray = {
 		Name = "Gray",
@@ -919,12 +898,21 @@ local Library = {
 	Creator = nil,
 
 	DialogOpen = false,
+	IsLocked = false,
 	UseAcrylic = false,
 	Acrylic = false,
 	Transparency = true,
 	MinimizeKeybind = nil,
 	MinimizeKey = Enum.KeyCode.LeftControl,
 }
+
+local LuarmorAPI = nil
+task.spawn(function()
+    local success, api = pcall(function()
+        return loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
+    end)
+    if success then LuarmorAPI = api end
+end)
 
 local function isMotor(value)
 	local motorType = tostring(value):match("^Motor%((.+)%)$")
@@ -1448,19 +1436,19 @@ function Creator.Disconnect()
 end
 
 Creator.Themes = Themes
-Creator.Theme = Creator.Theme or "Dark"
+Creator.Theme = "Slate"
 
 function Creator.GetThemeProperty(Property)
 	local Theme = Creator.Themes[Creator.Theme]
 	if Theme then
 		return Theme[Property]
 	end
-	return Creator.Themes.Dark[Property]
+	return Creator.Themes.Slate[Property]
 end
 
 function Creator.UpdateTheme()
 	if not Creator.Themes[Creator.Theme] then
-		Creator.Theme = "Dark"
+		Creator.Theme = "Slate"
 	end
 
 	for Instance, Object in next, Creator.Registry do
@@ -3532,12 +3520,14 @@ Components.Dialog = (function()
 		NewDialog.ButtonHolderFrame = New("Frame", {
 			Size = UDim2.new(1, 0, 0, 70),
 			Position = UDim2.new(0, 0, 1, -70),
+			BackgroundTransparency = 1,
 			ThemeTag = {
 				BackgroundColor3 = "DialogHolder",
 			},
 		}, {
 			New("Frame", {
 				Size = UDim2.new(1, 0, 0, 1),
+				BackgroundTransparency = 0.5,
 				ThemeTag = {
 					BackgroundColor3 = "DialogHolderLine",
 				},
@@ -3575,6 +3565,7 @@ Components.Dialog = (function()
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.fromScale(0.5, 0.5),
 			GroupTransparency = 1,
+			BackgroundTransparency = 0.3,
 			Parent = NewDialog.TintFrame,
 			ThemeTag = {
 				BackgroundColor3 = "Dialog",
@@ -4091,7 +4082,7 @@ Components.TitleBar = (function()
         if Config.UserInfoSubtitle ~= false then
             SubtitleLabel = New("TextLabel", {
                 Name = "UserSubtitle",
-                Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
+                Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or (_G.NEXUS_IS_PREMIUM and "Premium" or "Freekey"),
                 TextTransparency = 0,
                 FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
                 TextSize = 15,
@@ -4141,6 +4132,10 @@ Components.TitleBar = (function()
                 repeat task.wait() until ExpiryLabel.Parent
                 
                 while ExpiryLabel and ExpiryLabel.Parent do
+                    if SubtitleLabel then
+                         SubtitleLabel.Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or (_G.NEXUS_IS_PREMIUM and "Premium" or "Freekey")
+                    end
+
                     if _G.NEXUS_EXPIRY_TIME then
                         if _G.NEXUS_EXPIRY_TIME == -1 then
                              ExpiryLabel.Text = "Lifetime Key"
@@ -4188,34 +4183,45 @@ Components.TitleBar = (function()
                 Position = UDim2.new(0, 0, 0, 0),
             }, {
                 New("UIListLayout", {
-                    Padding = UDim.new(0, 0), -- Нет отступа между элементами
+                    Padding = UDim.new(0, 0), -- Vert Padding between TitleRow and Subtitle
                     FillDirection = Enum.FillDirection.Vertical,
                     SortOrder = Enum.SortOrder.LayoutOrder,
                     HorizontalAlignment = Enum.HorizontalAlignment.Center,
                     VerticalAlignment = Enum.VerticalAlignment.Center,
                 }),
 
-                -- Title
-                New("TextLabel", {
-                    RichText = true,
-                    Text = Config.Title,
-                    FontFace = Font.new(
-                        "rbxasset://fonts/families/GothamSSm.json",
-                        Enum.FontWeight.SemiBold,
-                        Enum.FontStyle.Normal
-                    ),
-                    TextSize = 14, -- Title на 2 больше чем SubTitle
-                    TextXAlignment = "Center",
-                    TextYAlignment = "Bottom", -- Выравнивание по нижнему краю
-                    Size = UDim2.new(1, 0, 0, 16),
-                    BackgroundTransparency = 1,
-                    LayoutOrder = 1,
-                    ThemeTag = {
-                        TextColor3 = "Text",
-                    },
-                }),
+                -- Title ROW Container (Executor Only)
+                New("Frame", {
+                     Size = UDim2.fromScale(0, 0),
+                     AutomaticSize = Enum.AutomaticSize.XY,
+                     BackgroundTransparency = 1,
+                     LayoutOrder = 1,
+                }, {
+                     New("UIListLayout", {
+                        Padding = UDim.new(0, 0),
+                        FillDirection = Enum.FillDirection.Horizontal,
+                        SortOrder = Enum.SortOrder.LayoutOrder,
+                        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                        VerticalAlignment = Enum.VerticalAlignment.Center,
+                     }),
 
-                -- SubTitle
+                    -- Executor Info
+                     New("TextLabel", {
+                        RichText = true,
+                        Text = "Running on " .. Executor,
+                        FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal),
+                        TextSize = 14,
+                        Size = UDim2.new(0, 0, 0, 16),
+                        AutomaticSize = Enum.AutomaticSize.X,
+                        BackgroundTransparency = 1,
+                        LayoutOrder = 1,
+                        ThemeTag = {
+                            TextColor3 = "Text",
+                        },
+                     }),
+                }),
+                
+                -- SubTitle (Below the row)
                 Config.SubTitle and New("TextLabel", {
                     RichText = true,
                     Text = Config.SubTitle,
@@ -4225,10 +4231,11 @@ Components.TitleBar = (function()
                         Enum.FontWeight.Regular,
                         Enum.FontStyle.Normal
                     ),
-                    TextSize = 12, -- SubTitle на 2 меньше чем Title
+                    TextSize = 12, 
                     TextXAlignment = "Center",
-                    TextYAlignment = "Top", -- Выравнивание по верхнему краю
-                    Size = UDim2.new(1, 0, 0, 14),
+                    TextYAlignment = "Top", 
+                    Size = UDim2.new(0, 0, 0, 14),
+                    AutomaticSize = Enum.AutomaticSize.X,
                     BackgroundTransparency = 1,
                     LayoutOrder = 2,
                     ThemeTag = {
@@ -4864,7 +4871,7 @@ Window.Root = New("Frame", {
 				},
 			})
 
-			local subtitleText = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "Premium"
+			local subtitleText = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or (_G.NEXUS_IS_PREMIUM and "Premium" or "Freekey")
 
 			New("TextLabel", {
 				Name = "UserSubtitle",
@@ -8999,7 +9006,6 @@ local SaveManager = {} do
 
 					Content = "Config loader",
 
-
 					SubContent = string.format("Auto loaded config %q", name),
 
 
@@ -9358,131 +9364,8 @@ local SaveManager = {} do
 
 end
 
--- Features Integration
-local DiscordRPC = {} do
-    DiscordRPC.__index = DiscordRPC
-    function DiscordRPC.new()
-        local self = setmetatable({}, DiscordRPC)
-        self.Details = "Using Nexus Library"
-        self.State = "In Game"
-        self.LargeImageKey = "roblox"
-        self.LargeImageText = "Roblox"
-        self.SmallImageKey = "nexus"
-        self.SmallImageText = "Nexus Lib"
-        self.Enabled = false
-        return self
-    end
-    function DiscordRPC:Update()
-        if not self.Enabled then return end
-        if getgenv and getgenv().setdiscordrpc then
-            getgenv().setdiscordrpc(self.Details, self.State, self.LargeImageKey, self.LargeImageText, self.SmallImageKey, self.SmallImageText)
-        elseif getgenv and getgenv().rpc and getgenv().rpc.set_activity then
-            getgenv().rpc.set_activity({
-                details = self.Details,
-                state = self.State,
-                assets = {large_image = self.LargeImageKey, large_text = self.LargeImageText, small_image = self.SmallImageKey, small_text = self.SmallImageText}
-            })
-        end
-    end
-    function DiscordRPC:Start(Window)
-        local Tab = Window:AddTab({ Title = "Discord RPC", Icon = "gamepad-2" })
-        local Section = Tab:AddSection("Rich Presence Settings")
-        Section:AddToggle("EnableRPC", {
-            Title = "Enable RPC", Description = "Toggle Discord Rich Presence", Default = false,
-            Callback = function(Value) self.Enabled = Value; if Value then self:Update() end end
-        })
-        Section:AddInput("RPCDetails", {
-            Title = "Details", Default = "Using Nexus Library", Callback = function(Value) self.Details = Value; self:Update() end
-        })
-        Section:AddInput("RPCState", {
-            Title = "State", Default = "Hacking on Server", Callback = function(Value) self.State = Value; self:Update() end
-        })
-        Section:AddButton({ Title = "Force Update", Callback = function() self:Update() end })
-    end
-end
-Library.DiscordRPC = DiscordRPC.new()
 
-local RemoteSpy = {} do
-    RemoteSpy.__index = RemoteSpy
-    function RemoteSpy.new()
-        local self = setmetatable({}, RemoteSpy)
-        self.Enabled = false; self.IgnoredRemotes = {}; self.BlockedRemotes = {}; self.Logs = {}; self.MaxLogs = 50
-        return self
-    end
-    function RemoteSpy:Log(remote, args)
-        if not self.Enabled then return end
-        if self.IgnoredRemotes[remote.Name] then return end
-        local argsStr = ""
-        for i, v in ipairs(args) do argsStr = argsStr .. tostring(v) .. ", " end
-        local logEntry = string.format("[%s] %s Args: %s", os.date("%X"), remote.Name, argsStr)
-        table.insert(self.Logs, 1, logEntry)
-        if #self.Logs > self.MaxLogs then table.remove(self.Logs) end
-        if self.UpdateUI then task.defer(self.UpdateUI) end
-    end
-    function RemoteSpy:Init(Window)
-        local Tab = Window:AddTab({ Title = "Remote Spy", Icon = "radar" })
-        local LogParagraph = Tab:AddParagraph({ Title = "Logs", Content = "Waiting..." })
-        Tab:AddToggle("EnableSpy", {
-            Title = "Enable Spy", Default = false,
-            Callback = function(Value) self.Enabled = Value; if Value then self:Hook() end end
-        })
-        Tab:AddButton({ Title = "Clear Logs", Callback = function() self.Logs = {}; LogParagraph:SetDesc("Cleared") end })
-        Tab:AddButton({ Title = "Copy Logs", Callback = function() 
-             if setclipboard then setclipboard(table.concat(self.Logs, "\n")) end 
-        end })
-        self.UpdateUI = function()
-            local content = ""; for i = 1, math.min(#self.Logs, 10) do content = content .. self.Logs[i] .. "\n---\n" end
-            LogParagraph:SetDesc(content == "" and "Waiting..." or content)
-        end
-    end
-    function RemoteSpy:Hook()
-        if self.Hooked then return end
-        self.Hooked = true
-        local mt = getrawmetatable(game)
-        local oldNamecall = mt.__namecall
-        if setreadonly then setreadonly(mt, false) end
-        mt.__namecall = newcclosure(function(selfInstance, ...)
-            local method = getnamecallmethod()
-            local args = {...}
-            if (method == "FireServer" or method == "InvokeServer") and (selfInstance:IsA("RemoteEvent") or selfInstance:IsA("RemoteFunction")) then
-                if self.Enabled then self:Log(selfInstance, args) end
-            end
-            return oldNamecall(selfInstance, ...)
-        end)
-        if setreadonly then setreadonly(mt, true) end
-    end
-end
-Library.RemoteSpy = RemoteSpy.new()
 
-local DexLite = {} do
-    DexLite.__index = DexLite
-    function DexLite.new() return setmetatable({CurrentPath = game}, DexLite) end
-    function DexLite:GetChildrenNames(obj)
-        local names = {}
-        if not obj then return {"Nil"} end
-        local children = obj:GetChildren()
-        for i = 1, math.min(#children, 100) do table.insert(names, children[i].Name) end
-        if #names == 0 then table.insert(names, "<Empty>") end
-        table.sort(names)
-        return names
-    end
-    function DexLite:Init(Window)
-        local Tab = Window:AddTab({ Title = "Dex Lite", Icon = "folder-tree" })
-        local PathLbl = Tab:AddParagraph({ Title = "Path", Content = "game" })
-        local Dropdown = Tab:AddDropdown("Explorer", { Title = "Children", Values = self:GetChildrenNames(game), Multi = false })
-        local Selected = nil
-        Dropdown:OnChanged(function(Val) if Val and self.CurrentPath:FindFirstChild(Val) then Selected = self.CurrentPath[Val] end end)
-        Tab:AddButton({ Title = "Step Into", Callback = function() 
-            if Selected then self.CurrentPath = Selected; PathLbl:SetDesc(self.CurrentPath:GetFullName()); Dropdown:SetValues(self:GetChildrenNames(self.CurrentPath)); Dropdown:SetValue(nil); Selected = nil end 
-        end })
-        Tab:AddButton({ Title = "Up", Callback = function() 
-             if self.CurrentPath.Parent then self.CurrentPath = self.CurrentPath.Parent; PathLbl:SetDesc(self.CurrentPath:GetFullName()); Dropdown:SetValues(self:GetChildrenNames(self.CurrentPath)); Dropdown:SetValue(nil); Selected = nil end
-        end })
-        Tab:AddButton({ Title = "Destroy", Callback = function() if Selected then Selected:Destroy(); Dropdown:SetValues(self:GetChildrenNames(self.CurrentPath)) end end })
-        Tab:AddButton({ Title = "Copy Path", Callback = function() if setclipboard then setclipboard((Selected or self.CurrentPath):GetFullName()) end end })
-    end
-end
-Library.Dex = DexLite.new()
 
 
 local InterfaceManager = {} do
@@ -9513,11 +9396,7 @@ local InterfaceManager = {} do
 
 
 	function InterfaceManager:SetTheme(name)
-
-
-		InterfaceManager.Settings.Theme = name
-
-
+		InterfaceManager.Settings.Theme = "Slate"
 	end
 
 
@@ -9631,6 +9510,7 @@ function InterfaceManager:LoadSettings()
             end
         end
     end
+    InterfaceManager.Settings.Theme = "Slate"
 end
 
 
@@ -9842,8 +9722,221 @@ end
 
 
 
-Library.CreateWindow = function(self, Config)
+function Library:ShowKeySystem(Config)
+    if not Library.Window then return end
+    
+    local LuarmorID = Config.LuarmorID
+    local Discord = Config.Discord or "https://discord.gg/"
+    local OnVerify = Config.OnVerify or function() end
+    
+    Library.IsLocked = true
+    
+    local LockOverlay = New("TextButton", {
+        Name = "KeySystemOverlay",
+        Text = "",
+        Size = UDim2.fromScale(1, 1),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        BackgroundTransparency = 1,
+        ZIndex = 5000,
+        Parent = Library.Window.Root,
+        Active = true,
+        AutoButtonColor = false,
+    }, {
+        New("UICorner", { CornerRadius = UDim.new(0, 8) }),
+    })
 
+    local TintMotor, TintTransparency = Creator.SpringMotor(1, LockOverlay, "BackgroundTransparency", true)
+    TintTransparency(0.45)
+
+    -- Auth Dialog
+    local AuthFrame = New("CanvasGroup", {
+        Name = "AuthFrame",
+        Size = UDim2.fromOffset(360, 230),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5),
+        GroupTransparency = 1,
+        BackgroundColor3 = Color3.fromRGB(35, 35, 38),
+        Parent = LockOverlay,
+        ThemeTag = { BackgroundColor3 = "Dialog" }
+    }, {
+        New("UICorner", { CornerRadius = UDim.new(0, 8) }),
+        New("UIStroke", { Thickness = 1.5, Transparency = 0.5, ThemeTag = { Color = "DialogBorder" } }),
+        
+        -- Title
+        New("TextLabel", {
+            Text = Config.Title or "Authentication",
+            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+            TextSize = 20,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            Size = UDim2.new(1, 0, 0, 45),
+            Position = UDim2.fromOffset(0, 10),
+            BackgroundTransparency = 1,
+            ThemeTag = { TextColor3 = "Text" }
+        }),
+
+        -- Description
+        New("TextLabel", {
+            Text = Config.Description or "Please provide a valid license key",
+            TextTransparency = 0.4,
+            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+            TextSize = 13,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            Size = UDim2.new(0.85, 0, 0, 30),
+            Position = UDim2.new(0, 0, 0, 50),
+            AnchorPoint = Vector2.new(0.5, 0),
+            Position = UDim2.new(0.5, 0, 0, 50),
+            BackgroundTransparency = 1,
+            ThemeTag = { TextColor3 = "Text" }
+        })
+    })
+
+    local FrameMotor, FrameTransparency = Creator.SpringMotor(1, AuthFrame, "GroupTransparency")
+    FrameTransparency(0)
+
+    -- Key Input field
+    local InputFrame = New("Frame", {
+        Name = "InputFrame",
+        Size = UDim2.new(0.85, 0, 0, 42),
+        Position = UDim2.fromScale(0.5, 0.48),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = Color3.fromRGB(45, 45, 48),
+        Parent = AuthFrame,
+        ThemeTag = { BackgroundColor3 = "Input" }
+    }, {
+        New("UICorner", { CornerRadius = UDim.new(0, 6) }),
+        New("UIStroke", { Thickness = 1, Transparency = 0.7, ThemeTag = { Color = "InElementBorder" } })
+    })
+
+    local TextBox = New("TextBox", {
+        Size = UDim2.new(1, -20, 1, 0),
+        Position = UDim2.fromOffset(10, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        PlaceholderText = "Paste your license key here...",
+        PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
+        TextColor3 = Color3.fromRGB(240, 240, 240),
+        TextSize = 14,
+        FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular),
+        Parent = InputFrame,
+        ThemeTag = { TextColor3 = "Text" }
+    })
+
+    local StatusLabel = New("TextLabel", {
+        Text = "",
+        FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
+        TextSize = 12,
+        Size = UDim2.new(1, 0, 0, 20),
+        Position = UDim2.new(0, 0, 0.65, 0),
+        BackgroundTransparency = 1,
+        TextColor3 = Color3.fromRGB(255, 100, 100)
+    })
+    StatusLabel.Parent = AuthFrame
+
+    local function createButton(text, pos, callback, isPrimary)
+        local btn = New("TextButton", {
+            Text = text,
+            Size = UDim2.new(0.4, 0, 0, 36),
+            Position = pos,
+            BackgroundColor3 = isPrimary and Color3.fromRGB(60, 60, 65) or Color3.fromRGB(40, 40, 45),
+            TextColor3 = Color3.fromRGB(240, 240, 240),
+            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium),
+            TextSize = 14,
+            Parent = AuthFrame,
+            ThemeTag = { 
+                BackgroundColor3 = isPrimary and "Accent" or "DialogButton",
+                TextColor3 = isPrimary and "ToggleToggled" or "Text"
+            }
+        }, {
+            New("UICorner", { CornerRadius = UDim.new(0, 6) }),
+            New("UIStroke", { Thickness = 1, Transparency = 0.8, ThemeTag = { Color = "DialogButtonBorder" } })
+        })
+        
+        btn.MouseButton1Click:Connect(callback)
+    end
+
+    local isProcessing = false
+    local function Verify()
+        if isProcessing then return end
+        local key = TextBox.Text:gsub("%s+", "")
+        if key == "" then
+            StatusLabel.Text = "Please enter a key!"
+            return
+        end
+
+        isProcessing = true
+        StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        StatusLabel.Text = "Verifying key..."
+
+        task.spawn(function()
+            if not LuarmorAPI then
+                pcall(function() LuarmorAPI = loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))() end)
+            end
+            
+            if not LuarmorAPI then
+                StatusLabel.Text = "Verification error (API not loaded)"
+                isProcessing = false
+                return
+            end
+
+            LuarmorAPI.script_id = LuarmorID
+            local success, status = pcall(function() return LuarmorAPI.check_key(key) end)
+
+            if not success or not status then
+                StatusLabel.Text = "Connection error. Try again."
+                isProcessing = false
+                return
+            end
+
+            if status.code == "KEY_VALID" then
+                StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+                StatusLabel.Text = "Key verified! Loading..."
+                
+                if writefile then pcall(function() writefile("NexusKey_" .. LuarmorID .. ".txt", key) end) end
+                
+                local expireTime = tonumber(status.data.auth_expire)
+                _G.NEXUS_EXPIRY_TIME = (expireTime and expireTime > os.time()) and expireTime or -1
+                _G.NEXUS_IS_PREMIUM = (_G.NEXUS_EXPIRY_TIME == -1)
+                _G.script_key = key
+                if getgenv then getgenv().script_key = key end
+                _G.NEXUS_LOADER_AUTH = true
+                
+                task.wait(1.5)
+                OnVerify(status.data)
+                
+                TintTransparency(1)
+                FrameTransparency(1)
+                task.wait(0.3)
+                LockOverlay:Destroy()
+                Library.IsLocked = false
+            else
+                StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+                StatusLabel.Text = status.message or "Invalid Key"
+                isProcessing = false
+            end
+        end)
+    end
+
+    createButton("Verify Key", UDim2.new(0.55, 0, 0.78, 0), Verify, true)
+    createButton("Get Link", UDim2.new(0.05, 0, 0.78, 0), function()
+        setclipboard(Discord)
+        StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        StatusLabel.Text = "Link copied to clipboard!"
+    end, false)
+
+    task.spawn(function()
+        if isfile and isfile("NexusKey_" .. LuarmorID .. ".txt") then
+            local saved = readfile("NexusKey_" .. LuarmorID .. ".txt"):gsub("%s+", "")
+            if saved ~= "" then
+                TextBox.Text = saved
+                task.wait(0.5)
+                Verify()
+            end
+        end
+    end)
+end
+
+Library.CreateWindow = function(self, Config)
+	-- Config.Title = Config.Title .. " | " .. Executor -- Старый метод удаляем
 
 	assert(Config.Title, "Window - Missing Title")
 
@@ -9875,14 +9968,14 @@ Library.CreateWindow = function(self, Config)
 	Library.Acrylic = Config.Acrylic or false
 
 
-	Library.Theme = Config.Theme or "Dark"
+	Library.Theme = "Slate"
 
 	if Config.BackgroundImage == nil then
 		Config.BackgroundImage = "rbxassetid://13196113628"
 	end
 
 	if Config.BackgroundTransparency == nil then
-		Config.BackgroundTransparency = 0.5
+		Config.BackgroundTransparency = 0.2
 	end
 
     if Config.Snowfall ~= false then
@@ -10005,11 +10098,13 @@ Library.CreateWindow = function(self, Config)
         Library.WindowSnowfallEnabled = false
     end
 
-	InterfaceManager:SetTheme(Config.Theme)
-	Library:SetTheme(Config.Theme)
+	InterfaceManager:SetTheme("Slate")
+	Library:SetTheme("Slate")
     
-    InterfaceManager:LoadSettings()
-    
+    if Config.KeySystem then
+        Library:ShowKeySystem(Config.KeySystem)
+    end
+
     task.spawn(function()
         task.wait(1)
         if Library.Window and Library.Window.Root then
@@ -10117,7 +10212,6 @@ function Library:CreateMinimizer(Config)
 
 
 	local draggableWhole = (Config.Draggable == true)
-
 
 
 
@@ -10539,36 +10633,10 @@ end
 
 
 function Library:SetTheme(Value)
-
-
-	if Library.Window and table.find(Library.Themes, Value) then
-
-
-		Library.Theme = Value
-
-
-		Creator.UpdateTheme()
-
-
-
-
-
-		if Value == "Glass" then
-
-
-			Library:SetWindowTransparency(0.9)
-
-
-		end
-
-
-	end
-
-
+	Library.Theme = "Slate"
+	Creator.Theme = "Slate"
+	Creator.UpdateTheme()
 end
-
-
-
 
 
 function Library:Destroy()
@@ -11125,7 +11193,6 @@ local Minimizer
 
 
 
-
 local isDragging = false
 
 
@@ -11524,127 +11591,6 @@ function Library:AddSnowfallToWindow(Config)
     return snowfall
 end
 
--- Custom Cursor Implementation
-do
-    local MouseScreen = Instance.new("ScreenGui")
-    MouseScreen.Name = "NexusCursor"
-    MouseScreen.DisplayOrder = 10000
-    MouseScreen.IgnoreGuiInset = true
-    if gethui then
-        MouseScreen.Parent = gethui()
-    elseif syn and syn.protect_gui then 
-        syn.protect_gui(MouseScreen)
-        MouseScreen.Parent = game:GetService("CoreGui")
-    else
-        MouseScreen.Parent = game:GetService("CoreGui")
-    end
-    
-    local CursorImage = Instance.new("ImageLabel")
-    CursorImage.Name = "Cursor"
-    CursorImage.Size = UDim2.fromOffset(32, 32)
-    CursorImage.BackgroundTransparency = 1
-    CursorImage.Image = "rbxassetid://13475062575" -- Futuristic Cursor
-    CursorImage.ZIndex = 100
-    CursorImage.Parent = MouseScreen
-    
-    local TrailFolder = Instance.new("Folder")
-    TrailFolder.Name = "Trail"
-    TrailFolder.Parent = MouseScreen
-    
-    Library.CustomCursor = {
-        Enabled = true,
-        TrailEnabled = true,
-        CursorParams = {
-            Image = "rbxassetid://13475062575",
-            Size = UDim2.fromOffset(32, 32),
-        },
-        TrailParams = {
-            Image = "rbxassetid://13475062575", 
-            Color = Color3.fromRGB(0, 255, 255), -- Cyan trail
-            Lifetime = 0.4,
-            SizeStart = 24,
-            SizeEnd = 0,
-            Frequency = 0.03
-        }
-    }
-    
-    local lastTrailTime = 0
-    
-    RunService.RenderStepped:Connect(function(dt)
-        local windowVisible = Library.Window and Library.Window.Root and Library.Window.Root.Visible
-        local config = Library.CustomCursor
-        
-        if windowVisible and config.Enabled then
-            UserInputService.MouseIconEnabled = false
-            CursorImage.Visible = true
-            
-            local mousePos = UserInputService:GetMouseLocation()
-            -- Center the cursor image on the mouse tip? Usually cursors top-left is the point.
-            -- This specific asset seems to be a standard cursor where top-left is 0,0.
-            CursorImage.Position = UDim2.fromOffset(mousePos.X, mousePos.Y)
-            CursorImage.Image = config.CursorParams.Image
-            CursorImage.Size = config.CursorParams.Size
-            
-            -- Set color to match theme if possible
-            local themeAccent = Library:GetThemeProperty("Accent")
-            if themeAccent then
-                 -- Tint the cursor? Maybe not, usually white is best.
-                 -- Tint the trail!
-                 config.TrailParams.Color = themeAccent
-            end
-
-            -- Trail Logic
-            if config.TrailEnabled then
-                lastTrailTime = lastTrailTime + dt
-                if lastTrailTime >= config.TrailParams.Frequency then
-                    lastTrailTime = 0
-                    
-                    local trailPart = Instance.new("ImageLabel")
-                    trailPart.Image = config.TrailParams.Image
-                    trailPart.ImageColor3 = config.TrailParams.Color
-                    trailPart.BackgroundTransparency = 1
-                    trailPart.Size = UDim2.fromOffset(config.TrailParams.SizeStart, config.TrailParams.SizeStart)
-                    trailPart.Position = CursorImage.Position
-                    trailPart.ZIndex = 99 -- Below cursor
-                    trailPart.Parent = TrailFolder
-                    
-                    local TweenService = game:GetService("TweenService")
-                    local tweenInfo = TweenInfo.new(config.TrailParams.Lifetime, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-                    
-                    local goal = {
-                        Size = UDim2.fromOffset(config.TrailParams.SizeEnd, config.TrailParams.SizeEnd),
-                        ImageTransparency = 1,
-                        Rotation = math.random(-30, 30)
-                    }
-                    
-                    local tween = TweenService:Create(trailPart, tweenInfo, goal)
-                    tween:Play()
-                    tween.Completed:Connect(function()
-                        trailPart:Destroy()
-                    end)
-                end
-            end
-        else
-            if CursorImage.Visible then
-                CursorImage.Visible = false
-                -- Restore mouse if menu is hidden
-                -- Note: InterfaceManager might handle this too, but we ensure it's visible when menu is gone
-                if not windowVisible then
-                     UserInputService.MouseIconEnabled = true
-                end
-            end
-        end
-    end)
-    
-    function Library:SetCustomCursor(NewConfig)
-         for k, v in pairs(NewConfig) do
-             if Library.CustomCursor[k] ~= nil then
-                 Library.CustomCursor[k] = v
-             end
-         end
-    end
-end
-
 if RunService:IsStudio() then task.wait(0.01) end
 
 -- RGB Animation Loop
@@ -11677,7 +11623,7 @@ task.spawn(function()
                 
                 -- Если библиотека поддерживает горячее обновление:
                 if Library.Window then
-                    Library:SetTheme("RGB") 
+                    Library:SetTheme("Slate") 
                 end
             end
         end
