@@ -10102,7 +10102,7 @@ Library.CreateWindow = function(self, Config)
 	Library:SetTheme("Slate")
     
     if Config.KeySystem then
-        Library:ShowKeySystem(Config.KeySystem)
+        Library:ShowKeySystem(Config)
     end
 
     task.spawn(function()
