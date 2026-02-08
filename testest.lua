@@ -6908,7 +6908,9 @@ ElementsTable.Keybind = (function()
 			Keybind.Value = Key
 			Keybind.Mode = Mode
             
-            Library:UpdateKeybinds()
+            pcall(function()
+                Library:UpdateKeybinds()
+            end)
 		end
 
 		function Keybind:OnClick(Callback)
@@ -6921,7 +6923,9 @@ ElementsTable.Keybind = (function()
 		end
 
 		function Keybind:DoClick()
-			Library:UpdateKeybinds()
+			pcall(function()
+				Library:UpdateKeybinds()
+			end)
 			Library:SafeCallback(Keybind.Callback, Keybind.Toggled)
 			Library:SafeCallback(Keybind.Clicked, Keybind.Toggled)
 		end
@@ -6933,7 +6937,9 @@ ElementsTable.Keybind = (function()
 				if v == Keybind then
 					table.remove(Library.Keybinds, i)
 					break
-				end
+			pcall(function()
+				Library:UpdateKeybinds()
+			end
 			end
 			Library:UpdateKeybinds()
 			Library.Options[Idx] = nil
@@ -6972,7 +6978,9 @@ ElementsTable.Keybind = (function()
 
 							KeybindDisplayLabel.Text = Key
 							Keybind.Value = Key -- Update value first!
-
+pcall(function()
+                                Library:UpdateKeybinds()
+                            end
                             -- Update keybinds list immediately
                             Library:UpdateKeybinds()
                             
