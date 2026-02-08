@@ -6902,13 +6902,13 @@ ElementsTable.Keybind = (function()
 
 		function Keybind:SetValue(Key, Mode)
 			Key = Key or Keybind.Key
-			
-			Library:UpdateKeybinds()
 			Mode = Mode or Keybind.Mode
 
 			KeybindDisplayLabel.Text = Key
 			Keybind.Value = Key
 			Keybind.Mode = Mode
+            
+            Library:UpdateKeybinds()
 		end
 
 		function Keybind:OnClick(Callback)
@@ -6971,8 +6971,11 @@ ElementsTable.Keybind = (function()
 							Picking = false
 
 							KeybindDisplayLabel.Text = Key
-							Keybind.Value = Key
+							Keybind.Value = Key -- Update value first!
 
+                            -- Update keybinds list immediately
+                            Library:UpdateKeybinds()
+                            
 							Library:SafeCallback(Keybind.ChangedCallback, Input.KeyCode or Input.UserInputType)
 							Library:SafeCallback(Keybind.Changed, Input.KeyCode or Input.UserInputType)
 
@@ -9934,30 +9937,22 @@ Library.CreateWindow = function(self, Config)
             local userWantsSnow = InterfaceManager.Settings.Snowfall
             if userWantsSnow == nil then userWantsSnow = true end
             
-            local configAllowsSnow = Library.WindowSnowfallEnabled
-            local snowfallEnabled = configAllowsSnow and userWantsSnow
-            
-            -- Only add snowfall if enabled
-            if snowfallEnabled then
-                 Library:AddSnowfallToWindow({
-                    Count = 38,
-                    Speed = 9.5
+            -- Always initialize snowfall if config allows, but set visibility based on user setting
+            if Library.WindowSnowfallEnabled then
+                local snow = Library:AddSnowfallToWindow({
+                    Count = Library.WindowSnowfallConfig.Count or 38,
+                    Speed = Library.WindowSnowfallConfig.Speed or 9.5
                 })
-            else
-                -- If not enabled, make sure any existing snow is hidden (just in case)
-                if Library.Snowfall then
-                    Library.Snowfall:SetVisible(false)
+                
+                if snow then
+                     snow:SetVisible(userWantsSnow)
+                     Library.SnowfallEnabled = userWantsSnow
                 end
             end
         end
     end)
-    
-    return Window
-end
 
-
-function Library:CreateMinimizer(Config)
-
+    Library:UpdateKeybinds()
 
 	Config = Config or {}
 
