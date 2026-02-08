@@ -1972,6 +1972,7 @@ Library.KeybindContainer = KeybindContainer
 function Library:UpdateKeybinds()
     if not Library.KeybindContainer then return end
     
+    -- Clear existing labels
     for _, child in ipairs(Library.KeybindContainer:GetChildren()) do
         if child:IsA("TextLabel") then
             child:Destroy()
@@ -1979,8 +1980,9 @@ function Library:UpdateKeybinds()
     end
     
     for _, keybind in pairs(Library.Keybinds) do
-        if keybind.Value ~= "None" then
-            local text = string.format("[%s] - %s", keybind.Value, keybind.Name)
+        local val = tostring(keybind.Value)
+        if val ~= "None" and val ~= "Enum.KeyCode.None" and val ~= "" and val ~= "nil" and val ~= "..." then
+            local text = string.format("[%s] - %s", val, keybind.Name)
             local isActive = keybind.Toggled
             
             local label = New("TextLabel", {
@@ -1994,7 +1996,6 @@ function Library:UpdateKeybinds()
                 TextXAlignment = Enum.TextXAlignment.Right,
             })
             
-            -- Add stroke for better visibility
             New("UIStroke", {
                 Parent = label,
                 Thickness = 1,
@@ -2029,7 +2030,8 @@ function Library:SafeCallback(Function, ...)
 			Duration = 5,
 		})
 	end
-end--?
+end
+
 function Library:Round(Number, Factor)
 	if Factor == 0 then
 		return math.floor(Number)
