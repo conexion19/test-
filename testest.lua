@@ -11357,9 +11357,6 @@ function Library:AddSnowfallToWindow(Config)
     snowContainer.Parent = Library.Window.Root
     
     
-    if Library.SnowfallEnabled ~= nil then
-        snowfall:SetVisible(Library.SnowfallEnabled)
-    end
     snowfall.instance = SnowModule:Init(snowContainer, {
         Count = Config.Count or 38,
         Speed = Config.Speed or 9.5
@@ -11367,6 +11364,10 @@ function Library:AddSnowfallToWindow(Config)
 
     function snowfall:SetVisible(visible)
         snowContainer.Visible = visible
+    end
+    
+    if Library.SnowfallEnabled ~= nil then
+        snowfall:SetVisible(Library.SnowfallEnabled)
     end
     
      function snowfall:SetIntensity(intensity)
