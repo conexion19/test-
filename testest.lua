@@ -2004,6 +2004,7 @@ function Library:UpdateKeybinds()
     end
 end
 
+function Library:SafeCallback(Function, ...)
 	if not Function then
 		return
 	end
