@@ -734,38 +734,38 @@ local Themes = {
 	Slate = {
 		Name = "Slate",
 		Accent = Color3.fromRGB(255, 255, 255),
-		AcrylicMain = Color3.fromRGB(35, 35, 38),
-		AcrylicBorder = Color3.fromRGB(35, 35, 38),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(30, 30, 33), Color3.fromRGB(35, 35, 38)),
+		AcrylicMain = Color3.fromRGB(25, 25, 28),
+		AcrylicBorder = Color3.fromRGB(25, 25, 28),
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(20, 20, 23), Color3.fromRGB(25, 25, 28)),
 		AcrylicNoise = 0.95,
-		TitleBarLine = Color3.fromRGB(0, 0, 0),
-		Tab = Color3.fromRGB(80, 80, 80),
-		Element = Color3.fromRGB(35, 35, 38),
-		ElementBorder = Color3.fromRGB(0, 0, 0),
-		InElementBorder = Color3.fromRGB(0, 0, 0),
+		TitleBarLine = Color3.fromRGB(35, 35, 35),
+		Tab = Color3.fromRGB(60, 60, 60),
+		Element = Color3.fromRGB(25, 25, 28),
+		ElementBorder = Color3.fromRGB(35, 35, 35),
+		InElementBorder = Color3.fromRGB(35, 35, 35),
 		ElementTransparency = 0.92,
-		ToggleSlider = Color3.fromRGB(65, 65, 65),
+		ToggleSlider = Color3.fromRGB(45, 45, 45),
 		ToggleToggled = Color3.fromRGB(255, 255, 255),
-		SliderRail = Color3.fromRGB(65, 65, 65),
-		DropdownFrame = Color3.fromRGB(65, 65, 65),
-		DropdownHolder = Color3.fromRGB(35, 35, 38),
-		DropdownBorder = Color3.fromRGB(0, 0, 0),
-		DropdownOption = Color3.fromRGB(65, 65, 65),
-		Keybind = Color3.fromRGB(65, 65, 65),
-		Input = Color3.fromRGB(65, 65, 65),
-		InputFocused = Color3.fromRGB(30, 30, 33),
-		InputIndicator = Color3.fromRGB(65, 65, 65),
-		Dialog = Color3.fromRGB(35, 35, 38),
-		DialogHolder = Color3.fromRGB(35, 35, 38),
-		DialogHolderLine = Color3.fromRGB(0, 0, 0),
-		DialogButton = Color3.fromRGB(40, 40, 43),
-		DialogButtonBorder = Color3.fromRGB(0, 0, 0),
-		DialogBorder = Color3.fromRGB(0, 0, 0),
-		DialogInput = Color3.fromRGB(35, 35, 38),
-		DialogInputLine = Color3.fromRGB(80, 80, 80),
+		SliderRail = Color3.fromRGB(45, 45, 45),
+		DropdownFrame = Color3.fromRGB(45, 45, 45),
+		DropdownHolder = Color3.fromRGB(25, 25, 28),
+		DropdownBorder = Color3.fromRGB(35, 35, 35),
+		DropdownOption = Color3.fromRGB(45, 45, 45),
+		Keybind = Color3.fromRGB(45, 45, 45),
+		Input = Color3.fromRGB(45, 45, 45),
+		InputFocused = Color3.fromRGB(20, 20, 23),
+		InputIndicator = Color3.fromRGB(45, 45, 45),
+		Dialog = Color3.fromRGB(25, 25, 28),
+		DialogHolder = Color3.fromRGB(25, 25, 28),
+		DialogHolderLine = Color3.fromRGB(35, 35, 35),
+		DialogButton = Color3.fromRGB(30, 30, 33),
+		DialogButtonBorder = Color3.fromRGB(35, 35, 35),
+		DialogBorder = Color3.fromRGB(35, 35, 35),
+		DialogInput = Color3.fromRGB(25, 25, 28),
+		DialogInputLine = Color3.fromRGB(60, 60, 60),
 		Text = Color3.fromRGB(240, 240, 240),
 		SubText = Color3.fromRGB(160, 160, 160),
-		Hover = Color3.fromRGB(65, 65, 68),
+		Hover = Color3.fromRGB(45, 45, 48),
 		HoverChange = 0.03,
 	},
 	Gray = {
@@ -898,21 +898,12 @@ local Library = {
 	Creator = nil,
 
 	DialogOpen = false,
-	IsLocked = false,
 	UseAcrylic = false,
 	Acrylic = false,
 	Transparency = true,
 	MinimizeKeybind = nil,
 	MinimizeKey = Enum.KeyCode.LeftControl,
 }
-
-local LuarmorAPI = nil
-task.spawn(function()
-    local success, api = pcall(function()
-        return loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
-    end)
-    if success then LuarmorAPI = api end
-end)
 
 local function isMotor(value)
 	local motorType = tostring(value):match("^Motor%((.+)%)$")
@@ -1960,7 +1951,59 @@ local GUI = Creator.New("ScreenGui", {
 Library.GUI = GUI
 ProtectGui(GUI)
 
-function Library:SafeCallback(Function, ...)
+local KeybindContainer = New("Frame", {
+    Position = UDim2.new(1, -10, 0.45, 0),
+    Size = UDim2.new(0, 200, 0.5, 0),
+    AnchorPoint = Vector2.new(1, 0),
+    BackgroundTransparency = 1,
+    Parent = GUI,
+})
+
+local KeybindListLayout = New("UIListLayout", {
+    Parent = KeybindContainer,
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Padding = UDim.new(0, 2),
+    HorizontalAlignment = Enum.HorizontalAlignment.Right,
+})
+
+Library.Keybinds = {}
+Library.KeybindContainer = KeybindContainer
+
+function Library:UpdateKeybinds()
+    if not Library.KeybindContainer then return end
+    
+    for _, child in ipairs(Library.KeybindContainer:GetChildren()) do
+        if child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+    
+    for _, keybind in pairs(Library.Keybinds) do
+        if keybind.Value ~= "None" then
+            local text = string.format("[%s] - %s", keybind.Value, keybind.Name)
+            local isActive = keybind.Toggled
+            
+            local label = New("TextLabel", {
+                Parent = Library.KeybindContainer,
+                Text = text,
+                TextColor3 = isActive and Color3.new(0, 1, 0) or Color3.new(1, 1, 1),
+                TextSize = 13,
+                Font = Enum.Font.GothamBold,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 16),
+                TextXAlignment = Enum.TextXAlignment.Right,
+            })
+            
+            -- Add stroke for better visibility
+            New("UIStroke", {
+                Parent = label,
+                Thickness = 1,
+                Color = Color3.new(0, 0, 0),
+            })
+        end
+    end
+end
+
 	if not Function then
 		return
 	end
@@ -2007,7 +2050,6 @@ local function getOffset()
 	local viewportSizeY = game:GetService("Workspace").CurrentCamera.ViewportSize.Y
 	return map(viewportSizeY, 0, 2560, 8, 56)
 end
-
 local viewportPointToWorld, getOffset = unpack({ viewportPointToWorld, getOffset })
 
 local BlurFolder = Instance.new("Folder")
@@ -3497,7 +3539,7 @@ Components.Dialog = (function()
 			Parent = Dialog.Window.Root,
 		}, {
 			New("UICorner", {
-				CornerRadius = UDim.new(0, 8),
+				CornerRadius = UDim.new(0, 0),
 			}),
 		})
 
@@ -4008,7 +4050,6 @@ Components.TitleBar = (function()
         end
         return Themes[Library.Theme].SubText or Color3.fromRGB(170,170,170)
     end
-
     return function(Config)
         local TitleBar = {}
 
@@ -4082,7 +4123,7 @@ Components.TitleBar = (function()
         if Config.UserInfoSubtitle ~= false then
             SubtitleLabel = New("TextLabel", {
                 Name = "UserSubtitle",
-                Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or (_G.NEXUS_IS_PREMIUM and "Premium" or "Freekey"),
+                Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "User",
                 TextTransparency = 0,
                 FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
                 TextSize = 15,
@@ -4095,7 +4136,7 @@ Components.TitleBar = (function()
             
             ExpiryLabel = New("TextLabel", {
                 Name = "ExpirySubtitle",
-                Text = "Loading...",
+                Text = "",
                 TextTransparency = 0.4,
                 FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
                 TextSize = 11,
@@ -4128,19 +4169,17 @@ Components.TitleBar = (function()
             end)
             
             task.spawn(function()
-                -- Wait for UI to mount
                 repeat task.wait() until ExpiryLabel.Parent
                 
                 while ExpiryLabel and ExpiryLabel.Parent do
-                    if SubtitleLabel then
-                         SubtitleLabel.Text = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or (_G.NEXUS_IS_PREMIUM and "Premium" or "Freekey")
-                    end
-
-                    if _G.NEXUS_EXPIRY_TIME then
-                        if _G.NEXUS_EXPIRY_TIME == -1 then
-                             ExpiryLabel.Text = "Lifetime Key"
+                    local expiryTime = _G.NEXUS_EXPIRY_TIME
+                    local isPremium = _G.NEXUS_IS_PREMIUM
+                    
+                    if expiryTime then
+                        if expiryTime == -1 then
+                             ExpiryLabel.Text = "Lifetime"
                         else
-                             local diff = _G.NEXUS_EXPIRY_TIME - os.time()
+                             local diff = expiryTime - os.time()
                              if diff <= 0 then
                                  ExpiryLabel.Text = "Expired"
                              else
@@ -4155,10 +4194,8 @@ Components.TitleBar = (function()
                                  end
                              end
                         end
-                    elseif _G.NEXUS_IS_PREMIUM then
-                        ExpiryLabel.Text = "Lifetime Key"
                     else
-                        ExpiryLabel.Text = "Waiting for Key..." -- Informative text before auth
+                        ExpiryLabel.Text = ""
                     end
                     task.wait(1)
                 end
@@ -4244,6 +4281,7 @@ Components.TitleBar = (function()
                 }) or nil,
             }),
 
+            --[[ Removed Separator Line
             New("Frame", {
                 BackgroundTransparency = 0.5,
                 Size = UDim2.new(1, 0, 0, 1),
@@ -4252,6 +4290,7 @@ Components.TitleBar = (function()
                     BackgroundColor3 = "TitleBarLine",
                 },
             }),
+            ]]
         })
 
         TitleBar.CloseButton = BarButton(Components.Assets.Close, UDim2.new(1, -4, 0, 4), TitleBar.Frame, function()
@@ -4737,10 +4776,12 @@ Components.Window = (function()
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
 		})
+        
+        local TabsTop = (Window.ShowSearch and 54 or 19) + Window.TabHolderTop
 
 Window.ContainerCanvas = New("Frame", {
-    Size = UDim2.new(1, -Window.TabWidth - 32, 1, -102),
-    Position = UDim2.fromOffset(Window.TabWidth + 26, 54),
+    Size = UDim2.new(1, -Window.TabWidth - 32, 1, -102 - (TabsTop - 54)),
+    Position = UDim2.fromOffset(Window.TabWidth + 26, TabsTop),
     BackgroundTransparency = 1,
     ClipsDescendants = true,
 }, {
@@ -4871,7 +4912,7 @@ Window.Root = New("Frame", {
 				},
 			})
 
-			local subtitleText = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or (_G.NEXUS_IS_PREMIUM and "Premium" or "Freekey")
+			local subtitleText = (Config.UserInfoSubtitle ~= nil) and tostring(Config.UserInfoSubtitle) or "Premium"
 
 			New("TextLabel", {
 				Name = "UserSubtitle",
@@ -5027,6 +5068,7 @@ Window.Root = New("Frame", {
 		end)
 
 		Creator.AddSignal(Window.TitleBar.Frame.InputBegan, function(Input)
+            if Config.Draggable == false then return end
 			if
 				Input.UserInputType == Enum.UserInputType.MouseButton1
 				or Input.UserInputType == Enum.UserInputType.Touch
@@ -6007,7 +6049,6 @@ local DropdownHolderCanvas = New("Frame", {
 				end
 			end
 		end)
-
 		Creator.AddSignal(DropdownDisplay:GetPropertyChangedSignal("Text"), function()
 			for _, Element in next, DropdownScrollFrame:GetChildren() do
 				if not Element:IsA("UIListLayout") then
@@ -6767,11 +6808,16 @@ ElementsTable.Keybind = (function()
 			Toggled = false,
 			Mode = Config.Mode or "Toggle",
 			Type = "Keybind",
+			Name = Config.Title, -- Added Name property for Keybind display
 			Callback = Config.Callback or function(Value) end,
 			ChangedCallback = Config.ChangedCallback or function(New) end,
 		}
 
 		local Picking = false
+		
+		-- Register keybind
+		table.insert(Library.Keybinds, Keybind)
+		Library:UpdateKeybinds()
 
 		local KeybindFrame = Components.Element(Config.Title, Config.Description, self.Container, true)
 
@@ -6853,6 +6899,8 @@ ElementsTable.Keybind = (function()
 
 		function Keybind:SetValue(Key, Mode)
 			Key = Key or Keybind.Key
+			
+			Library:UpdateKeybinds()
 			Mode = Mode or Keybind.Mode
 
 			KeybindDisplayLabel.Text = Key
@@ -6870,12 +6918,21 @@ ElementsTable.Keybind = (function()
 		end
 
 		function Keybind:DoClick()
+			Library:UpdateKeybinds()
 			Library:SafeCallback(Keybind.Callback, Keybind.Toggled)
 			Library:SafeCallback(Keybind.Clicked, Keybind.Toggled)
 		end
 
 		function Keybind:Destroy()
 			KeybindFrame:Destroy()
+			
+			for i, v in ipairs(Library.Keybinds) do
+				if v == Keybind then
+					table.remove(Library.Keybinds, i)
+					break
+				end
+			end
+			Library:UpdateKeybinds()
 			Library.Options[Idx] = nil
 		end
 
@@ -8988,7 +9045,6 @@ local SaveManager = {} do
 
 						Duration = 7
 
-
 					})
 
 
@@ -9007,7 +9063,6 @@ local SaveManager = {} do
 					Content = "Config loader",
 
 					SubContent = string.format("Auto loaded config %q", name),
-
 
 					Duration = 7
 
@@ -9719,245 +9774,14 @@ end
 end
 
 
-
-
-
-function Library:ShowKeySystem(Config)
-    if not Library.Window then return end
-    
-    local LuarmorID = Config.LuarmorID
-    local Discord = Config.Discord or "https://discord.gg/"
-    local OnVerify = Config.OnVerify or function() end
-    
-    Library.IsLocked = true
-    
-    local LockOverlay = New("TextButton", {
-        Name = "KeySystemOverlay",
-        Text = "",
-        Size = UDim2.fromScale(1, 1),
-        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-        BackgroundTransparency = 1,
-        ZIndex = 5000,
-        Parent = Library.Window.Root,
-        Active = true,
-        AutoButtonColor = false,
-    }, {
-        New("UICorner", { CornerRadius = UDim.new(0, 8) }),
-    })
-
-    local TintMotor, TintTransparency = Creator.SpringMotor(1, LockOverlay, "BackgroundTransparency", true)
-    TintTransparency(0.45)
-
-    -- Auth Dialog
-    local AuthFrame = New("CanvasGroup", {
-        Name = "AuthFrame",
-        Size = UDim2.fromOffset(360, 230),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.fromScale(0.5, 0.5),
-        GroupTransparency = 1,
-        BackgroundColor3 = Color3.fromRGB(35, 35, 38),
-        Parent = LockOverlay,
-        ThemeTag = { BackgroundColor3 = "Dialog" }
-    }, {
-        New("UICorner", { CornerRadius = UDim.new(0, 8) }),
-        New("UIStroke", { Thickness = 1.5, Transparency = 0.5, ThemeTag = { Color = "DialogBorder" } }),
-        
-        -- Title
-        New("TextLabel", {
-            Text = Config.Title or "Authentication",
-            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
-            TextSize = 20,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            Size = UDim2.new(1, 0, 0, 45),
-            Position = UDim2.fromOffset(0, 10),
-            BackgroundTransparency = 1,
-            ThemeTag = { TextColor3 = "Text" }
-        }),
-
-        -- Description
-        New("TextLabel", {
-            Text = Config.Description or "Please provide a valid license key",
-            TextTransparency = 0.4,
-            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-            TextSize = 13,
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            Size = UDim2.new(0.85, 0, 0, 30),
-            Position = UDim2.new(0, 0, 0, 50),
-            AnchorPoint = Vector2.new(0.5, 0),
-            Position = UDim2.new(0.5, 0, 0, 50),
-            BackgroundTransparency = 1,
-            ThemeTag = { TextColor3 = "Text" }
-        })
-    })
-
-    local FrameMotor, FrameTransparency = Creator.SpringMotor(1, AuthFrame, "GroupTransparency")
-    FrameTransparency(0)
-
-    -- Key Input field
-    local InputFrame = New("Frame", {
-        Name = "InputFrame",
-        Size = UDim2.new(0.85, 0, 0, 42),
-        Position = UDim2.fromScale(0.5, 0.48),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = Color3.fromRGB(45, 45, 48),
-        Parent = AuthFrame,
-        ThemeTag = { BackgroundColor3 = "Input" }
-    }, {
-        New("UICorner", { CornerRadius = UDim.new(0, 6) }),
-        New("UIStroke", { Thickness = 1, Transparency = 0.7, ThemeTag = { Color = "InElementBorder" } })
-    })
-
-    local TextBox = New("TextBox", {
-        Size = UDim2.new(1, -20, 1, 0),
-        Position = UDim2.fromOffset(10, 0),
-        BackgroundTransparency = 1,
-        Text = "",
-        PlaceholderText = "Paste your license key here...",
-        PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
-        TextColor3 = Color3.fromRGB(240, 240, 240),
-        TextSize = 14,
-        FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular),
-        Parent = InputFrame,
-        ThemeTag = { TextColor3 = "Text" }
-    })
-
-    local StatusLabel = New("TextLabel", {
-        Text = "",
-        FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
-        TextSize = 12,
-        Size = UDim2.new(1, 0, 0, 20),
-        Position = UDim2.new(0, 0, 0.65, 0),
-        BackgroundTransparency = 1,
-        TextColor3 = Color3.fromRGB(255, 100, 100)
-    })
-    StatusLabel.Parent = AuthFrame
-
-    local function createButton(text, pos, callback, isPrimary)
-        local btn = New("TextButton", {
-            Text = text,
-            Size = UDim2.new(0.4, 0, 0, 36),
-            Position = pos,
-            BackgroundColor3 = isPrimary and Color3.fromRGB(60, 60, 65) or Color3.fromRGB(40, 40, 45),
-            TextColor3 = Color3.fromRGB(240, 240, 240),
-            FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Medium),
-            TextSize = 14,
-            Parent = AuthFrame,
-            ThemeTag = { 
-                BackgroundColor3 = isPrimary and "Accent" or "DialogButton",
-                TextColor3 = isPrimary and "ToggleToggled" or "Text"
-            }
-        }, {
-            New("UICorner", { CornerRadius = UDim.new(0, 6) }),
-            New("UIStroke", { Thickness = 1, Transparency = 0.8, ThemeTag = { Color = "DialogButtonBorder" } })
-        })
-        
-        btn.MouseButton1Click:Connect(callback)
-    end
-
-    local isProcessing = false
-    local function Verify()
-        if isProcessing then return end
-        local key = TextBox.Text:gsub("%s+", "")
-        if key == "" then
-            StatusLabel.Text = "Please enter a key!"
-            return
-        end
-
-        isProcessing = true
-        StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-        StatusLabel.Text = "Verifying key..."
-
-        task.spawn(function()
-            if not LuarmorAPI then
-                pcall(function() LuarmorAPI = loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))() end)
-            end
-            
-            if not LuarmorAPI then
-                StatusLabel.Text = "Verification error (API not loaded)"
-                isProcessing = false
-                return
-            end
-
-            LuarmorAPI.script_id = LuarmorID
-            local success, status = pcall(function() return LuarmorAPI.check_key(key) end)
-
-            if not success or not status then
-                StatusLabel.Text = "Connection error. Try again."
-                isProcessing = false
-                return
-            end
-
-            if status.code == "KEY_VALID" then
-                StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-                StatusLabel.Text = "Key verified! Loading..."
-                
-                if writefile then pcall(function() writefile("NexusKey_" .. LuarmorID .. ".txt", key) end) end
-                
-                local expireTime = tonumber(status.data.auth_expire)
-                _G.NEXUS_EXPIRY_TIME = (expireTime and expireTime > os.time()) and expireTime or -1
-                _G.NEXUS_IS_PREMIUM = (_G.NEXUS_EXPIRY_TIME == -1)
-                _G.script_key = key
-                if getgenv then getgenv().script_key = key end
-                _G.NEXUS_LOADER_AUTH = true
-                
-                task.wait(1.5)
-                OnVerify(status.data)
-                
-                TintTransparency(1)
-                FrameTransparency(1)
-                task.wait(0.3)
-                LockOverlay:Destroy()
-                Library.IsLocked = false
-            else
-                StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-                StatusLabel.Text = status.message or "Invalid Key"
-                isProcessing = false
-            end
-        end)
-    end
-
-    createButton("Verify Key", UDim2.new(0.55, 0, 0.78, 0), Verify, true)
-    createButton("Get Link", UDim2.new(0.05, 0, 0.78, 0), function()
-        setclipboard(Discord)
-        StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-        StatusLabel.Text = "Link copied to clipboard!"
-    end, false)
-
-    task.spawn(function()
-        if isfile and isfile("NexusKey_" .. LuarmorID .. ".txt") then
-            local saved = readfile("NexusKey_" .. LuarmorID .. ".txt"):gsub("%s+", "")
-            if saved ~= "" then
-                TextBox.Text = saved
-                task.wait(0.5)
-                Verify()
-            end
-        end
-    end)
-end
-
 Library.CreateWindow = function(self, Config)
-	-- Config.Title = Config.Title .. " | " .. Executor -- Старый метод удаляем
 
 	assert(Config.Title, "Window - Missing Title")
 
-
-
-
-
 	if Library.Window then
-
-
 		print("You cannot create more than one window.")
-
-
 		return
-
-
 	end
-
-
-
-
 
 	Library.MinimizeKey = Config.MinimizeKey or Enum.KeyCode.LeftControl
 
@@ -10101,10 +9925,6 @@ Library.CreateWindow = function(self, Config)
 	InterfaceManager:SetTheme("Slate")
 	Library:SetTheme("Slate")
     
-    if Config.KeySystem then
-        Library:ShowKeySystem(Config)
-    end
-
     task.spawn(function()
         task.wait(1)
         if Library.Window and Library.Window.Root then
@@ -10224,7 +10044,6 @@ function Library:CreateMinimizer(Config)
 
 		return New("TextButton", {
 
-
 			Name = "MinimizeButton",
 
 
@@ -10244,7 +10063,6 @@ function Library:CreateMinimizer(Config)
 
 
 				BackgroundColor3 = "Element",
-
 
 			},
 
@@ -10843,19 +10661,7 @@ end
 
 
 
-if getgenv then
-
-
-	getgenv().Fluent = Library
-
-
-else
-
-
-	Fluent = Library
-
-
-end
+_G.Fluent = Library
 
 
 
@@ -11258,7 +11064,6 @@ end)
 
 
 
-
 Creator.AddSignal(MobileMinimizeButton.InputBegan, function(Input)
 
 	if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
@@ -11553,6 +11358,10 @@ function Library:AddSnowfallToWindow(Config)
     snowContainer.ClipsDescendants = true
     snowContainer.Parent = Library.Window.Root
     
+    
+    if Library.SnowfallEnabled ~= nil then
+        snowfall:SetVisible(Library.SnowfallEnabled)
+    end
     snowfall.instance = SnowModule:Init(snowContainer, {
         Count = Config.Count or 38,
         Speed = Config.Speed or 9.5
