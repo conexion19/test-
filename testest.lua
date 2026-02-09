@@ -1951,59 +1951,90 @@ local GUI = Creator.New("ScreenGui", {
 Library.GUI = GUI
 ProtectGui(GUI)
 
-local KeybindContainer = New("Frame", {
-    Position = UDim2.new(1, -10, 0.45, 0),
-    Size = UDim2.new(0, 200, 0.5, 0),
-    AnchorPoint = Vector2.new(1, 0),
-    BackgroundTransparency = 1,
-    Parent = GUI,
-})
+-- ========== Keybind Display System ==========
+local KeybindDisplayContainer = Instance.new("Frame")
+KeybindDisplayContainer.Name = "KeybindDisplay"
+KeybindDisplayContainer.BackgroundTransparency = 1
+KeybindDisplayContainer.Size = UDim2.new(0, 250, 1, 0)
+KeybindDisplayContainer.Position = UDim2.new(1, -260, 0, 0)
+KeybindDisplayContainer.AnchorPoint = Vector2.new(0, 0)
+KeybindDisplayContainer.Parent = GUI
 
-local KeybindListLayout = New("UIListLayout", {
-    Parent = KeybindContainer,
-    SortOrder = Enum.SortOrder.LayoutOrder,
-    Padding = UDim.new(0, 2),
-    HorizontalAlignment = Enum.HorizontalAlignment.Right,
-})
+local KeybindDisplayList = Instance.new("UIListLayout")
+KeybindDisplayList.SortOrder = Enum.SortOrder.LayoutOrder
+KeybindDisplayList.FillDirection = Enum.FillDirection.Vertical
+KeybindDisplayList.HorizontalAlignment = Enum.HorizontalAlignment.Right
+KeybindDisplayList.VerticalAlignment = Enum.VerticalAlignment.Center
+KeybindDisplayList.Padding = UDim.new(0, 2)
+KeybindDisplayList.Parent = KeybindDisplayContainer
 
-Library.Keybinds = {}
-Library.KeybindContainer = KeybindContainer
+Library.KeybindDisplayLabels = {}
+Library.KeybindDisplayOrder = 0
 
-function Library:UpdateKeybinds()
-    if not Library.KeybindContainer then return end
-    
-    -- Clear existing labels
-    for _, child in ipairs(Library.KeybindContainer:GetChildren()) do
-        if child:IsA("TextLabel") then
-            child:Destroy()
-        end
-    end
-    
-    for _, keybind in pairs(Library.Keybinds) do
-        local val = tostring(keybind.Value)
-        if val ~= "None" and val ~= "Enum.KeyCode.None" and val ~= "" and val ~= "nil" and val ~= "..." then
-            local text = string.format("[%s] - %s", val, keybind.Name)
-            local isActive = keybind.Toggled
-            
-            local label = New("TextLabel", {
-                Parent = Library.KeybindContainer,
-                Text = text,
-                TextColor3 = isActive and Color3.new(0, 1, 0) or Color3.new(1, 1, 1),
-                TextSize = 13,
-                Font = Enum.Font.GothamBold,
-                BackgroundTransparency = 1,
-                Size = UDim2.new(1, 0, 0, 16),
-                TextXAlignment = Enum.TextXAlignment.Right,
-            })
-            
-            New("UIStroke", {
-                Parent = label,
-                Thickness = 1,
-                Color = Color3.new(0, 0, 0),
-            })
-        end
-    end
+function Library:AddKeybindDisplay(idx, title, key, isToggled)
+	if Library.KeybindDisplayLabels[idx] then
+		Library:UpdateKeybindDisplay(idx, key, isToggled)
+		return
+	end
+	Library.KeybindDisplayOrder = Library.KeybindDisplayOrder + 1
+	local label = Instance.new("TextLabel")
+	label.Name = "KBD_" .. idx
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.new(1, 0, 0, 18)
+	label.Font = Enum.Font.GothamBold
+	label.TextSize = 13
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.TextXAlignment = Enum.TextXAlignment.Right
+	label.TextStrokeTransparency = 0.5
+	label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+	label.Text = title .. " - [" .. key .. "]"
+	label.LayoutOrder = Library.KeybindDisplayOrder
+	label.Parent = KeybindDisplayContainer
+	Library.KeybindDisplayLabels[idx] = {
+		Label = label,
+		Title = title,
+		Key = key,
+		Toggled = isToggled or false,
+	}
+	Library:UpdateKeybindDisplayColor(idx)
 end
+
+function Library:UpdateKeybindDisplay(idx, key, isToggled)
+	local data = Library.KeybindDisplayLabels[idx]
+	if not data then return end
+	if key then
+		data.Key = key
+	end
+	if isToggled ~= nil then
+		data.Toggled = isToggled
+	end
+	if data.Key == "None" or data.Key == "..." or data.Key == "" then
+		data.Label.Visible = false
+	else
+		data.Label.Visible = true
+		data.Label.Text = data.Title .. " - [" .. data.Key .. "]"
+	end
+	Library:UpdateKeybindDisplayColor(idx)
+end
+
+function Library:UpdateKeybindDisplayColor(idx)
+	local data = Library.KeybindDisplayLabels[idx]
+	if not data then return end
+	if data.Toggled then
+		data.Label.TextColor3 = Color3.fromRGB(85, 255, 85)
+	else
+		data.Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	end
+end
+
+function Library:RemoveKeybindDisplay(idx)
+	local data = Library.KeybindDisplayLabels[idx]
+	if data then
+		data.Label:Destroy()
+		Library.KeybindDisplayLabels[idx] = nil
+	end
+end
+-- ========== End Keybind Display System ==========
 
 function Library:SafeCallback(Function, ...)
 	if not Function then
@@ -2030,8 +2061,7 @@ function Library:SafeCallback(Function, ...)
 			Duration = 5,
 		})
 	end
-end
-
+end--?
 function Library:Round(Number, Factor)
 	if Factor == 0 then
 		return math.floor(Number)
@@ -5467,11 +5497,11 @@ ElementsTable.Toggle = (function()
 		Toggle.Elements = ToggleFrame
 
 		local ToggleCircle = New("ImageLabel", {
-			AnchorPoint = Vector2.new(0, 0.5),
-			Size = UDim2.fromOffset(14, 14),
-			Position = UDim2.new(0, 2, 0.5, 0),
-			Image = "http://www.roblox.com/asset/?id=12266946128",
-			ImageTransparency = 0.5,
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Size = UDim2.fromOffset(0, 0),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Image = "",
+			ImageTransparency = 1,
 			ThemeTag = {
 				ImageColor3 = "ToggleSlider",
 			},
@@ -5485,7 +5515,7 @@ ElementsTable.Toggle = (function()
 		})
 
 		local ToggleSlider = New("Frame", {
-			Size = UDim2.fromOffset(36, 18),
+			Size = UDim2.fromOffset(20, 20),
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -10, 0.5, 0),
 			Parent = ToggleFrame.Frame,
@@ -5495,7 +5525,7 @@ ElementsTable.Toggle = (function()
 			},
 		}, {
 			New("UICorner", {
-				CornerRadius = UDim.new(0, 9),
+				CornerRadius = UDim.new(0, 4),
 			}),
 			ToggleBorder,
 			ToggleCircle,
@@ -5511,18 +5541,12 @@ ElementsTable.Toggle = (function()
 			Toggle.Value = Value
 
 			Creator.OverrideTag(ToggleBorder, { Color = Toggle.Value and "Accent" or "ToggleSlider" })
-			Creator.OverrideTag(ToggleCircle, { ImageColor3 = Toggle.Value and "ToggleToggled" or "ToggleSlider" })
-			TweenService:Create(
-				ToggleCircle,
-				TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-				{ Position = UDim2.new(0, Toggle.Value and 19 or 2, 0.5, 0) }
-			):Play()
+			
 			TweenService:Create(
 				ToggleSlider,
 				TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-				{ BackgroundTransparency = Toggle.Value and 0.45 or 1 }
+				{ BackgroundTransparency = Toggle.Value and 0 or 1 }
 			):Play()
-			ToggleCircle.ImageTransparency = Toggle.Value and 0 or 0.5
 
 			Library:SafeCallback(Toggle.Callback, Toggle.Value)
 			Library:SafeCallback(Toggle.Changed, Toggle.Value)
@@ -6811,16 +6835,11 @@ ElementsTable.Keybind = (function()
 			Toggled = false,
 			Mode = Config.Mode or "Toggle",
 			Type = "Keybind",
-			Name = Config.Title, -- Added Name property for Keybind display
 			Callback = Config.Callback or function(Value) end,
 			ChangedCallback = Config.ChangedCallback or function(New) end,
 		}
 
 		local Picking = false
-		
-		-- Register keybind
-		table.insert(Library.Keybinds, Keybind)
-		Library:UpdateKeybinds()
 
 		local KeybindFrame = Components.Element(Config.Title, Config.Description, self.Container, true)
 
@@ -6907,10 +6926,12 @@ ElementsTable.Keybind = (function()
 			KeybindDisplayLabel.Text = Key
 			Keybind.Value = Key
 			Keybind.Mode = Mode
-            
-            pcall(function()
-                Library:UpdateKeybinds()
-            end)
+
+			if Key and Key ~= "None" and Key ~= "" then
+				Library:AddKeybindDisplay(Idx, Config.Title, Key, Keybind.Toggled)
+			else
+				Library:RemoveKeybindDisplay(Idx)
+			end
 		end
 
 		function Keybind:OnClick(Callback)
@@ -6923,25 +6944,13 @@ ElementsTable.Keybind = (function()
 		end
 
 		function Keybind:DoClick()
-			pcall(function()
-				Library:UpdateKeybinds()
-			end)
 			Library:SafeCallback(Keybind.Callback, Keybind.Toggled)
 			Library:SafeCallback(Keybind.Clicked, Keybind.Toggled)
 		end
 
 		function Keybind:Destroy()
 			KeybindFrame:Destroy()
-			
-			for i, v in ipairs(Library.Keybinds) do
-				if v == Keybind then
-					table.remove(Library.Keybinds, i)
-					break
-			pcall(function()
-				Library:UpdateKeybinds()
-			end
-			end
-			Library:UpdateKeybinds()
+			Library:RemoveKeybindDisplay(Idx)
 			Library.Options[Idx] = nil
 		end
 
@@ -6977,13 +6986,14 @@ ElementsTable.Keybind = (function()
 							Picking = false
 
 							KeybindDisplayLabel.Text = Key
-							Keybind.Value = Key -- Update value first!
-pcall(function()
-                                Library:UpdateKeybinds()
-                            end
-                            -- Update keybinds list immediately
-                            Library:UpdateKeybinds()
-                            
+							Keybind.Value = Key
+
+							if Key and Key ~= "None" and Key ~= "" then
+								Library:AddKeybindDisplay(Idx, Config.Title, Key, Keybind.Toggled)
+							else
+								Library:RemoveKeybindDisplay(Idx)
+							end
+
 							Library:SafeCallback(Keybind.ChangedCallback, Input.KeyCode or Input.UserInputType)
 							Library:SafeCallback(Keybind.Changed, Input.KeyCode or Input.UserInputType)
 
@@ -7006,11 +7016,13 @@ pcall(function()
 							or Key == "MouseRight" and Input.UserInputType == Enum.UserInputType.MouseButton2
 						then
 							Keybind.Toggled = not Keybind.Toggled
+							Library:UpdateKeybindDisplay(Idx, nil, Keybind.Toggled)
 							Keybind:DoClick()
 						end
 					elseif Input.UserInputType == Enum.UserInputType.Keyboard then
 						if Input.KeyCode.Name == Key then
 							Keybind.Toggled = not Keybind.Toggled
+							Library:UpdateKeybindDisplay(Idx, nil, Keybind.Toggled)
 							Keybind:DoClick()
 						end
 					end
@@ -7019,6 +7031,12 @@ pcall(function()
 		end)
 
 		Library.Options[Idx] = Keybind
+
+		-- Register in keybind display if default key is set
+		if Config.Default and Config.Default ~= "None" and Config.Default ~= "" then
+			Library:AddKeybindDisplay(Idx, Config.Title, Config.Default, Keybind.Toggled)
+		end
+
 		return Keybind
 	end
 
@@ -9945,22 +9963,30 @@ Library.CreateWindow = function(self, Config)
             local userWantsSnow = InterfaceManager.Settings.Snowfall
             if userWantsSnow == nil then userWantsSnow = true end
             
-            -- Always initialize snowfall if config allows, but set visibility based on user setting
-            if Library.WindowSnowfallEnabled then
-                local snow = Library:AddSnowfallToWindow({
-                    Count = Library.WindowSnowfallConfig.Count or 38,
-                    Speed = Library.WindowSnowfallConfig.Speed or 9.5
+            local configAllowsSnow = Library.WindowSnowfallEnabled
+            local snowfallEnabled = configAllowsSnow and userWantsSnow
+            
+            -- Only add snowfall if enabled
+            if snowfallEnabled then
+                 Library:AddSnowfallToWindow({
+                    Count = 38,
+                    Speed = 9.5
                 })
-                
-                if snow then
-                     snow:SetVisible(userWantsSnow)
-                     Library.SnowfallEnabled = userWantsSnow
+            else
+                -- If not enabled, make sure any existing snow is hidden (just in case)
+                if Library.Snowfall then
+                    Library.Snowfall:SetVisible(false)
                 end
             end
         end
     end)
+    
+    return Window
+end
 
-    Library:UpdateKeybinds()
+
+function Library:CreateMinimizer(Config)
+
 
 	Config = Config or {}
 
@@ -11364,7 +11390,6 @@ function Library:AddSnowfallToWindow(Config)
     snowContainer.ClipsDescendants = true
     snowContainer.Parent = Library.Window.Root
     
-    
     snowfall.instance = SnowModule:Init(snowContainer, {
         Count = Config.Count or 38,
         Speed = Config.Speed or 9.5
@@ -11372,10 +11397,6 @@ function Library:AddSnowfallToWindow(Config)
 
     function snowfall:SetVisible(visible)
         snowContainer.Visible = visible
-    end
-    
-    if Library.SnowfallEnabled ~= nil then
-        snowfall:SetVisible(Library.SnowfallEnabled)
     end
     
      function snowfall:SetIntensity(intensity)
