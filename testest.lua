@@ -912,7 +912,9 @@ local LanguageManager = {
 		English = {},
 		Russian = {}
 	},
-	RegisteredElements = {}
+	RegisteredElements = {},
+	Translating = false,
+	Cache = {}
 }
 
 function LanguageManager:SetLanguage(language)
@@ -932,10 +934,36 @@ function LanguageManager:AddTranslation(key, translations)
 	self:UpdateAllElements()
 end
 
+function LanguageManager:AutoTranslate(text, targetLang)
+	if not text or text == "" or targetLang == "English" then return text end
+	
+	-- Check cache first
+	local cacheKey = text .. "_" .. targetLang
+	if self.Cache[cacheKey] then
+		return self.Cache[cacheKey]
+	end
+	
+	-- Simple Google Translate API (Free, no key required for small requests)
+	local url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=" 
+		.. (targetLang == "Russian" and "ru" or "en") 
+		.. "&dt=t&q=" .. httpService:UrlEncode(text)
+		
+	local success, result = pcall(function()
+		return httpService:JSONDecode(game:HttpGet(url))
+	end)
+	
+	if success and result and result[1] and result[1][1] and result[1][1][1] then
+		local translatedText = result[1][1][1]
+		self.Cache[cacheKey] = translatedText
+		return translatedText
+	end
+	
+	return text
+end
+
 function LanguageManager:RegisterElement(textLabel, key)
 	if not textLabel or not key then return end
 	
-	-- Store the original text as the key if not explicitly provided
 	local actualKey = key
 	
 	table.insert(self.RegisteredElements, {
@@ -949,9 +977,25 @@ end
 function LanguageManager:UpdateElement(textLabel, key)
 	if not textLabel or not textLabel.Parent then return end
 	
+	if self.CurrentLanguage == "English" then
+		textLabel.Text = key
+		return
+	end
+	
+	-- Check if we already have a manual translation
 	local translation = self.Translations[self.CurrentLanguage][key]
 	if translation then
 		textLabel.Text = translation
+	else
+		-- Auto-translate asynchronously to not freeze the UI
+		task.spawn(function()
+			local translated = self:AutoTranslate(key, self.CurrentLanguage)
+			if translated and textLabel and textLabel.Parent then
+				-- Save to translations so we don't request again
+				self.Translations[self.CurrentLanguage][key] = translated
+				textLabel.Text = translated
+			end
+		end)
 	end
 end
 
