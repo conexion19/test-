@@ -900,10 +900,74 @@ local Library = {
 	DialogOpen = false,
 	UseAcrylic = false,
 	Acrylic = false,
-	Transparency = true,
+	Transparency = false, -- Changed to false by default
 	MinimizeKeybind = nil,
 	MinimizeKey = Enum.KeyCode.LeftControl,
 }
+
+-- ========== Language Manager System ==========
+local LanguageManager = {
+	CurrentLanguage = "English",
+	Translations = {
+		English = {},
+		Russian = {}
+	},
+	RegisteredElements = {}
+}
+
+function LanguageManager:SetLanguage(language)
+	if self.Translations[language] then
+		self.CurrentLanguage = language
+		self:UpdateAllElements()
+	end
+end
+
+function LanguageManager:AddTranslation(key, translations)
+	for lang, text in pairs(translations) do
+		if not self.Translations[lang] then
+			self.Translations[lang] = {}
+		end
+		self.Translations[lang][key] = text
+	end
+	self:UpdateAllElements()
+end
+
+function LanguageManager:RegisterElement(textLabel, key)
+	if not textLabel or not key then return end
+	
+	-- Store the original text as the key if not explicitly provided
+	local actualKey = key
+	
+	table.insert(self.RegisteredElements, {
+		Label = textLabel,
+		Key = actualKey
+	})
+	
+	self:UpdateElement(textLabel, actualKey)
+end
+
+function LanguageManager:UpdateElement(textLabel, key)
+	if not textLabel or not textLabel.Parent then return end
+	
+	local translation = self.Translations[self.CurrentLanguage][key]
+	if translation then
+		textLabel.Text = translation
+	end
+end
+
+function LanguageManager:UpdateAllElements()
+	for i = #self.RegisteredElements, 1, -1 do
+		local data = self.RegisteredElements[i]
+		if data.Label and data.Label.Parent then
+			self:UpdateElement(data.Label, data.Key)
+		else
+			table.remove(self.RegisteredElements, i)
+		end
+	end
+end
+
+Library.LanguageManager = LanguageManager
+-- ========== End Language Manager System ==========
 
 local function isMotor(value)
 	local motorType = tostring(value):match("^Motor%((.+)%)$")
@@ -2625,6 +2689,13 @@ Components.Element = (function()
 		Element:SetTitle(Title or "")
 		Element:SetDesc(Desc)
 
+		-- Localization support for Element Title and Description
+		if Library.LanguageManager then
+			Library.LanguageManager:RegisterElement(Element.TitleLabel, Title)
+			if Desc then
+				Library.LanguageManager:RegisterElement(Element.DescLabel, Desc)
+			end
+		end
 
 		if Library.Window and Library.Window.RegisterElement then
 			Library.Window.RegisterElement(Element.Frame, Title, "Element", Desc)
@@ -2733,6 +2804,13 @@ Components.Section = (function()
 			Section.Root.Size = UDim2.new(1, 0, 0, Section.Layout.AbsoluteContentSize.Y + 25)
 		end)
 
+		-- Localization support for Section Title
+		if Library.LanguageManager then
+			local textLabel = SectionHeader:FindFirstChildOfClass("TextLabel")
+			if textLabel then
+				Library.LanguageManager:RegisterElement(textLabel, Title)
+			end
+		end
 
 		if Library.Window and Library.Window.RegisterElement then
 			Library.Window.RegisterElement(Section.Root, Title, "Section")
@@ -2843,6 +2921,11 @@ Components.Tab = (function()
 				},
 			}),
 		})
+
+		-- Localization support for Tab Title
+		if Library.LanguageManager then
+			Library.LanguageManager:RegisterElement(Tab.Frame:FindFirstChildOfClass("TextLabel"), Title)
+		end
 
 		local ContainerLayout = New("UIListLayout", {
 			Padding = UDim.new(0, 5),
@@ -3062,6 +3145,14 @@ Components.Tab = (function()
 				Visible = false,
 				Position = UDim2.fromOffset(0, 0),
 			})
+
+			-- Localization support for SubTab Title
+			if Library.LanguageManager then
+				local textLabel = SubTabButton:FindFirstChildOfClass("TextLabel")
+				if textLabel then
+					Library.LanguageManager:RegisterElement(textLabel, Title)
+				end
+			end
 
 			local SubTabContainer = New("ScrollingFrame", {
 				Size = UDim2.fromScale(1, 1),
@@ -3371,7 +3462,15 @@ Components.Tab = (function()
 		TabModule.Tabs[Tab].SetTransparency(0.89)
 		TabModule.Tabs[Tab].Selected = true
 
-		Window.TabDisplay.Text = TabModule.Tabs[Tab].Name
+		-- Update TabDisplay with localized text if available
+		local tabName = TabModule.Tabs[Tab].Name
+		if Library.LanguageManager and Library.LanguageManager.Translations[Library.LanguageManager.CurrentLanguage] then
+			local translation = Library.LanguageManager.Translations[Library.LanguageManager.CurrentLanguage][tabName]
+			if translation then
+				tabName = translation
+			end
+		end
+		Window.TabDisplay.Text = tabName
 		Window.SelectorPosMotor:setGoal(Spring(TabModule:GetCurrentTabPos(), { frequency = 6 }))
 
 		if PreviousTab > 0 and PreviousTab ~= Tab and TabModule.Tabs[PreviousTab] and TabModule.Tabs[Tab] then
@@ -6835,6 +6934,7 @@ ElementsTable.Keybind = (function()
 			Toggled = false,
 			Mode = Config.Mode or "Toggle",
 			Type = "Keybind",
+			NoDisplay = Config.NoDisplay or false,
 			Callback = Config.Callback or function(Value) end,
 			ChangedCallback = Config.ChangedCallback or function(New) end,
 		}
@@ -6927,7 +7027,7 @@ ElementsTable.Keybind = (function()
 			Keybind.Value = Key
 			Keybind.Mode = Mode
 
-			if Key and Key ~= "None" and Key ~= "" then
+			if not Keybind.NoDisplay and Key and Key ~= "None" and Key ~= "" then
 				Library:AddKeybindDisplay(Idx, Config.Title, Key, Keybind.Toggled)
 			else
 				Library:RemoveKeybindDisplay(Idx)
@@ -6988,7 +7088,7 @@ ElementsTable.Keybind = (function()
 							KeybindDisplayLabel.Text = Key
 							Keybind.Value = Key
 
-							if Key and Key ~= "None" and Key ~= "" then
+							if not Keybind.NoDisplay and Key and Key ~= "None" and Key ~= "" then
 								Library:AddKeybindDisplay(Idx, Config.Title, Key, Keybind.Toggled)
 							else
 								Library:RemoveKeybindDisplay(Idx)
@@ -7033,7 +7133,7 @@ ElementsTable.Keybind = (function()
 		Library.Options[Idx] = Keybind
 
 		-- Register in keybind display if default key is set
-		if Config.Default and Config.Default ~= "None" and Config.Default ~= "" then
+		if not Keybind.NoDisplay and Config.Default and Config.Default ~= "None" and Config.Default ~= "" then
 			Library:AddKeybindDisplay(Idx, Config.Title, Config.Default, Keybind.Toggled)
 		end
 
@@ -9782,7 +9882,7 @@ end
 
 
 
-		local MenuKeybind = section:AddKeybind("MenuKeybind", { Title = "Minimize Bind", Default = Library.MinimizeKey.Name or Settings.MenuKeybind })
+		local MenuKeybind = section:AddKeybind("MenuKeybind", { Title = "Minimize Bind", Default = Library.MinimizeKey.Name or Settings.MenuKeybind, NoDisplay = true })
 
 
 		MenuKeybind:OnChanged(function()
@@ -9967,7 +10067,7 @@ Library.CreateWindow = function(self, Config)
             local snowfallEnabled = configAllowsSnow and userWantsSnow
             
             -- Only add snowfall if enabled
-            if snowfallEnabled then
+            if false and snowfallEnabled then
                  Library:AddSnowfallToWindow({
                     Count = 38,
                     Speed = 9.5
