@@ -845,7 +845,7 @@ local Themes = {
 	},
 	RGB = {
 		Name = "RGB",
-		Accent = Color3.fromRGB(255, 0, 0), -- Начальный цвет
+		Accent = Color3.fromRGB(255, 0, 0),
 		AcrylicMain = Color3.fromRGB(30, 30, 30),
 		AcrylicBorder = Color3.fromRGB(60, 60, 60),
 		AcrylicGradient = ColorSequence.new(Color3.fromRGB(20, 20, 20), Color3.fromRGB(25, 25, 25)),
@@ -900,12 +900,11 @@ local Library = {
 	DialogOpen = false,
 	UseAcrylic = false,
 	Acrylic = false,
-	Transparency = false, -- Changed to false by default
+	Transparency = false,
 	MinimizeKeybind = nil,
 	MinimizeKey = Enum.KeyCode.LeftControl,
 }
 
--- ========== Language Manager System ==========
 local LanguageManager = {
 	CurrentLanguage = "English",
 	Translations = {
@@ -937,13 +936,13 @@ end
 function LanguageManager:AutoTranslate(text, targetLang)
 	if not text or text == "" or targetLang == "English" then return text end
 	
-	-- Check cache first
+    
 	local cacheKey = text .. "_" .. targetLang
 	if self.Cache[cacheKey] then
 		return self.Cache[cacheKey]
 	end
 	
-	-- Simple Google Translate API (Free, no key required for small requests)
+    
 	local url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=" 
 		.. (targetLang == "Russian" and "ru" or "en") 
 		.. "&dt=t&q=" .. httpService:UrlEncode(text)
@@ -982,23 +981,20 @@ function LanguageManager:UpdateElement(textLabel, key)
 		return
 	end
 	
-	-- Check if we already have a manual translation
 	local translation = self.Translations[self.CurrentLanguage][key]
 	if translation then
 		textLabel.Text = translation
 	else
-		-- Auto-translate asynchronously to not freeze the UI
+    
 		task.spawn(function()
 			local translated = self:AutoTranslate(key, self.CurrentLanguage)
 			if translated and textLabel and textLabel.Parent then
-				-- Save to translations so we don't request again
 				self.Translations[self.CurrentLanguage][key] = translated
 				textLabel.Text = translated
 			end
 		end)
 	end
 end
-
 function LanguageManager:UpdateAllElements()
 	for i = #self.RegisteredElements, 1, -1 do
 		local data = self.RegisteredElements[i]
@@ -1011,7 +1007,6 @@ function LanguageManager:UpdateAllElements()
 end
 
 Library.LanguageManager = LanguageManager
--- ========== End Language Manager System ==========
 
 local function isMotor(value)
 	local motorType = tostring(value):match("^Motor%((.+)%)$")
@@ -2049,17 +2044,33 @@ Library.MiniMessageToRichText = MiniMessageToRichText
 
 local New = Creator.New
 
-local GUI = Creator.New("ScreenGui", {
-    Parent = game:GetService("CoreGui"), 
-    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-    ResetOnSpawn = false,
-    DisplayOrder = 999
-})
+local get_hui = gethui or function() return game:GetService("CoreGui") end
+
+local GUI
+local guiCreationSuccess = pcall(function()
+    GUI = Creator.New("ScreenGui", {
+        Parent = LocalPlayer:FindFirstChild("PlayerGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"),
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false,
+        DisplayOrder = 10,
+        Name = game:GetService("HttpService"):GenerateGUID(false)
+    })
+end)
+
+if not guiCreationSuccess or not GUI then
+    GUI = Instance.new("ScreenGui")
+    GUI.Parent = LocalPlayer:FindFirstChild("PlayerGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    GUI.ResetOnSpawn = false
+    GUI.DisplayOrder = 10
+    GUI.Name = game:GetService("HttpService"):GenerateGUID(false)
+end
+
+if pcall(ProtectGui) then ProtectGui(GUI) end
 
 Library.GUI = GUI
-ProtectGui(GUI)
+Library.HiddenParent = GUI
 
--- ========== Keybind Display System ==========
 local KeybindDisplayContainer = Instance.new("Frame")
 KeybindDisplayContainer.Name = "KeybindDisplay"
 KeybindDisplayContainer.BackgroundTransparency = 1
@@ -2128,7 +2139,13 @@ end
 function Library:UpdateKeybindDisplayColor(idx)
 	local data = Library.KeybindDisplayLabels[idx]
 	if not data then return end
-	if data.Toggled then
+	
+	local isActive = data.Toggled
+	if Library.Options and Library.Options[idx] and Library.Options[idx].Type == "Keybind" and Library.Options[idx].GetState then
+		isActive = Library.Options[idx]:GetState()
+	end
+
+	if isActive then
 		data.Label.TextColor3 = Color3.fromRGB(85, 255, 85)
 	else
 		data.Label.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -2142,7 +2159,6 @@ function Library:RemoveKeybindDisplay(idx)
 		Library.KeybindDisplayLabels[idx] = nil
 	end
 end
--- ========== End Keybind Display System ==========
 
 function Library:SafeCallback(Function, ...)
 	if not Function then
@@ -2169,7 +2185,7 @@ function Library:SafeCallback(Function, ...)
 			Duration = 5,
 		})
 	end
-end--?
+end
 function Library:Round(Number, Factor)
 	if Factor == 0 then
 		return math.floor(Number)
@@ -2733,7 +2749,6 @@ Components.Element = (function()
 		Element:SetTitle(Title or "")
 		Element:SetDesc(Desc)
 
-		-- Localization support for Element Title and Description
 		if Library.LanguageManager then
 			Library.LanguageManager:RegisterElement(Element.TitleLabel, Title)
 			if Desc then
@@ -2848,7 +2863,6 @@ Components.Section = (function()
 			Section.Root.Size = UDim2.new(1, 0, 0, Section.Layout.AbsoluteContentSize.Y + 25)
 		end)
 
-		-- Localization support for Section Title
 		if Library.LanguageManager then
 			local textLabel = SectionHeader:FindFirstChildOfClass("TextLabel")
 			if textLabel then
@@ -2966,7 +2980,6 @@ Components.Tab = (function()
 			}),
 		})
 
-		-- Localization support for Tab Title
 		if Library.LanguageManager then
 			Library.LanguageManager:RegisterElement(Tab.Frame:FindFirstChildOfClass("TextLabel"), Title)
 		end
@@ -3190,7 +3203,6 @@ Components.Tab = (function()
 				Position = UDim2.fromOffset(0, 0),
 			})
 
-			-- Localization support for SubTab Title
 			if Library.LanguageManager then
 				local textLabel = SubTabButton:FindFirstChildOfClass("TextLabel")
 				if textLabel then
@@ -3506,7 +3518,7 @@ Components.Tab = (function()
 		TabModule.Tabs[Tab].SetTransparency(0.89)
 		TabModule.Tabs[Tab].Selected = true
 
-		-- Update TabDisplay with localized text if available
+        
 		local tabName = TabModule.Tabs[Tab].Name
 		if Library.LanguageManager and Library.LanguageManager.Translations[Library.LanguageManager.CurrentLanguage] then
 			local translation = Library.LanguageManager.Translations[Library.LanguageManager.CurrentLanguage][tabName]
@@ -3869,7 +3881,7 @@ Components.Notification = (function()
 			AnchorPoint = Vector2.new(1, 1),
 			BackgroundTransparency = 1,
 			Parent = GUI,
-			ZIndex = 2000,
+			ZIndex = 10,
 		}, {
 			New("UIListLayout", {
 				HorizontalAlignment = Enum.HorizontalAlignment.Center,
@@ -3878,6 +3890,7 @@ Components.Notification = (function()
 				Padding = UDim.new(0, 20),
 			}),
 		})
+		Library.NotificationHolder = Notification.Holder
 	end
 
 	function Notification:New(Config)
@@ -4289,7 +4302,7 @@ Components.TitleBar = (function()
             Size = UDim2.new(0, 45, 0, 45),
             Position = UDim2.new(0, 2, 0.5, -21),
             BackgroundTransparency = 1,
-            Image = "rbxassetid://111390226361567",
+            Image = "rbxassetid://113682947140762",
             ImageColor3 = Color3.fromRGB(255, 255, 255),
         })
 
@@ -4383,27 +4396,27 @@ Components.TitleBar = (function()
             BackgroundTransparency = 1,
             Parent = Config.Parent,
         }, {
-            -- Logo no canto esquerdo (com animação)
+            
             LogoIcon,
 
             SubtitleLabel,
             ExpiryLabel,
 
-            -- Простой центральный контейнер
+            
             New("Frame", {
                 Size = UDim2.new(1, 0, 1, 0),
                 BackgroundTransparency = 1,
                 Position = UDim2.new(0, 0, 0, 0),
             }, {
                 New("UIListLayout", {
-                    Padding = UDim.new(0, 0), -- Vert Padding between TitleRow and Subtitle
+					Padding = UDim.new(0, 0),
                     FillDirection = Enum.FillDirection.Vertical,
                     SortOrder = Enum.SortOrder.LayoutOrder,
                     HorizontalAlignment = Enum.HorizontalAlignment.Center,
                     VerticalAlignment = Enum.VerticalAlignment.Center,
                 }),
 
-                -- Title ROW Container (Executor Only)
+            
                 New("Frame", {
                      Size = UDim2.fromScale(0, 0),
                      AutomaticSize = Enum.AutomaticSize.XY,
@@ -4418,7 +4431,7 @@ Components.TitleBar = (function()
                         VerticalAlignment = Enum.VerticalAlignment.Center,
                      }),
 
-                    -- Executor Info
+                
                      New("TextLabel", {
                         RichText = true,
                         Text = "Running on " .. Executor,
@@ -4434,7 +4447,7 @@ Components.TitleBar = (function()
                      }),
                 }),
                 
-                -- SubTitle (Below the row)
+                
                 Config.SubTitle and New("TextLabel", {
                     RichText = true,
                     Text = Config.SubTitle,
@@ -4457,16 +4470,7 @@ Components.TitleBar = (function()
                 }) or nil,
             }),
 
-            --[[ Removed Separator Line
-            New("Frame", {
-                BackgroundTransparency = 0.5,
-                Size = UDim2.new(1, 0, 0, 1),
-                Position = UDim2.new(0, 0, 1, 0),
-                ThemeTag = {
-                    BackgroundColor3 = "TitleBarLine",
-                },
-            }),
-            ]]
+            
         })
 
         TitleBar.CloseButton = BarButton(Components.Assets.Close, UDim2.new(1, -4, 0, 4), TitleBar.Frame, function()
@@ -5037,7 +5041,7 @@ Window.Root = New("Frame", {
     Size = Window.Size,
     Position = Window.Position,
     Parent = Config.Parent,
-    ZIndex = 100, 
+    ZIndex = 10, 
 }, rootChildren)
 
 		CenterWindow()
@@ -5328,16 +5332,26 @@ Window.Root = New("Frame", {
 			end
 		end)
 
-		Creator.AddSignal(UserInputService.InputBegan, function(Input)
-			if
-				type(Library.MinimizeKeybind) == "table"
-				and Library.MinimizeKeybind.Type == "Keybind"
-				and not UserInputService:GetFocusedTextBox()
-			then
-				if Input.KeyCode.Name == Library.MinimizeKeybind.Value then
-					Window:Minimize()
+		Creator.AddSignal(UserInputService.InputBegan, function(Input, gameProcessedEvent)
+			-- Don't return on gameProcessedEvent for minimize key - needs to work globally
+			-- Only proceed if it's a keyboard input
+			if Input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+			
+			local shouldMinimize = false
+			
+			if type(Library.MinimizeKeybind) == "table" and Library.MinimizeKeybind.Type == "Keybind" then
+				-- Compare KeyCode enums properly
+				if Input.KeyCode == Library.MinimizeKeybind.Value then
+					shouldMinimize = true
 				end
-			elseif Input.KeyCode == Library.MinimizeKey and not UserInputService:GetFocusedTextBox() then
+			elseif type(Library.MinimizeKey) == "userdata" then
+				-- Direct enum comparison is most reliable
+				if Input.KeyCode == Library.MinimizeKey then
+					shouldMinimize = true
+				end
+			end
+			
+			if shouldMinimize then
 				Window:Minimize()
 			end
 		end)
@@ -5952,7 +5966,7 @@ local DropdownHolderCanvas = New("Frame", {
     Size = UDim2.fromOffset(170, 300),
     Parent = Library.GUI,
     Visible = false,
-    ZIndex = 1000, 
+    ZIndex = 10, 
 }, {
     DropdownHolderFrame,
     New("UISizeConstraint", {
@@ -6316,7 +6330,7 @@ local DropdownHolderCanvas = New("Frame", {
 				Str = Dropdown.Value or ""
 			end
 
-			DropdownDisplay.Text = (Str == "" and "--" or Str)
+			DropdownDisplay.Text = (Str == "" and "" or Str)
 		end
 
 		function Dropdown:GetActiveValues()
@@ -6975,7 +6989,7 @@ ElementsTable.Keybind = (function()
 
 		local Keybind = {
 			Value = Config.Default,
-			Toggled = false,
+			Toggled = Config.Toggled or false,
 			Mode = Config.Mode or "Toggle",
 			Type = "Keybind",
 			NoDisplay = Config.NoDisplay or false,
@@ -7038,10 +7052,6 @@ ElementsTable.Keybind = (function()
 		})
 
 		function Keybind:GetState()
-			if UserInputService:GetFocusedTextBox() and Keybind.Mode ~= "Always" then
-				return false
-			end
-
 			if Keybind.Mode == "Always" then
 				return true
 			elseif Keybind.Mode == "Hold" then
@@ -7149,8 +7159,9 @@ ElementsTable.Keybind = (function()
 			end
 		end)
 
-		Creator.AddSignal(UserInputService.InputBegan, function(Input)
-			if not Picking and not UserInputService:GetFocusedTextBox() then
+		Creator.AddSignal(UserInputService.InputBegan, function(Input, gameProcessedEvent)
+			if gameProcessedEvent and not Picking then return end
+			if not Picking then
 				if Keybind.Mode == "Toggle" then
 					local Key = Keybind.Value
 
@@ -7176,7 +7187,7 @@ ElementsTable.Keybind = (function()
 
 		Library.Options[Idx] = Keybind
 
-		-- Register in keybind display if default key is set
+        
 		if not Keybind.NoDisplay and Config.Default and Config.Default ~= "None" and Config.Default ~= "" then
 			Library:AddKeybindDisplay(Idx, Config.Title, Config.Default, Keybind.Toggled)
 		end
@@ -7771,7 +7782,11 @@ ElementsTable.Input = (function()
 end)()
 
 local NotificationModule = Components.Notification
-NotificationModule:Init(GUI)
+if NotificationModule and NotificationModule.Init then
+    pcall(function()
+        NotificationModule:Init(GUI)
+    end)
+end
 
 local New = Creator.New
 
@@ -8781,7 +8796,7 @@ local SaveManager = {} do
 			Save = function(idx, object)
 
 
-				return { type = "Keybind", idx = idx, mode = object.Mode, key = object.Value }
+				return { type = "Keybind", idx = idx, mode = object.Mode, key = object.Value, toggled = object.Toggled }
 
 
 			end,
@@ -8791,7 +8806,9 @@ local SaveManager = {} do
 
 
 				if SaveManager.Options[idx] then 
-
+                    if data.toggled ~= nil then
+                        SaveManager.Options[idx].Toggled = data.toggled
+                    end
 
 					SaveManager.Options[idx]:SetValue(data.key, data.mode)
 
@@ -8999,7 +9016,6 @@ local SaveManager = {} do
 
 					task.spawn(function() self.Parser[option.type].Load(option.idx, option) end)
 
-
 				end
 
 
@@ -9010,7 +9026,6 @@ local SaveManager = {} do
 
 
 			Fluent.SettingLoaded = true
-
 
 
 
@@ -10000,8 +10015,6 @@ Library.CreateWindow = function(self, Config)
 
 
 
-
-
 	local Icon = Config.Icon
 
 
@@ -10110,14 +10123,14 @@ Library.CreateWindow = function(self, Config)
             local configAllowsSnow = Library.WindowSnowfallEnabled
             local snowfallEnabled = configAllowsSnow and userWantsSnow
             
-            -- Only add snowfall if enabled
+            
             if false and snowfallEnabled then
                  Library:AddSnowfallToWindow({
                     Count = 38,
                     Speed = 9.5
                 })
             else
-                -- If not enabled, make sure any existing snow is hidden (just in case)
+                
                 if Library.Snowfall then
                     Library.Snowfall:SetVisible(false)
                 end
@@ -10150,7 +10163,7 @@ function Library:CreateMinimizer(Config)
 	local parentGui = Library.GUI or GUI
 
 
-	if parentGui then parentGui.DisplayOrder = 1000 end
+	if parentGui then parentGui.DisplayOrder = 10 end
 
 
 	local isMobile = Mobile and true or false
@@ -10346,7 +10359,7 @@ function Library:CreateMinimizer(Config)
 			BackgroundTransparency = 1,
 
 
-			ZIndex = 999999999,
+			ZIndex = 10,
 
 
 			Visible = (Config.Visible ~= false),
@@ -10374,7 +10387,7 @@ function Library:CreateMinimizer(Config)
 			BackgroundTransparency = 1,
 
 
-			ZIndex = 999999999,
+			ZIndex = 10,
 
 
 			Visible = (Config.Visible ~= false),
@@ -10842,7 +10855,6 @@ _G.Fluent = Library
 
 
 
-
 local MinimizeButton = New("TextButton", {
 
 
@@ -10998,7 +11010,6 @@ local MinimizeButton = New("TextButton", {
 
 		ImageTransparency = 0.1,
 
-
 	}, {
 
 
@@ -11015,7 +11026,6 @@ local MinimizeButton = New("TextButton", {
 
 
 	})
-
 
 })
 
@@ -11371,9 +11381,11 @@ AddSignal(MinimizeButton.MouseButton1Click, function()
 
 
 	if not isDragging then
-
-		Library.Window:Minimize()
-
+		if Library.Window and Library.Window.Minimize then
+			pcall(function()
+				Library.Window:Minimize()
+			end)
+		end
 	end
 
 
@@ -11442,7 +11454,7 @@ function Library:AddSnowfallToWindow(Config)
             snowflake.Position = UDim2.new(
                 math.random() * 0.95, 
                 0, 
-                math.random() * 1.5 - 0.5, -- Spread across screen initially
+				math.random() * 1.5 - 0.5,
                 0
             )
             snowflake.Parent = innerContainer
@@ -11574,41 +11586,33 @@ end
 
 if RunService:IsStudio() then task.wait(0.01) end
 
--- RGB Animation Loop
-task.spawn(function()
-    local hue = 0
-    RunService.Heartbeat:Connect(function(dt)
-        -- Проверяем, выбрана ли тема "RGB"
-        if Library.Theme == "RGB" then
-            hue = hue + dt * 0.1 -- Скорость переливания
-            if hue > 1 then hue = 0 end
-            
-            local rgbColor = Color3.fromHSV(hue, 0.8, 1) -- Насыщенные цвета
-            local rgbColor2 = Color3.fromHSV((hue + 0.5) % 1, 0.8, 1) -- Контрастный цвет
-
-            -- Обновляем таблицу темы "RGB". 
-            -- Важно: мы обновляем значения в самой таблице определений
-            local theme = Themes["RGB"]
-            if theme then
-                theme.Accent = rgbColor
-                theme.TitleBarLine = rgbColor
-                theme.Tab = rgbColor 
-                theme.ElementBorder = rgbColor
-                theme.ToggleToggled = rgbColor
-                theme.SliderRail = rgbColor
-                theme.DropdownFrame = rgbColor
-                theme.InputIndicatorFocus = rgbColor
-                
-                -- Можно добавить переливание текста
-                theme.Text = Color3.new(1,1,1) -- Текст лучше оставить белым для читаемости
-                
-                -- Если библиотека поддерживает горячее обновление:
-                if Library.Window then
-                    Library:SetTheme("Slate") 
-                end
-            end
-        end
-    end)
+local initSuccess = pcall(function()
+	task.spawn(function()
+		local hue = 0
+		RunService.Heartbeat:Connect(function(dt)
+			if Library.Theme == "RGB" then
+				hue = hue + dt * 0.1
+				if hue > 1 then hue = 0 end
+				local rgbColor = Color3.fromHSV(hue, 0.8, 1)
+				local rgbColor2 = Color3.fromHSV((hue + 0.5) % 1, 0.8, 1)
+				local theme = Themes["RGB"]
+				if theme then
+					theme.Accent = rgbColor
+					theme.TitleBarLine = rgbColor
+					theme.Tab = rgbColor 
+					theme.ElementBorder = rgbColor
+					theme.ToggleToggled = rgbColor
+					theme.SliderRail = rgbColor
+					theme.DropdownFrame = rgbColor
+					theme.InputIndicatorFocus = rgbColor
+					theme.Text = Color3.new(1,1,1)
+					if Library.Window then
+						Library:SetTheme("Slate") 
+					end
+				end
+			end
+		end)
+	end)
 end)
 
 return Library, SaveManager, InterfaceManager, Mobile
