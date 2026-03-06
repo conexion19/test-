@@ -733,41 +733,40 @@ local Themes = {
 	},
 	Slate = {
 		Name = "Slate",
-		Accent = Color3.fromRGB(15, 10, 25),
-		AcrylicMain = Color3.fromRGB(12, 3, 25),
-		AcrylicBorder = Color3.fromRGB(30, 10, 50),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(8, 2, 20), Color3.fromRGB(15, 5, 28)),
-		AcrylicNoise = 0.94,
-		TitleBarLine = Color3.fromRGB(0, 0, 0),
-		Tab = Color3.fromRGB(40, 15, 75),
-		Element = Color3.fromRGB(20, 8, 42),
-		ElementBorder = Color3.fromRGB(0, 0, 0),
-		InElementBorder = Color3.fromRGB(20, 5, 40),
-		ElementTransparency = 0.60,
-		ToggleSlider = Color3.fromRGB(50, 18, 95),
+		Accent = Color3.fromRGB(255, 255, 255),
+		AcrylicMain = Color3.fromRGB(25, 25, 28),
+		AcrylicBorder = Color3.fromRGB(25, 25, 28),
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(20, 20, 23), Color3.fromRGB(25, 25, 28)),
+		AcrylicNoise = 0.95,
+		TitleBarLine = Color3.fromRGB(35, 35, 35),
+		Tab = Color3.fromRGB(60, 60, 60),
+		Element = Color3.fromRGB(25, 25, 28),
+		ElementBorder = Color3.fromRGB(35, 35, 35),
+		InElementBorder = Color3.fromRGB(35, 35, 35),
+		ElementTransparency = 0.92,
+		ToggleSlider = Color3.fromRGB(45, 45, 45),
 		ToggleToggled = Color3.fromRGB(255, 255, 255),
-		SliderRail = Color3.fromRGB(255, 255, 255),
-		DropdownFrame = Color3.fromRGB(50, 18, 95),
-		DropdownHolder = Color3.fromRGB(15, 5, 32),
-		DropdownBorder = Color3.fromRGB(0, 0, 0),
-		DropdownOption = Color3.fromRGB(45, 15, 85),
-		Keybind = Color3.fromRGB(50, 18, 95),
-		Input = Color3.fromRGB(50, 18, 95),
-		InputFocused = Color3.fromRGB(10, 3, 22),
-		InputIndicator = Color3.fromRGB(100, 50, 150),
-		InputIndicatorFocus = Color3.fromRGB(130, 80, 180),
-		Dialog = Color3.fromRGB(15, 5, 32),
-		DialogHolder = Color3.fromRGB(18, 8, 38),
-		DialogHolderLine = Color3.fromRGB(0, 0, 0),
-		DialogButton = Color3.fromRGB(28, 12, 52),
-		DialogButtonBorder = Color3.fromRGB(0, 0, 0),
-		DialogBorder = Color3.fromRGB(0, 0, 0),
-		DialogInput = Color3.fromRGB(20, 8, 42),
-		DialogInputLine = Color3.fromRGB(100, 50, 150),
-		Text = Color3.fromRGB(235, 245, 255),
-		SubText = Color3.fromRGB(160, 140, 190),
-		Hover = Color3.fromRGB(42, 18, 75),
-		HoverChange = 0.06,
+		SliderRail = Color3.fromRGB(45, 45, 45),
+		DropdownFrame = Color3.fromRGB(45, 45, 45),
+		DropdownHolder = Color3.fromRGB(25, 25, 28),
+		DropdownBorder = Color3.fromRGB(35, 35, 35),
+		DropdownOption = Color3.fromRGB(45, 45, 45),
+		Keybind = Color3.fromRGB(45, 45, 45),
+		Input = Color3.fromRGB(45, 45, 45),
+		InputFocused = Color3.fromRGB(20, 20, 23),
+		InputIndicator = Color3.fromRGB(45, 45, 45),
+		Dialog = Color3.fromRGB(25, 25, 28),
+		DialogHolder = Color3.fromRGB(25, 25, 28),
+		DialogHolderLine = Color3.fromRGB(35, 35, 35),
+		DialogButton = Color3.fromRGB(30, 30, 33),
+		DialogButtonBorder = Color3.fromRGB(35, 35, 35),
+		DialogBorder = Color3.fromRGB(35, 35, 35),
+		DialogInput = Color3.fromRGB(25, 25, 28),
+		DialogInputLine = Color3.fromRGB(60, 60, 60),
+		Text = Color3.fromRGB(240, 240, 240),
+		SubText = Color3.fromRGB(160, 160, 160),
+		Hover = Color3.fromRGB(45, 45, 48),
+		HoverChange = 0.03,
 	},
 	Gray = {
 		Name = "Gray",
@@ -5634,42 +5633,46 @@ ElementsTable.Toggle = (function()
 		}
 
 		local ToggleFrame = Components.Element(Config.Title, Config.Description, self.Container, true, Config)
-		ToggleFrame.DescLabel.Size = UDim2.new(1, -65, 0, 14)
+		ToggleFrame.DescLabel.Size = UDim2.new(1, -54, 0, 14)
 
 		Toggle.SetTitle = ToggleFrame.SetTitle
 		Toggle.SetDesc = ToggleFrame.SetDesc
 		Toggle.Visible = ToggleFrame.Visible
 		Toggle.Elements = ToggleFrame
 
-		-- Основной контейнер тоггла (прямоугольник с округлёнными углами)
-		local ToggleBackground = New("Frame", {
-			Size = UDim2.fromOffset(38, 20),
+		local ToggleCircle = New("ImageLabel", {
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Size = UDim2.fromOffset(0, 0),
+			Position = UDim2.new(0.5, 0, 0.5, 0),
+			Image = "",
+			ImageTransparency = 1,
+			ThemeTag = {
+				ImageColor3 = "ToggleSlider",
+			},
+		})
+
+		local ToggleBorder = New("UIStroke", {
+			Transparency = 0.5,
+			ThemeTag = {
+				Color = "ToggleSlider",
+			},
+		})
+
+		local ToggleSlider = New("Frame", {
+			Size = UDim2.fromOffset(20, 20),
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -10, 0.5, 0),
 			Parent = ToggleFrame.Frame,
-			BackgroundColor3 = Color3.fromRGB(50, 50, 50),
-			BackgroundTransparency = 0,
+			BackgroundTransparency = 1,
 			ThemeTag = {
-				BackgroundColor3 = "ToggleSlider",
+				BackgroundColor3 = "Accent",
 			},
 		}, {
 			New("UICorner", {
-				CornerRadius = UDim.new(0, 10),
+				CornerRadius = UDim.new(0, 4),
 			}),
-		})
-
-		-- Белый движущийся круг внутри
-		local ToggleCircle = New("Frame", {
-			Size = UDim2.fromOffset(16, 16),
-			AnchorPoint = Vector2.new(0, 0.5),
-			Position = UDim2.new(0, 2, 0.5, 0),
-			Parent = ToggleBackground,
-			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-			BackgroundTransparency = 0,
-		}, {
-			New("UICorner", {
-				CornerRadius = UDim.new(0, 8),
-			}),
+			ToggleBorder,
+			ToggleCircle,
 		})
 
 		function Toggle:OnChanged(Func)
@@ -5681,13 +5684,12 @@ ElementsTable.Toggle = (function()
 			Value = not not Value
 			Toggle.Value = Value
 
-			-- Анимация движения круга влево/вправо
-			local newPosition = Value and UDim2.new(0, 20, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
+			Creator.OverrideTag(ToggleBorder, { Color = Toggle.Value and "Accent" or "ToggleSlider" })
 			
 			TweenService:Create(
-				ToggleCircle,
-				TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-				{ Position = newPosition }
+				ToggleSlider,
+				TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				{ BackgroundTransparency = Toggle.Value and 0 or 1 }
 			):Play()
 
 			Library:SafeCallback(Toggle.Callback, Toggle.Value)
@@ -6643,7 +6645,7 @@ ElementsTable.Slider = (function()
 			Size = UDim2.fromOffset(14, 14),
 			Image = "http://www.roblox.com/asset/?id=12266946128",
 			ThemeTag = {
-				ImageColor3 = "ToggleToggled",
+				ImageColor3 = "Accent",
 			},
 		})
 
@@ -6657,8 +6659,9 @@ ElementsTable.Slider = (function()
 
 		local SliderFill = New("Frame", {
 			Size = UDim2.new(0, 0, 1, 0),
-			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-			BackgroundTransparency = 0,
+			ThemeTag = {
+				BackgroundColor3 = "Accent",
+			},
 		}, {
 			New("UICorner", {
 				CornerRadius = UDim.new(1, 0),
@@ -6717,9 +6720,11 @@ ElementsTable.Slider = (function()
 			Size = UDim2.new(1, 0, 0, 4),
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -10, 0.5, 0),
-			BackgroundTransparency = 0.3,
-			BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+			BackgroundTransparency = 0.4,
 			Parent = SliderFrame.Frame,
+			ThemeTag = {
+				BackgroundColor3 = "SliderRail",
+			},
 		}, {
 			New("UICorner", {
 				CornerRadius = UDim.new(1, 0),
@@ -10700,7 +10705,7 @@ function Library:ToggleTransparency(Value)
 	if Library.Window then
 
 
-		Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value and 0.1 or 0
+		Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value and 0.35 or 0
 
 
 	end
