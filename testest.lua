@@ -5634,7 +5634,7 @@ ElementsTable.Toggle = (function()
 		}
 
 		local ToggleFrame = Components.Element(Config.Title, Config.Description, self.Container, true, Config)
-		ToggleFrame.DescLabel.Size = UDim2.new(1, -64, 0, 14)
+		ToggleFrame.DescLabel.Size = UDim2.new(1, -70, 0, 14)
 
 		Toggle.SetTitle = ToggleFrame.SetTitle
 		Toggle.SetDesc = ToggleFrame.SetDesc
@@ -5643,7 +5643,7 @@ ElementsTable.Toggle = (function()
 
 		-- Основной контейнер тоггла (прямоугольник с округлёнными углами)
 		local ToggleBackground = New("Frame", {
-			Size = UDim2.fromOffset(25, 13),
+			Size = UDim2.fromOffset(45, 24),
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -10, 0.5, 0),
 			Parent = ToggleFrame.Frame,
@@ -5654,21 +5654,21 @@ ElementsTable.Toggle = (function()
 			},
 		}, {
 			New("UICorner", {
-				CornerRadius = UDim.new(0, 7),
+				CornerRadius = UDim.new(0, 12),
 			}),
 		})
 
 		-- Белый движущийся круг внутри
 		local ToggleCircle = New("Frame", {
-			Size = UDim2.fromOffset(11, 11),
+			Size = UDim2.fromOffset(20, 20),
 			AnchorPoint = Vector2.new(0, 0.5),
-			Position = UDim2.new(0, 1, 0.5, 0),
+			Position = UDim2.new(0, 2, 0.5, 0),
 			Parent = ToggleBackground,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BackgroundTransparency = 0,
 		}, {
 			New("UICorner", {
-				CornerRadius = UDim.new(0, 6),
+				CornerRadius = UDim.new(0, 10),
 			}),
 		})
 
@@ -5682,11 +5682,11 @@ ElementsTable.Toggle = (function()
 			Toggle.Value = Value
 
 			-- Анимация движения круга влево/вправо
-			local newPosition = Value and UDim2.new(0, 13, 0.5, 0) or UDim2.new(0, 1, 0.5, 0)
+			local newPosition = Value and UDim2.new(0, 23, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
 			
 			TweenService:Create(
 				ToggleCircle,
-				TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut),
+				TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
 				{ Position = newPosition }
 			):Play()
 
