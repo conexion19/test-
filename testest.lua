@@ -5643,7 +5643,7 @@ ElementsTable.Toggle = (function()
 
 		-- Основной контейнер тоггла (прямоугольник с округлёнными углами)
 		local ToggleBackground = New("Frame", {
-			Size = UDim2.fromOffset(50, 26),
+			Size = UDim2.fromOffset(25, 13),
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -10, 0.5, 0),
 			Parent = ToggleFrame.Frame,
@@ -5654,21 +5654,21 @@ ElementsTable.Toggle = (function()
 			},
 		}, {
 			New("UICorner", {
-				CornerRadius = UDim.new(0, 13),
+				CornerRadius = UDim.new(0, 7),
 			}),
 		})
 
 		-- Белый движущийся круг внутри
 		local ToggleCircle = New("Frame", {
-			Size = UDim2.fromOffset(22, 22),
+			Size = UDim2.fromOffset(11, 11),
 			AnchorPoint = Vector2.new(0, 0.5),
-			Position = UDim2.new(0, 2, 0.5, 0),
+			Position = UDim2.new(0, 1, 0.5, 0),
 			Parent = ToggleBackground,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BackgroundTransparency = 0,
 		}, {
 			New("UICorner", {
-				CornerRadius = UDim.new(0, 11),
+				CornerRadius = UDim.new(0, 6),
 			}),
 		})
 
@@ -5682,21 +5682,12 @@ ElementsTable.Toggle = (function()
 			Toggle.Value = Value
 
 			-- Анимация движения круга влево/вправо
-			local newPosition = Value and UDim2.new(0, 26, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
+			local newPosition = Value and UDim2.new(0, 13, 0.5, 0) or UDim2.new(0, 1, 0.5, 0)
 			
 			TweenService:Create(
 				ToggleCircle,
-				TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut),
 				{ Position = newPosition }
-			):Play()
-
-			-- Окрашивание фона при включении - белый горит
-			local bgColor = Value and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(50, 50, 50)
-			
-			TweenService:Create(
-				ToggleBackground,
-				TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-				{ BackgroundColor3 = bgColor }
 			):Play()
 
 			Library:SafeCallback(Toggle.Callback, Toggle.Value)
@@ -6652,7 +6643,7 @@ ElementsTable.Slider = (function()
 			Size = UDim2.fromOffset(14, 14),
 			Image = "http://www.roblox.com/asset/?id=12266946128",
 			ThemeTag = {
-				ImageColor3 = "Accent",
+				ImageColor3 = "ToggleToggled",
 			},
 		})
 
@@ -6666,9 +6657,8 @@ ElementsTable.Slider = (function()
 
 		local SliderFill = New("Frame", {
 			Size = UDim2.new(0, 0, 1, 0),
-			ThemeTag = {
-				BackgroundColor3 = "Accent",
-			},
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BackgroundTransparency = 0,
 		}, {
 			New("UICorner", {
 				CornerRadius = UDim.new(1, 0),
@@ -6727,11 +6717,9 @@ ElementsTable.Slider = (function()
 			Size = UDim2.new(1, 0, 0, 4),
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -10, 0.5, 0),
-			BackgroundTransparency = 0.4,
+			BackgroundTransparency = 0.3,
+			BackgroundColor3 = Color3.fromRGB(0, 0, 0),
 			Parent = SliderFrame.Frame,
-			ThemeTag = {
-				BackgroundColor3 = "SliderRail",
-			},
 		}, {
 			New("UICorner", {
 				CornerRadius = UDim.new(1, 0),
