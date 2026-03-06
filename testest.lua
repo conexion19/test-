@@ -745,8 +745,8 @@ local Themes = {
 		InElementBorder = Color3.fromRGB(20, 5, 40),
 		ElementTransparency = 0.60,
 		ToggleSlider = Color3.fromRGB(50, 18, 95),
-		ToggleToggled = Color3.fromRGB(100, 50, 150),
-		SliderRail = Color3.fromRGB(50, 18, 95),
+		ToggleToggled = Color3.fromRGB(255, 255, 255),
+		SliderRail = Color3.fromRGB(255, 255, 255),
 		DropdownFrame = Color3.fromRGB(50, 18, 95),
 		DropdownHolder = Color3.fromRGB(15, 5, 32),
 		DropdownBorder = Color3.fromRGB(0, 0, 0),
@@ -10706,7 +10706,7 @@ function Library:ToggleTransparency(Value)
 	if Library.Window then
 
 
-		Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value and 0.35 or 0
+		Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value and 0.1 or 0
 
 
 	end
