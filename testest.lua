@@ -5634,46 +5634,42 @@ ElementsTable.Toggle = (function()
 		}
 
 		local ToggleFrame = Components.Element(Config.Title, Config.Description, self.Container, true, Config)
-		ToggleFrame.DescLabel.Size = UDim2.new(1, -54, 0, 14)
+		ToggleFrame.DescLabel.Size = UDim2.new(1, -64, 0, 14)
 
 		Toggle.SetTitle = ToggleFrame.SetTitle
 		Toggle.SetDesc = ToggleFrame.SetDesc
 		Toggle.Visible = ToggleFrame.Visible
 		Toggle.Elements = ToggleFrame
 
-		local ToggleCircle = New("ImageLabel", {
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Size = UDim2.fromOffset(0, 0),
-			Position = UDim2.new(0.5, 0, 0.5, 0),
-			Image = "",
-			ImageTransparency = 1,
-			ThemeTag = {
-				ImageColor3 = "ToggleSlider",
-			},
-		})
-
-		local ToggleBorder = New("UIStroke", {
-			Transparency = 0.5,
-			ThemeTag = {
-				Color = "ToggleSlider",
-			},
-		})
-
-		local ToggleSlider = New("Frame", {
-			Size = UDim2.fromOffset(20, 20),
+		-- Основной контейнер тоггла (прямоугольник с округлёнными углами)
+		local ToggleBackground = New("Frame", {
+			Size = UDim2.fromOffset(50, 26),
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -10, 0.5, 0),
 			Parent = ToggleFrame.Frame,
-			BackgroundTransparency = 1,
+			BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+			BackgroundTransparency = 0,
 			ThemeTag = {
-				BackgroundColor3 = "Accent",
+				BackgroundColor3 = "ToggleSlider",
 			},
 		}, {
 			New("UICorner", {
-				CornerRadius = UDim.new(0, 4),
+				CornerRadius = UDim.new(0, 13),
 			}),
-			ToggleBorder,
-			ToggleCircle,
+		})
+
+		-- Белый движущийся круг внутри
+		local ToggleCircle = New("Frame", {
+			Size = UDim2.fromOffset(22, 22),
+			AnchorPoint = Vector2.new(0, 0.5),
+			Position = UDim2.new(0, 2, 0.5, 0),
+			Parent = ToggleBackground,
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BackgroundTransparency = 0,
+		}, {
+			New("UICorner", {
+				CornerRadius = UDim.new(0, 11),
+			}),
 		})
 
 		function Toggle:OnChanged(Func)
@@ -5685,12 +5681,22 @@ ElementsTable.Toggle = (function()
 			Value = not not Value
 			Toggle.Value = Value
 
-			Creator.OverrideTag(ToggleBorder, { Color = Toggle.Value and "Accent" or "ToggleSlider" })
+			-- Анимация движения круга влево/вправо
+			local newPosition = Value and UDim2.new(0, 26, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
 			
 			TweenService:Create(
-				ToggleSlider,
-				TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-				{ BackgroundTransparency = Toggle.Value and 0 or 1 }
+				ToggleCircle,
+				TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				{ Position = newPosition }
+			):Play()
+
+			-- Окрашивание фона при включении - белый горит
+			local bgColor = Value and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(50, 50, 50)
+			
+			TweenService:Create(
+				ToggleBackground,
+				TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				{ BackgroundColor3 = bgColor }
 			):Play()
 
 			Library:SafeCallback(Toggle.Callback, Toggle.Value)
