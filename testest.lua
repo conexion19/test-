@@ -5,100 +5,46 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local TextService = game:GetService("TextService")
 local Camera = game:GetService("Workspace").CurrentCamera
-local Mouse = LocalPlayer:GetMouse()
-local httpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-
-local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) ~= nil
-
-local fischbypass
-
-if game.GameId == 5750914919 then
-	fischbypass = true
-end
-
-local RenderStepped = RunService.RenderStepped
-
-local ProtectGui = protectgui or (syn and syn.protect_gui) or function() end
-
-local Executor = identifyexecutor and identifyexecutor() or "Unknown"
-local Themes = {
-	Names = {
-		"Slate",
+	Names = {"Slate"},
+	Slate = {
+		Name = "Slate",
+		Accent = Color3.fromRGB(180, 100, 255), -- яркий фиолетовый акцент
+		AcrylicMain = Color3.fromRGB(28, 16, 40), -- глубокий тёмно-фиолетовый
+		AcrylicBorder = Color3.fromRGB(70, 30, 110), -- насыщенный бордер
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(28, 16, 40), Color3.fromRGB(60, 30, 90)),
+		AcrylicNoise = 0.7,
+		TitleBarLine = Color3.fromRGB(100, 60, 150),
+		Tab = Color3.fromRGB(44, 22, 66),
+		Element = Color3.fromRGB(38, 20, 54),
+		ElementBorder = Color3.fromRGB(60, 30, 90),
+		InElementBorder = Color3.fromRGB(110, 60, 160),
+		ElementTransparency = 0.78, -- чуть больше прозрачности
+		ToggleSlider = Color3.fromRGB(120, 70, 180),
+		ToggleToggled = Color3.fromRGB(200, 120, 255),
+		SliderRail = Color3.fromRGB(80, 40, 120),
+		DropdownFrame = Color3.fromRGB(38, 20, 54),
+		DropdownHolder = Color3.fromRGB(28, 16, 40),
+		DropdownBorder = Color3.fromRGB(90, 40, 130),
+		DropdownOption = Color3.fromRGB(160, 100, 220),
+		Keybind = Color3.fromRGB(120, 70, 180),
+		Input = Color3.fromRGB(44, 22, 66),
+		InputFocused = Color3.fromRGB(200, 120, 255),
+		InputIndicator = Color3.fromRGB(160, 100, 220),
+		InputIndicatorFocus = Color3.fromRGB(220, 180, 255),
+		Dialog = Color3.fromRGB(38, 20, 54),
+		DialogHolder = Color3.fromRGB(28, 16, 40),
+		DialogHolderLine = Color3.fromRGB(90, 40, 130),
+		DialogButton = Color3.fromRGB(160, 100, 220),
+		DialogButtonBorder = Color3.fromRGB(90, 40, 130),
+		DialogBorder = Color3.fromRGB(90, 40, 130),
+		DialogInput = Color3.fromRGB(44, 22, 66),
+		DialogInputLine = Color3.fromRGB(160, 100, 220),
+		Text = Color3.fromRGB(235, 210, 255), -- светлый фиолетовый/белый
+		SubText = Color3.fromRGB(180, 140, 210), -- приглушённый светлый фиолетовый
+		Hover = Color3.fromRGB(90, 40, 130),
+		HoverChange = 0.06,
 	},
-	Dark = {
-		Name = "Dark",
-		Accent = Color3.fromRGB(96, 205, 255),
-		AcrylicMain = Color3.fromRGB(60, 60, 60),
-		AcrylicBorder = Color3.fromRGB(90, 90, 90),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(40, 40, 40)),
-		AcrylicNoise = 0.9,
-		TitleBarLine = Color3.fromRGB(75, 75, 75),
-		Tab = Color3.fromRGB(120, 120, 120),
-		Element = Color3.fromRGB(120, 120, 120),
-		ElementBorder = Color3.fromRGB(35, 35, 35),
-		InElementBorder = Color3.fromRGB(90, 90, 90),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(120, 120, 120),
-		ToggleToggled = Color3.fromRGB(42, 42, 42),
-		SliderRail = Color3.fromRGB(120, 120, 120),
-		DropdownFrame = Color3.fromRGB(160, 160, 160),
-		DropdownHolder = Color3.fromRGB(45, 45, 45),
-		DropdownBorder = Color3.fromRGB(35, 35, 35),
-		DropdownOption = Color3.fromRGB(120, 120, 120),
-		Keybind = Color3.fromRGB(120, 120, 120),
-		Input = Color3.fromRGB(160, 160, 160),
-		InputFocused = Color3.fromRGB(10, 10, 10),
-		InputIndicator = Color3.fromRGB(150, 150, 150),
-		Dialog = Color3.fromRGB(45, 45, 45),
-		DialogHolder = Color3.fromRGB(35, 35, 35),
-		DialogHolderLine = Color3.fromRGB(30, 30, 30),
-		DialogButton = Color3.fromRGB(45, 45, 45),
-		DialogButtonBorder = Color3.fromRGB(80, 80, 80),
-		DialogBorder = Color3.fromRGB(70, 70, 70),
-		DialogInput = Color3.fromRGB(55, 55, 55),
-		DialogInputLine = Color3.fromRGB(160, 160, 160),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(120, 120, 120),
-		HoverChange = 0.07,
-	},
-	Darker = {
-		Name = "Darker",
-		Accent = Color3.fromRGB(56, 109, 223),
-		AcrylicMain = Color3.fromRGB(30, 30, 30),
-		AcrylicBorder = Color3.fromRGB(60, 60, 60),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(17, 17, 17), Color3.fromRGB(18, 18, 18)),
-		AcrylicNoise = 0.94,
-		TitleBarLine = Color3.fromRGB(65, 65, 65),
-		Tab = Color3.fromRGB(100, 100, 100),
-		Element = Color3.fromRGB(70, 70, 70),
-		ElementBorder = Color3.fromRGB(25, 25, 25),
-		InElementBorder = Color3.fromRGB(55, 55, 55),
-		ElementTransparency = 0.82,
-		DropdownFrame = Color3.fromRGB(120, 120, 120),
-		DropdownHolder = Color3.fromRGB(35, 35, 35),
-		DropdownBorder = Color3.fromRGB(25, 25, 25),
-		Dialog = Color3.fromRGB(35, 35, 35),
-		DialogHolder = Color3.fromRGB(25, 25, 25),
-		DialogHolderLine = Color3.fromRGB(20, 20, 20),
-		DialogButton = Color3.fromRGB(35, 35, 35),
-		DialogButtonBorder = Color3.fromRGB(55, 55, 55),
-		DialogBorder = Color3.fromRGB(50, 50, 50),
-		DialogInput = Color3.fromRGB(45, 45, 45),
-		DialogInputLine = Color3.fromRGB(120, 120, 120),
-	},
-	AMOLED = {
-		Name = "AMOLED",
-		Accent = Color3.fromRGB(255, 255, 255),
-		AcrylicMain = Color3.fromRGB(0, 0, 0),
-		AcrylicBorder = Color3.fromRGB(20, 20, 20),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromRGB(0, 0, 0)),
-		AcrylicNoise = 1,
-		TitleBarLine = Color3.fromRGB(25, 25, 25),
-		Tab = Color3.fromRGB(40, 40, 40),
-		Element = Color3.fromRGB(15, 15, 15),
+}
 		ElementBorder = Color3.fromRGB(0, 0, 0),
 		InElementBorder = Color3.fromRGB(40, 40, 40),
 		ElementTransparency = 0.95,
@@ -888,7 +834,6 @@ local Library = {
 
 	OpenFrames = {},
 	Options = {},
-	Themes = Themes.Names,
 	Windows = {},
 
 	Window = nil,
@@ -922,342 +867,6 @@ function LanguageManager:SetLanguage(language)
 		self:UpdateAllElements()
 	end
 end
-
-function LanguageManager:AddTranslation(key, translations)
-	for lang, text in pairs(translations) do
-		if not self.Translations[lang] then
-			self.Translations[lang] = {}
-		end
-		self.Translations[lang][key] = text
-	end
-	self:UpdateAllElements()
-end
-
-function LanguageManager:AutoTranslate(text, targetLang)
-	if not text or text == "" or targetLang == "English" then return text end
-	
-    
-	local cacheKey = text .. "_" .. targetLang
-	if self.Cache[cacheKey] then
-		return self.Cache[cacheKey]
-	end
-	
-    
-	local url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=" 
-		.. (targetLang == "Russian" and "ru" or "en") 
-		.. "&dt=t&q=" .. httpService:UrlEncode(text)
-		
-	local success, result = pcall(function()
-		return httpService:JSONDecode(game:HttpGet(url))
-	end)
-	
-	if success and result and result[1] and result[1][1] and result[1][1][1] then
-		local translatedText = result[1][1][1]
-		self.Cache[cacheKey] = translatedText
-		return translatedText
-	end
-	
-	return text
-end
-
-function LanguageManager:RegisterElement(textLabel, key)
-	if not textLabel or not key then return end
-	
-	local actualKey = key
-	
-	table.insert(self.RegisteredElements, {
-		Label = textLabel,
-		Key = actualKey
-	})
-	
-	self:UpdateElement(textLabel, actualKey)
-end
-
-function LanguageManager:UpdateElement(textLabel, key)
-	if not textLabel or not textLabel.Parent then return end
-	
-	if self.CurrentLanguage == "English" then
-		textLabel.Text = key
-		return
-	end
-	
-	local translation = self.Translations[self.CurrentLanguage][key]
-	if translation then
-		textLabel.Text = translation
-	else
-    
-		task.spawn(function()
-			local translated = self:AutoTranslate(key, self.CurrentLanguage)
-			if translated and textLabel and textLabel.Parent then
-				self.Translations[self.CurrentLanguage][key] = translated
-				textLabel.Text = translated
-			end
-		end)
-	end
-end
-function LanguageManager:UpdateAllElements()
-	for i = #self.RegisteredElements, 1, -1 do
-		local data = self.RegisteredElements[i]
-		if data.Label and data.Label.Parent then
-			self:UpdateElement(data.Label, data.Key)
-		else
-			table.remove(self.RegisteredElements, i)
-		end
-	end
-end
-
-Library.LanguageManager = LanguageManager
-
-local function isMotor(value)
-	local motorType = tostring(value):match("^Motor%((.+)%)$")
-
-	if motorType then
-		return true, motorType
-	else
-		return false
-	end
-end
-
-local Connection = {}
-
-Connection.__index = Connection
-
-function Connection.new(signal, handler)
-	return setmetatable({
-		signal = signal,
-		connected = true,
-		_handler = handler,
-	}, Connection)
-end
-
-function Connection:disconnect()
-	if self.connected then
-		self.connected = false
-
-		for index, connection in pairs(self.signal._connections) do
-			if connection == self then
-				table.remove(self.signal._connections, index)
-				return
-			end
-		end
-	end
-end
-
-local Signal = {}
-Signal.__index = Signal
-
-function Signal.new()
-	return setmetatable({
-		_connections = {},
-		_threads = {},
-	}, Signal)
-end
-
-function Signal:fire(...)
-	for _, connection in pairs(self._connections) do
-		connection._handler(...)
-	end
-
-	for _, thread in pairs(self._threads) do
-		coroutine.resume(thread, ...)
-	end
-
-	self._threads = {}
-end
-
-function Signal:connect(handler)
-	local connection = Connection.new(self, handler)
-	table.insert(self._connections, connection)
-	return connection
-end
-
-function Signal:wait()
-	table.insert(self._threads, coroutine.running())
-	return coroutine.yield()
-end
-
-local Linear = {}
-Linear.__index = Linear
-
-function Linear.new(targetValue, options)
-	assert(targetValue, "Missing argument #1: targetValue")
-
-	options = options or {}
-
-	return setmetatable({
-		_targetValue = targetValue,
-		_velocity = options.velocity or 1,
-	}, Linear)
-end
-
-function Linear:step(state, dt)
-	local position = state.value
-	local velocity = self._velocity
-	local goal = self._targetValue
-
-	local dPos = dt * velocity
-
-	local complete = dPos >= math.abs(goal - position)
-	position = position + dPos * (goal > position and 1 or -1)
-	if complete then
-		position = self._targetValue
-		velocity = 0
-	end
-
-	return {
-		complete = complete,
-		value = position,
-		velocity = velocity,
-	}
-end
-
-local Instant = {}
-Instant.__index = Instant
-
-function Instant.new(targetValue)
-	return setmetatable({
-		_targetValue = targetValue,
-	}, Instant)
-end
-
-function Instant:step()
-	return {
-		complete = true,
-		value = self._targetValue,
-	}
-end
-
-local VELOCITY_THRESHOLD = 0.001
-local POSITION_THRESHOLD = 0.001
-
-local EPS = 0.0001
-
-local Spring = {}
-Spring.__index = Spring
-
-function Spring.new(targetValue, options)
-	assert(targetValue, "Missing argument #1: targetValue")
-	options = options or {}
-
-	return setmetatable({
-		_targetValue = targetValue,
-		_frequency = options.frequency or 4,
-		_dampingRatio = options.dampingRatio or 1,
-	}, Spring)
-end
-
-function Spring:step(state, dt)
-
-
-	local d = self._dampingRatio
-	local f = self._frequency * 2 * math.pi
-	local g = self._targetValue
-	local p0 = state.value
-	local v0 = state.velocity or 0
-
-	local offset = p0 - g
-	local decay = math.exp(-d * f * dt)
-
-	local p1, v1
-
-	if d == 1 then
-		p1 = (offset * (1 + f * dt) + v0 * dt) * decay + g
-		v1 = (v0 * (1 - f * dt) - offset * (f * f * dt)) * decay
-	elseif d < 1 then
-		local c = math.sqrt(1 - d * d)
-
-		local i = math.cos(f * c * dt)
-		local j = math.sin(f * c * dt)
-
-
-
-		local z
-		if c > EPS then
-			z = j / c
-		else
-			local a = dt * f
-			z = a + ((a * a) * (c * c) * (c * c) / 20 - c * c) * (a * a * a) / 6
-		end
-
-
-
-		local y
-		if f * c > EPS then
-			y = j / (f * c)
-		else
-			local b = f * c
-			y = dt + ((dt * dt) * (b * b) * (b * b) / 20 - b * b) * (dt * dt * dt) / 6
-		end
-
-		p1 = (offset * (i + d * z) + v0 * y) * decay + g
-		v1 = (v0 * (i - z * d) - offset * (z * f)) * decay
-	else
-		local c = math.sqrt(d * d - 1)
-
-		local r1 = -f * (d - c)
-		local r2 = -f * (d + c)
-
-		local co2 = (v0 - offset * r1) / (2 * f * c)
-		local co1 = offset - co2
-
-		local e1 = co1 * math.exp(r1 * dt)
-		local e2 = co2 * math.exp(r2 * dt)
-
-		p1 = e1 + e2 + g
-		v1 = e1 * r1 + e2 * r2
-	end
-
-	local complete = math.abs(v1) < VELOCITY_THRESHOLD and math.abs(p1 - g) < POSITION_THRESHOLD
-
-	return {
-		complete = complete,
-		value = complete and g or p1,
-		velocity = v1,
-	}
-end
-
-local noop = function() end
-
-local BaseMotor = {}
-BaseMotor.__index = BaseMotor
-
-function BaseMotor.new()
-	return setmetatable({
-		_onStep = Signal.new(),
-		_onStart = Signal.new(),
-		_onComplete = Signal.new(),
-	}, BaseMotor)
-end
-
-function BaseMotor:onStep(handler)
-	return self._onStep:connect(handler)
-end
-function BaseMotor:onStart(handler)
-	return self._onStart:connect(handler)
-end
-
-function BaseMotor:onComplete(handler)
-	return self._onComplete:connect(handler)
-end
-
-function BaseMotor:start()
-	if not self._connection then
-		self._connection = RunService.RenderStepped:Connect(function(deltaTime)
-			self:step(deltaTime)
-		end)
-	end
-end
-
-function BaseMotor:stop()
-	if self._connection then
-		self._connection:Disconnect()
-		self._connection = nil
-	end
-end
-BaseMotor.destroy = BaseMotor.stop
-
-BaseMotor.step = noop
-BaseMotor.getValue = noop
 BaseMotor.setGoal = noop
 
 function BaseMotor:__tostring()
@@ -1609,8 +1218,8 @@ local MiniMessageColors = {
 	["yellow"] = "#FFFF55",
 	["white"] = "#FFFFFF",
 	["reset"] = "#FFFFFF",
-	["orange"] = "#FFAA00",
-	["pink"] = "#FF55FF",
+	["orange"] = "#1f1605",
+	["pink"] = "#581358",
 	["lime"] = "#55FF55",
 	["brown"] = "#AA5500",
 }
@@ -1925,10 +1534,7 @@ local function setupMiniMessageSupport(object, properties)
 		end
 		
 		if text:match("<[^>]+>") then
-		local hasMiniMessagePattern = 
-			text:match("<%w+>") or
-			text:match("<color:") or
-			text:match("<#[%x%x%x%x%x%x]>") or
+		local hasMiniMessagePattern = text:match("<%w+>") or text:match("<color:") or text:match("<#[%x%x%x%x%x%x]>") or
 			text:match("<gradient:") or
 			text:match("<reset>") or
 			text:match("<obfuscated>") or
@@ -2046,30 +1652,28 @@ local New = Creator.New
 
 local get_hui = gethui or function() return game:GetService("CoreGui") end
 
+-- Safely create main GUI with error handling
 local GUI
 local guiCreationSuccess = pcall(function()
     GUI = Creator.New("ScreenGui", {
-        Parent = LocalPlayer:FindFirstChild("PlayerGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"),
+        Parent = get_hui(), 
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false,
-        DisplayOrder = 10,
-        Name = game:GetService("HttpService"):GenerateGUID(false)
+        DisplayOrder = 10
     })
 end)
 
 if not guiCreationSuccess or not GUI then
+    warn("Failed to create main GUI - retrying with Instance.new")
     GUI = Instance.new("ScreenGui")
-    GUI.Parent = LocalPlayer:FindFirstChild("PlayerGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    GUI.Parent = pcall(get_hui) and get_hui() or game:GetService("CoreGui")
     GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     GUI.ResetOnSpawn = false
     GUI.DisplayOrder = 10
-    GUI.Name = game:GetService("HttpService"):GenerateGUID(false)
 end
 
-if pcall(ProtectGui) then ProtectGui(GUI) end
-
 Library.GUI = GUI
-Library.HiddenParent = GUI
+if pcall(ProtectGui) then ProtectGui(GUI) end
 
 local KeybindDisplayContainer = Instance.new("Frame")
 KeybindDisplayContainer.Name = "KeybindDisplay"
@@ -3845,8 +3449,7 @@ Components.Dialog = (function()
 
 			for _, Btn in next, NewDialog.ButtonHolder:GetChildren() do
 				if Btn:IsA("TextButton") then
-					Btn.Size =
-						UDim2.new(1 / NewDialog.Buttons, -(((NewDialog.Buttons - 1) * 10) / NewDialog.Buttons), 0, 32)
+					Btn.Size = UDim2.new(1 / NewDialog.Buttons, -(((NewDialog.Buttons - 1) * 10) / NewDialog.Buttons), 0, 32)
 				end
 			end
 
@@ -3890,7 +3493,6 @@ Components.Notification = (function()
 				Padding = UDim.new(0, 20),
 			}),
 		})
-		Library.NotificationHolder = Notification.Holder
 	end
 
 	function Notification:New(Config)
@@ -5303,8 +4905,7 @@ Window.Root = New("Frame", {
 				local StartSize = Window.Size
 
 				local TargetSize = Vector3.new(StartSize.X.Offset, StartSize.Y.Offset, 0) + Vector3.new(1, 1, 0) * Delta
-				local TargetSizeClamped =
-					Vector2.new(math.clamp(TargetSize.X, 470, 2048), math.clamp(TargetSize.Y, 380, 2048))
+				local TargetSizeClamped = Vector2.new(math.clamp(TargetSize.X, 470, 2048), math.clamp(TargetSize.Y, 380, 2048))
 
 				SizeMotor:setGoal({
 					X = Flipper.Instant.new(TargetSizeClamped.X),
@@ -5333,25 +4934,15 @@ Window.Root = New("Frame", {
 		end)
 
 		Creator.AddSignal(UserInputService.InputBegan, function(Input, gameProcessedEvent)
-			-- Don't return on gameProcessedEvent for minimize key - needs to work globally
-			-- Only proceed if it's a keyboard input
-			if Input.UserInputType ~= Enum.UserInputType.Keyboard then return end
-			
-			local shouldMinimize = false
-			
-			if type(Library.MinimizeKeybind) == "table" and Library.MinimizeKeybind.Type == "Keybind" then
-				-- Compare KeyCode enums properly
-				if Input.KeyCode == Library.MinimizeKeybind.Value then
-					shouldMinimize = true
+			if gameProcessedEvent then return end
+			if
+				type(Library.MinimizeKeybind) == "table"
+				and Library.MinimizeKeybind.Type == "Keybind"
+			then
+				if Input.KeyCode.Name == Library.MinimizeKeybind.Value then
+					Window:Minimize()
 				end
-			elseif type(Library.MinimizeKey) == "userdata" then
-				-- Direct enum comparison is most reliable
-				if Input.KeyCode == Library.MinimizeKey then
-					shouldMinimize = true
-				end
-			end
-			
-			if shouldMinimize then
+			elseif Input.KeyCode == Library.MinimizeKey then
 				Window:Minimize()
 			end
 		end)
@@ -6226,11 +5817,10 @@ local DropdownHolderCanvas = New("Frame", {
 
 		Creator.AddSignal(DropdownInner.InputBegan, function(Input)
 			if Input.UserInputType == Enum.UserInputType.Touch then
-				if Dropdown.Opened then
-					Dropdown:Close()
-				else
+				if not Dropdown.Opened then
 					Dropdown:Open()
 				end
+				-- Не закрываем Dropdown при touch на самом Dropdown
 			end
 		end)
 		Creator.AddSignal(DropdownDisplay:GetPropertyChangedSignal("Text"), function()
@@ -6244,20 +5834,13 @@ local DropdownHolderCanvas = New("Frame", {
 		end)
 
 		Creator.AddSignal(UserInputService.InputBegan, function(Input)
-			if
-				Input.UserInputType == Enum.UserInputType.MouseButton1
-				or Input.UserInputType == Enum.UserInputType.Touch
-			then
-				local mousePos = Input.UserInputType == Enum.UserInputType.MouseButton1 and Vector2.new(Mouse.X, Mouse.Y) or Input.Position
-				local AbsPos, AbsSize = DropdownHolderFrame.AbsolutePosition, DropdownHolderFrame.AbsoluteSize
-				local innerAbsPos, innerAbsSize = DropdownInner.AbsolutePosition, DropdownInner.AbsoluteSize
-				
-				local clickedInsideDropdown = mousePos.X >= AbsPos.X and mousePos.X <= AbsPos.X + AbsSize.X and mousePos.Y >= AbsPos.Y and mousePos.Y <= AbsPos.Y + AbsSize.Y
-				local clickedInsideInner = mousePos.X >= innerAbsPos.X and mousePos.X <= innerAbsPos.X + innerAbsSize.X and mousePos.Y >= innerAbsPos.Y and mousePos.Y <= innerAbsPos.Y + innerAbsSize.Y
-				
-				if not clickedInsideDropdown and not clickedInsideInner then
-					Dropdown:Close()
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+				-- ignore events that begin on the dropdown or its inner button, especially on touch devices
+				if Input.Target and (DropdownInner:IsAncestorOf(Input.Target) or DropdownHolderCanvas:IsAncestorOf(Input.Target)) then
+					return
 				end
+				-- Только закрываем Dropdown если touch вне Dropdown
+				Dropdown:Close()
 			end
 		end)
 
@@ -7542,8 +7125,7 @@ ElementsTable.Colorpicker = (function()
 			Creator.AddSignal(GreenInput.Input.FocusLost, function(Enter)
 				if Enter then
 					local CurrentColor = GetRGB()
-					local Success, Result =
-						pcall(Color3.fromRGB, CurrentColor["R"], GreenInput.Input.Text, CurrentColor["B"])
+					local Success, Result = pcall(Color3.fromRGB, CurrentColor["R"], GreenInput.Input.Text, CurrentColor["B"])
 					if Success and typeof(Result) == "Color3" then
 						if tonumber(GreenInput.Input.Text) <= 255 then
 							Hue, Sat, Vib = Color3.toHSV(Result)
@@ -7556,8 +7138,7 @@ ElementsTable.Colorpicker = (function()
 			Creator.AddSignal(BlueInput.Input.FocusLost, function(Enter)
 				if Enter then
 					local CurrentColor = GetRGB()
-					local Success, Result =
-						pcall(Color3.fromRGB, CurrentColor["R"], CurrentColor["G"], BlueInput.Input.Text)
+					local Success, Result = pcall(Color3.fromRGB, CurrentColor["R"], CurrentColor["G"], BlueInput.Input.Text)
 					if Success and typeof(Result) == "Color3" then
 						if tonumber(BlueInput.Input.Text) <= 255 then
 							Hue, Sat, Vib = Color3.toHSV(Result)
@@ -9970,7 +9551,8 @@ Library.CreateWindow = function(self, Config)
 	assert(Config.Title, "Window - Missing Title")
 
 	if Library.Window then
-		print("You cannot create more than one window.")
+		-- log suppressed to keep library load less conspicuous
+		-- print("You cannot create more than one window.")
 		return
 	end
 
@@ -10009,7 +9591,6 @@ Library.CreateWindow = function(self, Config)
 
 
 		Acrylic.init()
-
 
 	end
 
@@ -10850,7 +10431,8 @@ end
 
 
 
-_G.Fluent = Library
+-- Global assignment removed to keep library loading stealthy
+-- _G.Fluent = Library
 
 
 
@@ -11009,10 +10591,7 @@ local MinimizeButton = New("TextButton", {
 
 
 		ImageTransparency = 0.1,
-
 	}, {
-
-
 		New("UIAspectRatioConstraint", {
 
 
