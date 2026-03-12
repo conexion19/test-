@@ -5,14 +5,23 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local TextService = game:GetService("TextService")
 local Camera = game:GetService("Workspace").CurrentCamera
-local Mouse = LocalPlayer:GetMouse()
+local Mouse = {}
+setmetatable(Mouse, {
+	__index = function(self, index)
+		local loc = UserInputService:GetMouseLocation()
+		if index == "X" then return loc.X end
+		if index == "Y" then return loc.Y - 36 end
+		return nil
+	end
+})
 local httpService = game:GetService("HttpService")
 
 local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) ~= nil
 
 local fischbypass
 
-if game.GameId == 5750914919 then
+local DEATHBALL_ID = 5166944221
+if game.GameId == DEATHBALL_ID then
 	fischbypass = true
 end
 
@@ -946,7 +955,7 @@ function LanguageManager:AutoTranslate(text, targetLang)
 		.. "&dt=t&q=" .. httpService:UrlEncode(text)
 		
 	local success, result = pcall(function()
-		return httpService:JSONDecode(game:HttpGet(url))
+		return httpService:JSONDecode((request or syn.request or http.request)({Url = url, Method = "GET"}).Body)
 	end)
 	
 	if success and result and result[1] and result[1][1] and result[1][1][1] then
@@ -2042,20 +2051,40 @@ Library.MiniMessageToRichText = MiniMessageToRichText
 
 local New = Creator.New
 
-local get_hui = gethui or function() return game:GetService("CoreGui") end
+local get_hui = function()
+    local success, hui = pcall(function() return gethui() end)
+    if success and hui and hui.Name ~= "PlayerGui" then
+        return hui
+    end
+    if type(syn) == "table" and type(syn.protect_gui) == "function" then
+        return game:GetService("CoreGui")
+    end
+    local core = game:GetService("CoreGui")
+    return core:FindFirstChild("RobloxGui") or core
+end
+
+local function RandomString()
+    local length = math.random(10, 20)
+    local array = {}
+    for i = 1, length do
+        array[i] = string.char(math.random(97, 122))
+    end
+    return table.concat(array)
+end
 
 local GUI = Creator.New("ScreenGui", {
+    Name = RandomString(),
     Parent = get_hui(), 
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     ResetOnSpawn = false,
-    DisplayOrder = 999
+    DisplayOrder = math.random(10, 50)
 })
 
 Library.GUI = GUI
 ProtectGui(GUI)
 
 local KeybindDisplayContainer = Instance.new("Frame")
-KeybindDisplayContainer.Name = "UIFrame"
+KeybindDisplayContainer.Name = RandomString()
 KeybindDisplayContainer.BackgroundTransparency = 1
 KeybindDisplayContainer.Size = UDim2.new(0, 250, 1, 0)
 KeybindDisplayContainer.Position = UDim2.new(1, -260, 0, 0)
@@ -8388,7 +8417,7 @@ local SaveManager = {} do
 
 
 
-	SaveManager.Folder = "FluentSettings"
+	SaveManager.Folder = "NexusSettings"
 
 
 	SaveManager.Ignore = {}
@@ -8752,7 +8781,7 @@ local SaveManager = {} do
 
 
 
-			Fluent.SettingLoaded = true
+			Library.SettingLoaded = true
 
 
 
@@ -9342,7 +9371,7 @@ end
 local InterfaceManager = {} do
 
 
-	InterfaceManager.Folder = "FluentSettings"
+	InterfaceManager.Folder = "NexusSettings"
 
 
 	InterfaceManager.Settings = {
@@ -10272,7 +10301,10 @@ function Library:CreateMinimizer(Config)
 				if isDragging and dragStart and dragOffset and holder and holder.Parent then
 
 
-					local mouse = LocalPlayer:GetMouse()
+					local mouse = {
+					X = UserInputService:GetMouseLocation().X,
+					Y = UserInputService:GetMouseLocation().Y - 36
+					}
 
 
 					local current = Vector2.new(mouse.X, mouse.Y)
@@ -11044,7 +11076,10 @@ Creator.AddSignal(RunService.Heartbeat, function()
 		end
 
 
-		local Mouse = game:GetService("Players").LocalPlayer:GetMouse()
+		local Mouse = {
+			X = UserInputService:GetMouseLocation().X,
+			Y = UserInputService:GetMouseLocation().Y - 36
+		}
 
 
 		local currentMousePos = Vector2.new(Mouse.X, Mouse.Y)
