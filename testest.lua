@@ -7,8 +7,6 @@ local TextService = game:GetService("TextService")
 local Camera = game:GetService("Workspace").CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 local httpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
 local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) ~= nil
 
@@ -20,9 +18,9 @@ end
 
 local RenderStepped = RunService.RenderStepped
 
-local ProtectGui = protectgui or (syn and syn.protect_gui) or function() end
+local ProtectGui = (typeof(protect_gui) == "function" and protect_gui) or (syn and typeof(syn.protect_gui) == "function" and syn.protect_gui) or function(obj) return obj end
 
-local Executor = identifyexecutor and identifyexecutor() or "Unknown"
+local Executor = "Unknown"
 local Themes = {
 	Names = {
 		"Slate",
@@ -2046,31 +2044,18 @@ local New = Creator.New
 
 local get_hui = gethui or function() return game:GetService("CoreGui") end
 
--- Safely create main GUI with error handling
-local GUI
-local guiCreationSuccess = pcall(function()
-    GUI = Creator.New("ScreenGui", {
-        Parent = get_hui(), 
-        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-        ResetOnSpawn = false,
-        DisplayOrder = 10
-    })
-end)
-
-if not guiCreationSuccess or not GUI then
-    warn("Failed to create main GUI - retrying with Instance.new")
-    GUI = Instance.new("ScreenGui")
-    GUI.Parent = pcall(get_hui) and get_hui() or game:GetService("CoreGui")
-    GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    GUI.ResetOnSpawn = false
-    GUI.DisplayOrder = 10
-end
+local GUI = Creator.New("ScreenGui", {
+    Parent = get_hui(), 
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    ResetOnSpawn = false,
+    DisplayOrder = 999
+})
 
 Library.GUI = GUI
-if pcall(ProtectGui) then ProtectGui(GUI) end
+ProtectGui(GUI)
 
 local KeybindDisplayContainer = Instance.new("Frame")
-KeybindDisplayContainer.Name = "KeybindDisplay"
+KeybindDisplayContainer.Name = "UIFrame"
 KeybindDisplayContainer.BackgroundTransparency = 1
 KeybindDisplayContainer.Size = UDim2.new(0, 250, 1, 0)
 KeybindDisplayContainer.Position = UDim2.new(1, -260, 0, 0)
@@ -2208,244 +2193,41 @@ end
 local viewportPointToWorld, getOffset = unpack({ viewportPointToWorld, getOffset })
 
 local BlurFolder = Instance.new("Folder")
-BlurFolder.Name = "FluentBlur"
-do
-	local ws = game:GetService("Workspace")
-	local function attachToCurrentCamera()
-		local cam = ws.CurrentCamera
-		if cam and BlurFolder.Parent ~= cam then
-			BlurFolder.Parent = cam
-		end
-	end
-	attachToCurrentCamera()
-	ws:GetPropertyChangedSignal("CurrentCamera"):Connect(attachToCurrentCamera)
-end
+BlurFolder.Name = "Blur"
 
 local function createAcrylic()
-	local Part = Creator.New("Part", {
-		Name = "Body",
-		Color = Color3.new(0, 0, 0),
-		Material = Enum.Material.Glass,
-		Size = Vector3.new(1, 1, 0),
-		Anchored = true,
-		CanCollide = false,
-		Locked = true,
-		CastShadow = false,
-		Transparency = 0.98,
-	}, {
-		Creator.New("SpecialMesh", {
-			Name = "Mesh",
-			MeshType = Enum.MeshType.Brick,
-			Offset = Vector3.new(0, 0, -0.000001),
-		}),
-	})
-
+	local Part = Instance.new("Folder")
+	Part.Name = "Body"
 	return Part
 end
 
 function AcrylicBlur()
-	local function createAcrylicBlur(distance)
-		local cleanups = {}
-
-		distance = distance or 0.001
-		local positions = {
-			topLeft = Vector2.new(),
-			topRight = Vector2.new(),
-			bottomRight = Vector2.new(),
-		}
-		local model = createAcrylic()
-		model.Parent = BlurFolder
-
-		local function updatePositions(size, position)
-			positions.topLeft = position
-			positions.topRight = position + Vector2.new(size.X, 0)
-			positions.bottomRight = position + size
-		end
-
-		local function render()
-			local res = game:GetService("Workspace").CurrentCamera
-			if res then
-				res = res.CFrame
-			end
-			local cond = res
-			if not cond then
-				cond = CFrame.new()
-			end
-
-			local camera = cond
-			local topLeft = positions.topLeft
-			local topRight = positions.topRight
-			local bottomRight = positions.bottomRight
-
-			local topLeft3D = viewportPointToWorld(topLeft, distance)
-			local topRight3D = viewportPointToWorld(topRight, distance)
-			local bottomRight3D = viewportPointToWorld(bottomRight, distance)
-
-			local width = (topRight3D - topLeft3D).Magnitude
-			local height = (topRight3D - bottomRight3D).Magnitude
-
-			model.CFrame = CFrame.fromMatrix((topLeft3D + bottomRight3D) / 2, camera.XVector, camera.YVector, camera.ZVector)
-			model.Mesh.Scale = Vector3.new(width, height, 0)
-		end
-
-		local function onChange(rbx)
-			local offset = getOffset()
-			local size = rbx.AbsoluteSize - Vector2.new(offset, offset)
-			local position = rbx.AbsolutePosition + Vector2.new(offset / 2, offset / 2)
-
-			updatePositions(size, position)
-			task.spawn(render)
-		end
-
-		local function renderOnChange()
-			local camera = game:GetService("Workspace").CurrentCamera
-			if not camera then
-				return
-			end
-			table.insert(cleanups, camera:GetPropertyChangedSignal("CFrame"):Connect(render))
-			table.insert(cleanups, camera:GetPropertyChangedSignal("ViewportSize"):Connect(render))
-			table.insert(cleanups, camera:GetPropertyChangedSignal("FieldOfView"):Connect(render))
-			task.spawn(render)
-		end
-
-		model.Destroying:Connect(function()
-			for _, item in cleanups do
-				pcall(function()
-					item:Disconnect()
-				end)
-			end
-		end)
-
-		renderOnChange()
-
-		return onChange, model
-	end
-
 	return function(distance)
 		local Blur = {}
-		local onChange, model = createAcrylicBlur(distance)
-
 		local comp = Creator.New("Frame", {
 			BackgroundTransparency = 1,
 			Size = UDim2.fromScale(1, 1),
 		})
-
-		Creator.AddSignal(comp:GetPropertyChangedSignal("AbsolutePosition"), function()
-			onChange(comp)
-		end)
-		Creator.AddSignal(comp:GetPropertyChangedSignal("AbsoluteSize"), function()
-			onChange(comp)
-		end)
-		Blur.AddParent = function(Parent)
-			Creator.AddSignal(Parent:GetPropertyChangedSignal("Visible"), function()
-				Blur.SetVisibility(Parent.Visible)
-			end)
-		end
-
-		Blur.SetVisibility = function(Value)
-			model.Transparency = Value and 0.98 or 1
-		end
-
+		Blur.AddParent = function(Parent) end
+		Blur.SetVisibility = function(Value) end
 		Blur.Frame = comp
-		Blur.Model = model
-
+		Blur.Model = Instance.new("Folder")
 		return Blur
 	end
 end
 
 function AcrylicPaint()
 	local New = Creator.New
-	local AcrylicBlur = AcrylicBlur()
-
 	return function(props)
 		local AcrylicPaint = {}
-
 		AcrylicPaint.Frame = New("Frame", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 0.9,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BorderSizePixel = 0,
-		}, {
-			New("ImageLabel", {
-				Image = "rbxassetid://8992230677",
-				ScaleType = "Slice",
-				SliceCenter = Rect.new(Vector2.new(99, 99), Vector2.new(99, 99)),
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				Size = UDim2.new(1, 120, 1, 116),
-				Position = UDim2.new(0.5, 0, 0.5, 0),
-				BackgroundTransparency = 1,
-				ImageColor3 = Color3.fromRGB(0, 0, 0),
-				ImageTransparency = 0.7,
-			}),
-
-			New("Frame", {
-				BackgroundTransparency = 0.45,
-				Size = UDim2.fromScale(1, 1),
-				Name = "Background",
-				ThemeTag = {
-					BackgroundColor3 = "AcrylicMain",
-				},
-			}),
-
-			New("Frame", {
-				BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-				BackgroundTransparency = 0.4,
-				Size = UDim2.fromScale(1, 1),
-			}, {
-				New("UIGradient", {
-					Rotation = 90,
-					ThemeTag = {
-						Color = "AcrylicGradient",
-					},
-				}),
-			}),
-
-			New("ImageLabel", {
-				Image = "rbxassetid://9968344105",
-				ImageTransparency = 0.98,
-				ScaleType = Enum.ScaleType.Tile,
-				TileSize = UDim2.new(0, 128, 0, 128),
-				Size = UDim2.fromScale(1, 1),
-				BackgroundTransparency = 1,
-			}),
-
-			New("ImageLabel", {
-				Image = "rbxassetid://9968344227",
-				ImageTransparency = 0.9,
-				ScaleType = Enum.ScaleType.Tile,
-				TileSize = UDim2.new(0, 128, 0, 128),
-				Size = UDim2.fromScale(1, 1),
-				BackgroundTransparency = 1,
-				ThemeTag = {
-					ImageTransparency = "AcrylicNoise",
-				},
-			}),
-
-			New("Frame", {
-				BackgroundTransparency = 1,
-				Size = UDim2.fromScale(1, 1),
-				ZIndex = 2,
-			}, {
-				New("UIStroke", {
-					Transparency = 0.5,
-					Thickness = 1,
-					ThemeTag = {
-						Color = "AcrylicBorder",
-					},
-				}),
-			}),
 		})
-
-		local Blur
-
-		if Library.UseAcrylic then
-			Blur = AcrylicBlur()
-			Blur.Frame.Parent = AcrylicPaint.Frame
-			AcrylicPaint.Model = Blur.Model
-			AcrylicPaint.AddParent = Blur.AddParent
-			AcrylicPaint.SetVisibility = Blur.SetVisibility
-		end
-
+		AcrylicPaint.AddParent = function() end
+		AcrylicPaint.SetVisibility = function() end
 		return AcrylicPaint
 	end
 end
@@ -2457,47 +2239,8 @@ local Acrylic = {
 }
 
 function Acrylic.init()
-	local baseEffect = Instance.new("DepthOfFieldEffect")
-	baseEffect.FarIntensity = 0
-	baseEffect.InFocusRadius = 0.1
-	baseEffect.NearIntensity = 1
-
-	local depthOfFieldDefaults = {}
-
-	function Acrylic.Enable()
-		for _, effect in pairs(depthOfFieldDefaults) do
-			effect.Enabled = false
-		end
-		baseEffect.Parent = game:GetService("Lighting")
-	end
-
-	function Acrylic.Disable()
-		for _, effect in pairs(depthOfFieldDefaults) do
-			effect.Enabled = effect.enabled
-		end
-		baseEffect.Parent = nil
-	end
-
-	local function registerDefaults()
-		local function register(object)
-			if object:IsA("DepthOfFieldEffect") then
-				depthOfFieldDefaults[object] = { enabled = object.Enabled }
-			end
-		end
-
-		for _, child in pairs(game:GetService("Lighting"):GetChildren()) do
-			register(child)
-		end
-
-		if game:GetService("Workspace").CurrentCamera then
-			for _, child in pairs(game:GetService("Workspace").CurrentCamera:GetChildren()) do
-				register(child)
-			end
-		end
-	end
-
-	registerDefaults()
-	Acrylic.Enable()
+	function Acrylic.Enable() end
+	function Acrylic.Disable() end
 end
 
 local Components = {
@@ -3879,7 +3622,7 @@ Components.Notification = (function()
 			AnchorPoint = Vector2.new(1, 1),
 			BackgroundTransparency = 1,
 			Parent = GUI,
-			ZIndex = 10,
+			ZIndex = 2000,
 		}, {
 			New("UIListLayout", {
 				HorizontalAlignment = Enum.HorizontalAlignment.Center,
@@ -5038,7 +4781,7 @@ Window.Root = New("Frame", {
     Size = Window.Size,
     Position = Window.Position,
     Parent = Config.Parent,
-    ZIndex = 10, 
+    ZIndex = 100, 
 }, rootChildren)
 
 		CenterWindow()
@@ -5145,7 +4888,7 @@ Window.Root = New("Frame", {
 			Y = Window.Position.Y.Offset,
 		})
 
-		_G.CDDrag = 0
+		Library.__cd = 0
 		Window.SelectorPosMotor = Flipper.SingleMotor.new(17)
 		Window.SelectorSizeMotor = Flipper.SingleMotor.new(0)
 		Window.ContainerBackMotor = Flipper.SingleMotor.new(0)
@@ -5153,7 +4896,7 @@ Window.Root = New("Frame", {
 		Window.ContainerXMotor = Flipper.SingleMotor.new(0)
 
 		SizeMotor:onStep(function(values)
-			task.wait(_G.CDDrag / 10)
+			task.wait(Library.__cd / 10)
 			Window.Root.Size = UDim2.new(0, values.X, 0, values.Y)
 			task.spawn(function()
 				task.wait(0.01)
@@ -5164,7 +4907,7 @@ Window.Root = New("Frame", {
 		end)
 
 		PosMotor:onStep(function(values)
-			task.wait(_G.CDDrag / 10)
+			task.wait(Library.__cd / 10)
 			Window.Root.Position = UDim2.new(0, values.X, 0, values.Y)
 		end)
 
@@ -5713,6 +5456,7 @@ ElementsTable.Toggle = (function()
 
 	return Element
 end)()
+
 ElementsTable.Dropdown = (function()
 	local Element = {}
 	Element.__index = Element
@@ -5953,7 +5697,7 @@ local DropdownHolderCanvas = New("Frame", {
     Size = UDim2.fromOffset(170, 300),
     Parent = Library.GUI,
     Visible = false,
-    ZIndex = 10, 
+    ZIndex = 1000, 
 }, {
     DropdownHolderFrame,
     New("UISizeConstraint", {
@@ -7769,11 +7513,7 @@ ElementsTable.Input = (function()
 end)()
 
 local NotificationModule = Components.Notification
-if NotificationModule and NotificationModule.Init then
-    pcall(function()
-        NotificationModule:Init(GUI)
-    end)
-end
+NotificationModule:Init(GUI)
 
 local New = Creator.New
 
@@ -9016,9 +8756,7 @@ local SaveManager = {} do
 
 
 
-
 			return true, decoded
-
 
 		end
 
@@ -9957,8 +9695,7 @@ Library.CreateWindow = function(self, Config)
 	assert(Config.Title, "Window - Missing Title")
 
 	if Library.Window then
-		-- log suppressed to keep library load less conspicuous
-		-- print("You cannot create more than one window.")
+		print("You cannot create more than one window.")
 		return
 	end
 
@@ -9998,6 +9735,7 @@ Library.CreateWindow = function(self, Config)
 
 		Acrylic.init()
 
+
 	end
 
 
@@ -10015,8 +9753,6 @@ Library.CreateWindow = function(self, Config)
 
 
 		end
-
-
 
 
 
@@ -10150,7 +9886,7 @@ function Library:CreateMinimizer(Config)
 	local parentGui = Library.GUI or GUI
 
 
-	if parentGui then parentGui.DisplayOrder = 10 end
+	if parentGui then parentGui.DisplayOrder = 1000 end
 
 
 	local isMobile = Mobile and true or false
@@ -10332,7 +10068,7 @@ function Library:CreateMinimizer(Config)
 		holder = New("Frame", {
 
 
-			Name = "FluentMinimizer",
+			Name = "UIButton",
 
 
 			Parent = parentGui,
@@ -10346,7 +10082,7 @@ function Library:CreateMinimizer(Config)
 			BackgroundTransparency = 1,
 
 
-			ZIndex = 10,
+			ZIndex = 999999999,
 
 
 			Visible = (Config.Visible ~= false),
@@ -10361,7 +10097,7 @@ function Library:CreateMinimizer(Config)
 		holder = New("Frame", {
 
 
-			Name = "FluentMinimizer",
+			Name = "UIButton",
 
 
 			Parent = parentGui,
@@ -10374,7 +10110,7 @@ function Library:CreateMinimizer(Config)
 			BackgroundTransparency = 1,
 
 
-			ZIndex = 10,
+			ZIndex = 999999999,
 
 
 			Visible = (Config.Visible ~= false),
@@ -10705,7 +10441,7 @@ function Library:ToggleTransparency(Value)
 	if Library.Window then
 
 
-		Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value and 0.35 or 0
+		Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value and 0.1 or 0
 
 
 	end
@@ -10837,8 +10573,8 @@ end
 
 
 
--- Global assignment removed to keep library loading stealthy
--- _G.Fluent = Library
+-- _G.Fluent removed for AC bypass
+
 
 
 
@@ -10997,7 +10733,10 @@ local MinimizeButton = New("TextButton", {
 
 
 		ImageTransparency = 0.1,
+
 	}, {
+
+
 		New("UIAspectRatioConstraint", {
 
 
@@ -11013,7 +10752,6 @@ local MinimizeButton = New("TextButton", {
 	})
 
 })
-
 
 
 
@@ -11366,11 +11104,9 @@ AddSignal(MinimizeButton.MouseButton1Click, function()
 
 
 	if not isDragging then
-		if Library.Window and Library.Window.Minimize then
-			pcall(function()
-				Library.Window:Minimize()
-			end)
-		end
+
+		Library.Window:Minimize()
+
 	end
 
 
@@ -11409,7 +11145,7 @@ function Library:AddSnowfallToWindow(Config)
     
     function SnowModule:Init(Parent, Config)
         local innerContainer = Instance.new("Frame")
-        innerContainer.Name = "SnowfallEffect"
+        innerContainer.Name = "Effect"
         innerContainer.Size = UDim2.new(1, 0, 1, 0)
         innerContainer.BackgroundTransparency = 1
         innerContainer.ClipsDescendants = true
@@ -11425,7 +11161,7 @@ function Library:AddSnowfallToWindow(Config)
 
         for i = 1, snowflakeCount do
             local snowflake = Instance.new("ImageLabel")
-            snowflake.Name = "Snowflake"..i
+            snowflake.Name = "Part"..i
             snowflake.BackgroundTransparency = 1
             snowflake.BorderSizePixel = 0
             snowflake.Image = "rbxassetid://124338537670236"
@@ -11524,7 +11260,7 @@ function Library:AddSnowfallToWindow(Config)
     end
     
     local snowContainer = Instance.new("Frame")
-    snowContainer.Name = "SnowfallContainer"
+    snowContainer.Name = "Container"
     snowContainer.Size = UDim2.new(1, 0, 1, 0)
     snowContainer.BackgroundTransparency = 1
     snowContainer.ZIndex = 1
@@ -11570,34 +11306,30 @@ function Library:AddSnowfallToWindow(Config)
 end
 
 if RunService:IsStudio() then task.wait(0.01) end
-
-local initSuccess = pcall(function()
-	task.spawn(function()
-		local hue = 0
-		RunService.Heartbeat:Connect(function(dt)
-			if Library.Theme == "RGB" then
-				hue = hue + dt * 0.1
-				if hue > 1 then hue = 0 end
-				local rgbColor = Color3.fromHSV(hue, 0.8, 1)
-				local rgbColor2 = Color3.fromHSV((hue + 0.5) % 1, 0.8, 1)
-				local theme = Themes["RGB"]
-				if theme then
-					theme.Accent = rgbColor
-					theme.TitleBarLine = rgbColor
-					theme.Tab = rgbColor 
-					theme.ElementBorder = rgbColor
-					theme.ToggleToggled = rgbColor
-					theme.SliderRail = rgbColor
-					theme.DropdownFrame = rgbColor
-					theme.InputIndicatorFocus = rgbColor
-					theme.Text = Color3.new(1,1,1)
-					if Library.Window then
-						Library:SetTheme("Slate") 
-					end
+task.spawn(function()
+	local hue = 0
+	RunService.Heartbeat:Connect(function(dt)
+		if Library.Theme == "RGB" then
+			hue = hue + dt * 0.1
+			if hue > 1 then hue = 0 end
+			local rgbColor = Color3.fromHSV(hue, 0.8, 1)
+			local rgbColor2 = Color3.fromHSV((hue + 0.5) % 1, 0.8, 1)
+			local theme = Themes["RGB"]
+			if theme then
+				theme.Accent = rgbColor
+				theme.TitleBarLine = rgbColor
+				theme.Tab = rgbColor 
+				theme.ElementBorder = rgbColor
+				theme.ToggleToggled = rgbColor
+				theme.SliderRail = rgbColor
+				theme.DropdownFrame = rgbColor
+				theme.InputIndicatorFocus = rgbColor
+				theme.Text = Color3.new(1,1,1)
+				if Library.Window then
+					Library:SetTheme("Slate") 
 				end
 			end
-		end)
+		end
 	end)
 end)
-
 return Library, SaveManager, InterfaceManager, Mobile
