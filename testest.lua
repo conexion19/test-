@@ -27,7 +27,16 @@ end
 
 local RenderStepped = RunService.RenderStepped
 
-local ProtectGui = (typeof(protect_gui) == "function" and protect_gui) or (syn and typeof(syn.protect_gui) == "function" and syn.protect_gui) or function(obj) return obj end
+local function GetProtectGui()
+    local success, fn = pcall(function() return protect_gui end)
+    if success and type(fn) == "function" then return fn end
+    success, fn = pcall(function() return syn.protect_gui end)
+    if success and type(fn) == "function" then return fn end
+    success, fn = pcall(function() return getgenv().protectgui end)
+    if success and type(fn) == "function" then return fn end
+    return function(obj) return obj end
+end
+local ProtectGui = GetProtectGui()
 
 local Executor = "Unknown"
 local Themes = {
@@ -2051,19 +2060,13 @@ Library.MiniMessageToRichText = MiniMessageToRichText
 
 local New = Creator.New
 
-local get_hui = function()
-    local success, hui = pcall(function() return gethui() end)
-    if success and hui and hui.Name ~= "PlayerGui" then
-        return hui
-    end
-    if type(syn) == "table" and type(syn.protect_gui) == "function" then
-        return game:GetService("CoreGui")
-    end
-    local core = game:GetService("CoreGui")
-    return core:FindFirstChild("RobloxGui") or core
-end
-
 local function RandomString()
+    local success, guid = pcall(function()   
+        return game:GetService("HttpService"):GenerateGUID(false):gsub("-", "")
+    end)
+    if success and guid then return guid end
+    -- Fallback with seeded randomness
+    math.randomseed(tick() % 1 * 1000000)
     local length = math.random(10, 20)
     local array = {}
     for i = 1, length do
@@ -2072,9 +2075,24 @@ local function RandomString()
     return table.concat(array)
 end
 
+local get_hui = function()
+    local success, hui = pcall(function() return gethui() end)
+    if success and hui and hui.Name ~= "PlayerGui" then
+        return hui
+    end
+    if type(syn) == "table" and type(syn.protect_gui) == "function" then
+        local s, c = pcall(function() return game:GetService("CoreGui") end)
+        if s and c then return c end
+    end
+    local success, core = pcall(function() return game:GetService("CoreGui") end)
+    if success and core then
+        return core:FindFirstChild("RobloxGui") or core
+    end
+    return game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+end
+
 local GUI = Creator.New("ScreenGui", {
     Name = RandomString(),
-    Parent = get_hui(), 
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     ResetOnSpawn = false,
     DisplayOrder = math.random(10, 50)
@@ -2082,6 +2100,7 @@ local GUI = Creator.New("ScreenGui", {
 
 Library.GUI = GUI
 ProtectGui(GUI)
+pcall(function() GUI.Parent = get_hui() end)
 
 local KeybindDisplayContainer = Instance.new("Frame")
 KeybindDisplayContainer.Name = RandomString()
