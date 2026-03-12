@@ -1,3 +1,8 @@
+local _g = getgenv and getgenv() or shared or _G
+if type(_g._NEXUS_CLEANUP) == "function" then
+    pcall(_g._NEXUS_CLEANUP)
+end
+
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -11362,7 +11367,7 @@ end
 if RunService:IsStudio() then task.wait(0.01) end
 task.spawn(function()
 	local hue = 0
-	RunService.Heartbeat:Connect(function(dt)
+	local rgbLoop = RunService.Heartbeat:Connect(function(dt)
 		if Library.Theme == "RGB" then
 			hue = hue + dt * 0.1
 			if hue > 1 then hue = 0 end
@@ -11385,5 +11390,13 @@ task.spawn(function()
 			end
 		end
 	end)
+    table.insert(Creator.Signals, rgbLoop)
 end)
+
+_g._NEXUS_CLEANUP = function()
+    if Library and type(Library.Destroy) == "function" then
+        pcall(function() Library:Destroy() end)
+    end
+end
+
 return Library, SaveManager, InterfaceManager, Mobile
