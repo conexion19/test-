@@ -25,7 +25,7 @@ local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum
 
 local fischbypass
 
-local DEATHBALL_ID = 5166944221
+local DEATHBALL_ID = 8304191830
 if game.GameId == DEATHBALL_ID then
 	fischbypass = true
 end
@@ -2275,9 +2275,19 @@ function AcrylicPaint()
 		local AcrylicPaint = {}
 		AcrylicPaint.Frame = New("Frame", {
 			Size = UDim2.fromScale(1, 1),
-			BackgroundTransparency = 0.9,
+			BackgroundTransparency = 1,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BorderSizePixel = 0,
+		}, {
+			New("Frame", {
+                Name = "Background",
+                BackgroundTransparency = 0,
+                ThemeTag = {
+                    BackgroundColor3 = "AcrylicMain"
+                },
+                Size = UDim2.fromScale(1, 1),
+                ZIndex = 1,
+            })
 		})
 		AcrylicPaint.AddParent = function() end
 		AcrylicPaint.SetVisibility = function() end
@@ -10494,10 +10504,10 @@ end
 function Library:ToggleTransparency(Value)
 
 
-	if Library.Window then
+	if Library.Window and Library.Window.AcrylicPaint and Library.Window.AcrylicPaint.Frame and Library.Window.AcrylicPaint.Frame:FindFirstChild("Background") then
 
 
-		Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value and 0.1 or 0
+		Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value and 0.15 or 0
 
 
 	end
@@ -10568,9 +10578,9 @@ function Library:SetWindowTransparency(Value)
 
 			end
 
-
-			Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = math.min(backgroundTransparency, 0.99)
-
+			if Library.Window.AcrylicPaint.Frame:FindFirstChild("Background") then
+			    Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = math.min(backgroundTransparency, 0.99)
+            end
 
 
 
@@ -10599,11 +10609,13 @@ function Library:SetWindowTransparency(Value)
 		else
 
 
-			Library.Window.AcrylicPaint.Model.Transparency = 0.98
+			if Library.Window.AcrylicPaint.Model then
+			    Library.Window.AcrylicPaint.Model.Transparency = 0.98
+            end
 
-
-			Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value * 0.3
-
+			if Library.Window.AcrylicPaint.Frame:FindFirstChild("Background") then
+			    Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value == 0 and 0 or (Value * 0.3)
+            end
 
 		end
 
