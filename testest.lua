@@ -743,7 +743,7 @@ local Themes = {
 		InElementBorder = Color3.fromRGB(60, 30, 40),
 		ElementTransparency = 0.92,
 		ToggleSlider = Color3.fromRGB(80, 40, 50),
-		ToggleToggled = Color3.fromRGB(255, 105, 180),
+		ToggleToggled = Color3.fromRGB(255, 255, 255),
 		SliderRail = Color3.fromRGB(80, 40, 50),
 		DropdownFrame = Color3.fromRGB(80, 40, 50),
 		DropdownHolder = Color3.fromRGB(40, 20, 25),
@@ -761,7 +761,7 @@ local Themes = {
 		DialogBorder = Color3.fromRGB(60, 30, 40),
 		DialogInput = Color3.fromRGB(40, 20, 25),
 		DialogInputLine = Color3.fromRGB(100, 50, 60),
-		Text = Color3.fromRGB(255, 230, 240),
+		Text = Color3.fromRGB(255, 255, 255),
 		SubText = Color3.fromRGB(200, 160, 170),
 		Hover = Color3.fromRGB(80, 40, 50),
 		HoverChange = 0.03,
@@ -2043,9 +2043,11 @@ Library.MiniMessageToRichText = MiniMessageToRichText
 local New = Creator.New
 
 local get_hui = gethui or function() return game:GetService("CoreGui") end
+local clref = cloneref or function(o) return o end
 
 local GUI = Creator.New("ScreenGui", {
-    Parent = get_hui(), 
+    Name = httpService:GenerateGUID(false),
+    Parent = clref(get_hui()), 
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     ResetOnSpawn = false,
     DisplayOrder = 999
@@ -5284,8 +5286,8 @@ Window.Root = New("Frame", {
 				local Delta = Input.Position - MousePos
 				Window.Position = UDim2.fromOffset(StartPos.X.Offset + Delta.X, StartPos.Y.Offset + Delta.Y)
 				PosMotor:setGoal({
-					X = Flipper.Spring.new(Window.Position.X.Offset, {frequency = 5, dampingRatio = 0.8}),
-					Y = Flipper.Spring.new(Window.Position.Y.Offset, {frequency = 5, dampingRatio = 0.8}),
+					X = Flipper.Instant.new(Window.Position.X.Offset),
+					Y = Flipper.Instant.new(Window.Position.Y.Offset),
 				})
 			end
 
@@ -5639,12 +5641,13 @@ ElementsTable.Toggle = (function()
 
 		local ToggleCircle = New("ImageLabel", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Size = UDim2.fromOffset(0, 0),
+			Size = UDim2.fromOffset(14, 14),
 			Position = UDim2.new(0.5, 0, 0.5, 0),
-			Image = "",
+			Image = "rbxassetid://10709790644",
 			ImageTransparency = 1,
+			BackgroundTransparency = 1,
 			ThemeTag = {
-				ImageColor3 = "ToggleSlider",
+				ImageColor3 = "ToggleToggled",
 			},
 		})
 
@@ -5682,11 +5685,18 @@ ElementsTable.Toggle = (function()
 			Toggle.Value = Value
 
 			Creator.OverrideTag(ToggleBorder, { Color = Toggle.Value and "Accent" or "ToggleSlider" })
+            Creator.OverrideTag(ToggleCircle, { ImageColor3 = Toggle.Value and "Text" or "ToggleSlider" })
 			
 			TweenService:Create(
 				ToggleSlider,
 				TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
 				{ BackgroundTransparency = Toggle.Value and 0 or 1 }
+			):Play()
+            
+            TweenService:Create(
+				ToggleCircle,
+				TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				{ ImageTransparency = Toggle.Value and 0 or 1, Size = Toggle.Value and UDim2.fromOffset(14, 14) or UDim2.fromOffset(0, 0) }
 			):Play()
 
 			Library:SafeCallback(Toggle.Callback, Toggle.Value)
