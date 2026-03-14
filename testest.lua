@@ -8,6 +8,21 @@ local Camera = game:GetService("Workspace").CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 local httpService = game:GetService("HttpService")
 
+-- Anti-Detection Cleanup
+if type(getgenv().NexusCleanup) == "function" then
+    pcall(getgenv().NexusCleanup)
+end
+
+if getgenv().NexusInstance and typeof(getgenv().NexusInstance) == "Instance" then
+    pcall(function() getgenv().NexusInstance:Destroy() end)
+end
+if getgenv().NexusBlur and typeof(getgenv().NexusBlur) == "Instance" then
+    pcall(function() getgenv().NexusBlur:Destroy() end)
+end
+getgenv().NexusInstance = nil
+getgenv().NexusBlur = nil
+getgenv().NexusCleanup = nil
+
 local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) ~= nil
 
 local fischbypass
@@ -2042,22 +2057,41 @@ Library.MiniMessageToRichText = MiniMessageToRichText
 
 local New = Creator.New
 
-local get_hui = gethui or function() return game:GetService("CoreGui") end
+local get_hui = gethui or function() return nil end
 local clref = cloneref or function(o) return o end
+
+local function GetBestParent()
+    -- 1. Try gethui() (Hidden UI container)
+    local success, hiddenUI = pcall(function() return get_hui() end)
+    if success and hiddenUI and typeof(hiddenUI) == "Instance" then
+        return hiddenUI
+    end
+    
+    -- 2. Try hiding inside RobloxGui (Whitelisted by many ACs)
+    local CoreGui = game:GetService("CoreGui")
+    local RobloxGui = CoreGui:FindFirstChild("RobloxGui")
+    if RobloxGui then
+        return RobloxGui
+    end
+    
+    -- 3. Fallback to CoreGui
+    return CoreGui
+end
 
 local GUI = Creator.New("ScreenGui", {
     Name = httpService:GenerateGUID(false),
-    Parent = clref(get_hui()), 
+    Parent = clref(GetBestParent()), 
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     ResetOnSpawn = false,
     DisplayOrder = 999
 })
 
+getgenv().NexusInstance = GUI
 Library.GUI = GUI
 ProtectGui(GUI)
 
 local KeybindDisplayContainer = Instance.new("Frame")
-KeybindDisplayContainer.Name = "UIFrame"
+KeybindDisplayContainer.Name = httpService:GenerateGUID(false)
 KeybindDisplayContainer.BackgroundTransparency = 1
 KeybindDisplayContainer.Size = UDim2.new(0, 250, 1, 0)
 KeybindDisplayContainer.Position = UDim2.new(1, -260, 0, 0)
@@ -2195,7 +2229,8 @@ end
 local viewportPointToWorld, getOffset = unpack({ viewportPointToWorld, getOffset })
 
 local BlurFolder = Instance.new("Folder")
-BlurFolder.Name = "Blur"
+BlurFolder.Name = httpService:GenerateGUID(false)
+getgenv().NexusBlur = BlurFolder
 do
 	local ws = game:GetService("Workspace")
 	local function attachToCurrentCamera()
@@ -2210,7 +2245,7 @@ end
 
 local function createAcrylic()
 	local Part = Creator.New("Part", {
-		Name = "Body",
+		Name = httpService:GenerateGUID(false),
 		Color = Color3.new(0, 0, 0),
 		Material = Enum.Material.Glass,
 		Size = Vector3.new(1, 1, 0),
@@ -2221,7 +2256,7 @@ local function createAcrylic()
 		Transparency = 0.98,
 	}, {
 		Creator.New("SpecialMesh", {
-			Name = "Mesh",
+			Name = httpService:GenerateGUID(false),
 			MeshType = Enum.MeshType.Brick,
 			Offset = Vector3.new(0, 0, -0.000001),
 		}),
@@ -3861,6 +3896,7 @@ Components.Notification = (function()
 		Library.ActiveNotifications = Library.ActiveNotifications or {}
 
 		Notification.Holder = New("Frame", {
+            Name = httpService:GenerateGUID(false),
 			Position = UDim2.new(1, -30, 1, -30),
 			Size = UDim2.new(0, 310, 1, -30),
 			AnchorPoint = Vector2.new(1, 1),
@@ -5021,6 +5057,7 @@ Window.ContainerCanvas = New("Frame", {
 		table.insert(rootChildren, ResizeStartFrame)
 
 Window.Root = New("Frame", {
+    Name = httpService:GenerateGUID(false),
     BackgroundTransparency = 1,
     Size = Window.Size,
     Position = Window.Position,
@@ -8648,11 +8685,7 @@ if RunService:IsStudio() then
 end
 
 local SaveManager = {} do
-
-
-
-	SaveManager.Folder = "FluentSettings"
-
+    SaveManager.Folder = "Config_" .. tostring(game.GameId)
 
 	SaveManager.Ignore = {}
 
@@ -9602,10 +9635,7 @@ end
 
 
 local InterfaceManager = {} do
-
-
-	InterfaceManager.Folder = "FluentSettings"
-
+    InterfaceManager.Folder = "Config_" .. tostring(game.GameId) .. "_UI"
 
 	InterfaceManager.Settings = {
 
@@ -10841,7 +10871,7 @@ end
 
 
 local MinimizeButton = New("TextButton", {
-
+    Name = httpService:GenerateGUID(false),
 
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
 
@@ -11018,7 +11048,7 @@ local MinimizeButton = New("TextButton", {
 
 
 local MobileMinimizeButton = New("TextButton", {
-
+    Name = httpService:GenerateGUID(false),
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
 
 
@@ -11405,7 +11435,7 @@ function Library:AddSnowfallToWindow(Config)
     
     function SnowModule:Init(Parent, Config)
         local innerContainer = Instance.new("Frame")
-        innerContainer.Name = "Effect"
+        innerContainer.Name = httpService:GenerateGUID(false)
         innerContainer.Size = UDim2.new(1, 0, 1, 0)
         innerContainer.BackgroundTransparency = 1
         innerContainer.ClipsDescendants = true
@@ -11421,7 +11451,7 @@ function Library:AddSnowfallToWindow(Config)
 
         for i = 1, snowflakeCount do
             local snowflake = Instance.new("ImageLabel")
-            snowflake.Name = "Part"..i
+            snowflake.Name = httpService:GenerateGUID(false)
             snowflake.BackgroundTransparency = 1
             snowflake.BorderSizePixel = 0
             snowflake.Image = "rbxassetid://124338537670236"
@@ -11592,4 +11622,15 @@ task.spawn(function()
 		end
 	end)
 end)
+
+getgenv().NexusCleanup = function()
+    pcall(function() Library:Destroy() end)
+    pcall(function() InterfaceManager:DisableCursorUnlock() end)
+    if getgenv().NexusInstance then
+        pcall(function() getgenv().NexusInstance:Destroy() end)
+    end
+    getgenv().NexusInstance = nil
+    getgenv().NexusBlur = nil
+end
+
 return Library, SaveManager, InterfaceManager, Mobile
