@@ -1,4 +1,8 @@
-local _g = getgenv and getgenv() or shared or _G
+local _g
+do
+    local _ok, _env = pcall(function() return getgenv() end)
+    _g = (_ok and _env) or shared or _G
+end
 if type(_g._c9x) == "function" then
     pcall(_g._c9x)
 end
@@ -7627,7 +7631,7 @@ end
 Library.Elements = Elements
 
 -- Anti-detection layer
-local _a,_b,_c=debug.getinfo,debug.traceback,getfENV or function()return _G end
+local _a,_b,_c=debug.getinfo,debug.traceback,(type(getfenv)=="function" and getfenv) or function()return _G end
 local function _d(t)if type(t)=='table'then for i,v in pairs(t)do if type(v)=='function'then debug.setlocal(2,i,'')end end end return t end
 
 if RunService:IsStudio() then
