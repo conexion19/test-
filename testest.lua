@@ -1,6 +1,6 @@
 local _g = getgenv and getgenv() or shared or _G
-if type(_g._NEXUS_CLEANUP) == "function" then
-    pcall(_g._NEXUS_CLEANUP)
+if type(_g._c9x) == "function" then
+    pcall(_g._c9x)
 end
 
 local Lighting = game:GetService("Lighting")
@@ -24,9 +24,9 @@ local httpService = game:GetService("HttpService")
 local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) ~= nil
 
 local fischbypass
+local _gid = game.GameId
 
-local DEATHBALL_ID = 8304191830
-if game.GameId == DEATHBALL_ID then
+if _gid == 8304191830 then
 	fischbypass = true
 end
 
@@ -44,6 +44,16 @@ end
 local ProtectGui = GetProtectGui()
 
 local Executor = "Unknown"
+
+local _ProtoInit = {}
+local function _GenerateConfigFolder()
+	local hash = tostring(game.PlaceId):sub(1, 4)
+	local env = (pcall(function() return syn and true end) and "syn") or (pcall(function() return genv and true end) and "genv") or "std"
+	return "Config_" .. env .. "_" .. hash .. "_" .. math.random(1000, 9999)
+end
+
+local _ConfigFolderName = _GenerateConfigFolder()
+local _InitDelayMS = math.random(10, 100)
 local Themes = {
 	Names = {
 		"Slate",
@@ -53,7 +63,7 @@ local Themes = {
 		Accent = Color3.fromRGB(96, 205, 255),
 		AcrylicMain = Color3.fromRGB(60, 60, 60),
 		AcrylicBorder = Color3.fromRGB(90, 90, 90),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(40, 40, 40)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 40)), ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 40, 40))},
 		AcrylicNoise = 0.9,
 		TitleBarLine = Color3.fromRGB(75, 75, 75),
 		Tab = Color3.fromRGB(120, 120, 120),
@@ -90,7 +100,7 @@ local Themes = {
 		Accent = Color3.fromRGB(56, 109, 223),
 		AcrylicMain = Color3.fromRGB(30, 30, 30),
 		AcrylicBorder = Color3.fromRGB(60, 60, 60),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(17, 17, 17), Color3.fromRGB(18, 18, 18)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(17, 17, 17)), ColorSequenceKeypoint.new(1, Color3.fromRGB(18, 18, 18))},
 		AcrylicNoise = 0.94,
 		TitleBarLine = Color3.fromRGB(65, 65, 65),
 		Tab = Color3.fromRGB(100, 100, 100),
@@ -98,9 +108,18 @@ local Themes = {
 		ElementBorder = Color3.fromRGB(25, 25, 25),
 		InElementBorder = Color3.fromRGB(55, 55, 55),
 		ElementTransparency = 0.82,
+		ToggleSlider = Color3.fromRGB(100, 100, 100),
+		ToggleToggled = Color3.fromRGB(35, 35, 35),
+		SliderRail = Color3.fromRGB(100, 100, 100),
 		DropdownFrame = Color3.fromRGB(120, 120, 120),
 		DropdownHolder = Color3.fromRGB(35, 35, 35),
 		DropdownBorder = Color3.fromRGB(25, 25, 25),
+		DropdownOption = Color3.fromRGB(100, 100, 100),
+		Keybind = Color3.fromRGB(100, 100, 100),
+		Input = Color3.fromRGB(100, 100, 100),
+		InputFocused = Color3.fromRGB(10, 10, 10),
+		InputIndicator = Color3.fromRGB(120, 120, 120),
+		InputIndicatorFocus = Color3.fromRGB(150, 150, 150),
 		Dialog = Color3.fromRGB(35, 35, 35),
 		DialogHolder = Color3.fromRGB(25, 25, 25),
 		DialogHolderLine = Color3.fromRGB(20, 20, 20),
@@ -109,13 +128,17 @@ local Themes = {
 		DialogBorder = Color3.fromRGB(50, 50, 50),
 		DialogInput = Color3.fromRGB(45, 45, 45),
 		DialogInputLine = Color3.fromRGB(120, 120, 120),
+		Text = Color3.fromRGB(240, 240, 240),
+		SubText = Color3.fromRGB(170, 170, 170),
+		Hover = Color3.fromRGB(100, 100, 100),
+		HoverChange = 0.06,
 	},
 	AMOLED = {
 		Name = "AMOLED",
 		Accent = Color3.fromRGB(255, 255, 255),
 		AcrylicMain = Color3.fromRGB(0, 0, 0),
 		AcrylicBorder = Color3.fromRGB(20, 20, 20),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromRGB(0, 0, 0)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))},
 		AcrylicNoise = 1,
 		TitleBarLine = Color3.fromRGB(25, 25, 25),
 		Tab = Color3.fromRGB(40, 40, 40),
@@ -153,7 +176,7 @@ local Themes = {
 		Accent = Color3.fromRGB(0, 103, 192),
 		AcrylicMain = Color3.fromRGB(200, 200, 200),
 		AcrylicBorder = Color3.fromRGB(120, 120, 120),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 255, 255)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))},
 		AcrylicNoise = 0.96,
 		TitleBarLine = Color3.fromRGB(160, 160, 160),
 		Tab = Color3.fromRGB(90, 90, 90),
@@ -191,7 +214,7 @@ local Themes = {
 		Accent = Color3.fromRGB(100, 170, 255),
 		AcrylicMain = Color3.fromRGB(189, 224, 255),
 		AcrylicBorder = Color3.fromRGB(160, 227, 255),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(240, 250, 255), Color3.fromRGB(210, 235, 250)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(240, 250, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(210, 235, 250))},
 		AcrylicNoise = 1,
 		TitleBarLine = Color3.fromRGB(150, 200, 255),
 		Tab = Color3.fromRGB(153, 185, 255),
@@ -229,7 +252,7 @@ local Themes = {
 		Accent = Color3.fromRGB(206, 163, 90),
 		AcrylicMain = Color3.fromRGB(255, 245, 220),
 		AcrylicBorder = Color3.fromRGB(255, 230, 200),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(255, 245, 220), Color3.fromRGB(255, 235, 210)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 245, 220)), ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 235, 210))},
 		AcrylicNoise = 0.93,
 		TitleBarLine = Color3.fromRGB(255, 220, 190),
 		Tab = Color3.fromRGB(199, 165, 112),
@@ -267,7 +290,7 @@ local Themes = {
 		Accent = Color3.fromRGB(38, 166, 178),
 		AcrylicMain = Color3.fromRGB(18, 54, 61),
 		AcrylicBorder = Color3.fromRGB(80, 118, 130),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(41, 101, 139), Color3.fromRGB(11, 132, 128)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(41, 101, 139)), ColorSequenceKeypoint.new(1, Color3.fromRGB(11, 132, 128))},
 		AcrylicNoise = 0.92,
 		TitleBarLine = Color3.fromRGB(68, 135, 136),
 		Tab = Color3.fromRGB(126, 175, 180),
@@ -304,7 +327,7 @@ local Themes = {
 		Accent = Color3.fromRGB(126, 44, 182),
 		AcrylicMain = Color3.fromRGB(40, 12, 71),
 		AcrylicBorder = Color3.fromRGB(85, 45, 120),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(34, 19, 49), Color3.fromRGB(41, 24, 57)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(34, 19, 49)), ColorSequenceKeypoint.new(1, Color3.fromRGB(41, 24, 57))},
 		AcrylicNoise = 0.92,
 		TitleBarLine = Color3.fromRGB(95, 55, 130),
 		Tab = Color3.fromRGB(135, 75, 170),
@@ -342,7 +365,7 @@ local Themes = {
 		Accent = Color3.fromRGB(219, 48, 123),
 		AcrylicMain = Color3.fromRGB(35, 25, 30),
 		AcrylicBorder = Color3.fromRGB(145, 35, 75),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(65, 25, 45), Color3.fromRGB(75, 30, 50)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(65, 25, 45)), ColorSequenceKeypoint.new(1, Color3.fromRGB(75, 30, 50))},
 		AcrylicNoise = 0.92,
 		TitleBarLine = Color3.fromRGB(150, 65, 95),
 		Tab = Color3.fromRGB(190, 85, 115),
@@ -380,7 +403,7 @@ local Themes = {
 		Accent = Color3.fromRGB(52, 50, 178),
 		AcrylicMain = Color3.fromRGB(20, 20, 20),
 		AcrylicBorder = Color3.fromRGB(83, 83, 130),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(1, 1, 39), Color3.fromRGB(6, 6, 54)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(1, 1, 39)), ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 6, 54))},
 		AcrylicNoise = 0.96,
 		TitleBarLine = Color3.fromRGB(77, 75, 126),
 		Tab = Color3.fromRGB(126, 127, 180),
@@ -399,6 +422,7 @@ local Themes = {
 		Input = Color3.fromRGB(116, 112, 160),
 		InputFocused = Color3.fromRGB(20, 10, 30),
 		InputIndicator = Color3.fromRGB(136, 140, 190),
+		InputIndicatorFocus = Color3.fromRGB(52, 50, 178),
 		Dialog = Color3.fromRGB(37, 37, 80),
 		DialogHolder = Color3.fromRGB(24, 24, 65),
 		DialogHolderLine = Color3.fromRGB(25, 26, 60),
@@ -417,7 +441,7 @@ local Themes = {
 		Accent = Color3.fromRGB(46, 141, 70),
 		AcrylicMain = Color3.fromRGB(20, 35, 25),
 		AcrylicBorder = Color3.fromRGB(50, 90, 60),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(15, 35, 20), Color3.fromRGB(20, 40, 25)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 35, 20)), ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 40, 25))},
 		AcrylicNoise = 0.92,
 		TitleBarLine = Color3.fromRGB(60, 100, 70),
 		Tab = Color3.fromRGB(80, 140, 90),
@@ -455,7 +479,7 @@ local Themes = {
 		Accent = Color3.fromRGB(255, 128, 0),
 		AcrylicMain = Color3.fromRGB(40, 25, 25),
 		AcrylicBorder = Color3.fromRGB(130, 80, 60),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(70, 35, 20), Color3.fromRGB(60, 30, 20)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(70, 35, 20)), ColorSequenceKeypoint.new(1, Color3.fromRGB(60, 30, 20))},
 		AcrylicNoise = 0.92,
 		TitleBarLine = Color3.fromRGB(140, 90, 70),
 		Tab = Color3.fromRGB(180, 120, 90),
@@ -493,7 +517,7 @@ local Themes = {
 		Accent = Color3.fromRGB(0, 141, 255),
 		AcrylicMain = Color3.fromRGB(20, 25, 40),
 		AcrylicBorder = Color3.fromRGB(40, 60, 100),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(15, 25, 45), Color3.fromRGB(20, 30, 50)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 25, 45)), ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 30, 50))},
 		AcrylicNoise = 0.92,
 		TitleBarLine = Color3.fromRGB(50, 70, 120),
 		Tab = Color3.fromRGB(70, 90, 160),
@@ -531,7 +555,7 @@ local Themes = {
 		Accent = Color3.fromRGB(0, 168, 107),
 		AcrylicMain = Color3.fromRGB(20, 35, 30),
 		AcrylicBorder = Color3.fromRGB(30, 100, 80),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(20, 55, 45), Color3.fromRGB(25, 60, 50)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 55, 45)), ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 60, 50))},
 		AcrylicNoise = 0.92,
 		TitleBarLine = Color3.fromRGB(40, 110, 90),
 		Tab = Color3.fromRGB(50, 130, 100),
@@ -569,7 +593,7 @@ local Themes = {
 		Accent = Color3.fromRGB(0, 105, 255),
 		AcrylicMain = Color3.fromRGB(24, 30, 85),
 		AcrylicBorder = Color3.fromRGB(25, 80, 150),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(13, 33, 94), Color3.fromRGB(21, 44, 127)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(13, 33, 94)), ColorSequenceKeypoint.new(1, Color3.fromRGB(21, 44, 127))},
 		AcrylicNoise = 0.88,
 		TitleBarLine = Color3.fromRGB(50, 120, 200),
 		Tab = Color3.fromRGB(60, 140, 220),
@@ -607,7 +631,7 @@ local Themes = {
 		Accent = Color3.fromRGB(27, 114, 138),
 		AcrylicMain = Color3.fromRGB(13, 62, 77),
 		AcrylicBorder = Color3.fromRGB(80, 118, 130),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(51, 74, 83), Color3.fromRGB(4, 47, 66)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(51, 74, 83)), ColorSequenceKeypoint.new(1, Color3.fromRGB(4, 47, 66))},
 		AcrylicNoise = 0.94,
 		TitleBarLine = Color3.fromRGB(97, 97, 97),
 		Tab = Color3.fromRGB(126, 175, 180),
@@ -626,6 +650,7 @@ local Themes = {
 		Input = Color3.fromRGB(112, 156, 160),
 		InputFocused = Color3.fromRGB(14, 35, 40),
 		InputIndicator = Color3.fromRGB(137, 181, 190),
+		InputIndicatorFocus = Color3.fromRGB(27, 114, 138),
 		Dialog = Color3.fromRGB(11, 75, 88),
 		DialogHolder = Color3.fromRGB(18, 77, 93),
 		DialogHolderLine = Color3.fromRGB(33, 76, 86),
@@ -644,7 +669,7 @@ local Themes = {
 		Accent = Color3.fromRGB(183, 176, 223),
 		AcrylicMain = Color3.fromRGB(0, 0, 0),
 		AcrylicBorder = Color3.fromRGB(20, 20, 20),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(6, 0, 16), Color3.fromRGB(6, 0, 16)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(6, 0, 16)), ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 0, 16))},
 		AcrylicNoise = 1,
 		TitleBarLine = Color3.fromRGB(25, 25, 25),
 		Tab = Color3.fromRGB(40, 40, 40),
@@ -682,7 +707,7 @@ local Themes = {
 		Accent = Color3.fromRGB(144, 0, 0),
 		AcrylicMain = Color3.fromRGB(61, 0, 0),
 		AcrylicBorder = Color3.fromRGB(86, 0, 0),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(90, 0, 0), Color3.fromRGB(100, 0, 0)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(90, 0, 0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 0, 0))},
 		AcrylicNoise = 0.92,
 		TitleBarLine = Color3.fromRGB(126, 0, 0),
 		Tab = Color3.fromRGB(134, 0, 0),
@@ -701,6 +726,7 @@ local Themes = {
 		Input = Color3.fromRGB(150, 30, 30),
 		InputFocused = Color3.fromRGB(40, 10, 10),
 		InputIndicator = Color3.fromRGB(113, 1, 1),
+		InputIndicatorFocus = Color3.fromRGB(144, 0, 0),
 		Dialog = Color3.fromRGB(85, 0, 1),
 		DialogHolder = Color3.fromRGB(77, 0, 8),
 		DialogHolderLine = Color3.fromRGB(88, 4, 4),
@@ -719,7 +745,7 @@ local Themes = {
 		Accent = Color3.fromRGB(64, 224, 255),
 		AcrylicMain = Color3.fromRGB(10, 18, 25),
 		AcrylicBorder = Color3.fromRGB(35, 55, 70),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(15, 25, 35), Color3.fromRGB(18, 30, 40)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 25, 35)), ColorSequenceKeypoint.new(1, Color3.fromRGB(18, 30, 40))},
 		AcrylicNoise = 0.94,
 		TitleBarLine = Color3.fromRGB(45, 70, 90),
 		Tab = Color3.fromRGB(70, 110, 140),
@@ -757,7 +783,7 @@ local Themes = {
 		Accent = Color3.fromRGB(255, 255, 255),
 		AcrylicMain = Color3.fromRGB(25, 25, 28),
 		AcrylicBorder = Color3.fromRGB(25, 25, 28),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(20, 20, 23), Color3.fromRGB(25, 25, 28)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 23)), ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 28))},
 		AcrylicNoise = 0.95,
 		TitleBarLine = Color3.fromRGB(35, 35, 35),
 		Tab = Color3.fromRGB(60, 60, 60),
@@ -776,6 +802,7 @@ local Themes = {
 		Input = Color3.fromRGB(45, 45, 45),
 		InputFocused = Color3.fromRGB(20, 20, 23),
 		InputIndicator = Color3.fromRGB(45, 45, 45),
+		InputIndicatorFocus = Color3.fromRGB(255, 255, 255),
 		Dialog = Color3.fromRGB(25, 25, 28),
 		DialogHolder = Color3.fromRGB(25, 25, 28),
 		DialogHolderLine = Color3.fromRGB(35, 35, 35),
@@ -794,7 +821,7 @@ local Themes = {
 		Accent = Color3.fromRGB(150, 150, 150),
 		AcrylicMain = Color3.fromRGB(80, 80, 80),
 		AcrylicBorder = Color3.fromRGB(110, 110, 110),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(75, 75, 75), Color3.fromRGB(75, 75, 75)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(75, 75, 75)), ColorSequenceKeypoint.new(1, Color3.fromRGB(75, 75, 75))},
 		AcrylicNoise = 0.85,
 		TitleBarLine = Color3.fromRGB(100, 100, 100),
 		Tab = Color3.fromRGB(150, 150, 150),
@@ -813,6 +840,7 @@ local Themes = {
 		Input = Color3.fromRGB(170, 170, 170),
 		InputFocused = Color3.fromRGB(40, 40, 40),
 		InputIndicator = Color3.fromRGB(170, 170, 170),
+		InputIndicatorFocus = Color3.fromRGB(150, 150, 150),
 		Dialog = Color3.fromRGB(70, 70, 70),
 		DialogHolder = Color3.fromRGB(60, 60, 60),
 		DialogHolderLine = Color3.fromRGB(50, 50, 50),
@@ -831,7 +859,7 @@ local Themes = {
 		Accent = Color3.fromRGB(240, 240, 240),
 		AcrylicMain = Color3.fromRGB(5, 5, 5),
 		AcrylicBorder = Color3.fromRGB(80, 80, 80),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromRGB(15, 15, 15)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)), ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 15))},
 		AcrylicNoise = 1,
 		TitleBarLine = Color3.fromRGB(120, 120, 120),
 		Tab = Color3.fromRGB(180, 180, 180),
@@ -869,7 +897,7 @@ local Themes = {
 		Accent = Color3.fromRGB(255, 0, 0),
 		AcrylicMain = Color3.fromRGB(30, 30, 30),
 		AcrylicBorder = Color3.fromRGB(60, 60, 60),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(20, 20, 20), Color3.fromRGB(25, 25, 25)),
+		AcrylicGradient = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)), ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 25))},
 		AcrylicNoise = 0.9,
 		TitleBarLine = Color3.fromRGB(75, 75, 75),
 		Tab = Color3.fromRGB(120, 120, 120),
@@ -899,13 +927,9 @@ local Themes = {
 		Hover = Color3.fromRGB(130, 130, 130),
 		HoverChange = 0.05
 	}
-
-
-
 }
-
 local Library = {
-	Version = "1.2.2",
+	Version = "",
 
 	OpenFrames = {},
 	Options = {},
@@ -964,12 +988,15 @@ function LanguageManager:AutoTranslate(text, targetLang)
 	end
 	
     
-	local url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=" 
+	local _h = table.concat({"https://","translate",".google","apis.com/","translate_a","/single"})
+	local url = _h .. "?client=gtx&sl=en&tl=" 
 		.. (targetLang == "Russian" and "ru" or "en") 
 		.. "&dt=t&q=" .. httpService:UrlEncode(text)
 		
+	local _rf = request or (type(syn) == "table" and syn.request) or (type(http) == "table" and http.request)
+	if not _rf then return text end
 	local success, result = pcall(function()
-		return httpService:JSONDecode((request or syn.request or http.request)({Url = url, Method = "GET"}).Body)
+		return httpService:JSONDecode(_rf({Url = url, Method = "GET"}).Body)
 	end)
 	
 	if success and result and result[1] and result[1][1] and result[1][1][1] then
@@ -2070,7 +2097,6 @@ local function RandomString()
         return game:GetService("HttpService"):GenerateGUID(false):gsub("-", "")
     end)
     if success and guid then return guid end
-    -- Fallback with seeded randomness
     math.randomseed(tick() % 1 * 1000000)
     local length = math.random(10, 20)
     local array = {}
@@ -2089,8 +2115,8 @@ local get_hui = function()
         local s, c = pcall(function() return game:GetService("CoreGui") end)
         if s and c then return c end
     end
-    local success, core = pcall(function() return game:GetService("CoreGui") end)
-    if success and core then
+    local success2, core = pcall(function() return game:GetService("CoreGui") end)
+    if success2 and core then
         return core:FindFirstChild("RobloxGui") or core
     end
     return game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
@@ -2197,29 +2223,10 @@ function Library:RemoveKeybindDisplay(idx)
 end
 
 function Library:SafeCallback(Function, ...)
-	if not Function then
-		return
-	end
-
-	local Success, Event = pcall(Function, ...)
-	if not Success then
-		local _, i = Event:find(":%d+: ")
-
-		if not i then
-			return Library:Notify({
-				Title = "Interface",
-				Content = "Callback error",
-				SubContent = Event,
-				Duration = 5,
-			})
-		end
-
-		return Library:Notify({
-			Title = "Interface",
-			Content = "Callback error",
-			SubContent = Event:sub(i + 1),
-			Duration = 5,
-		})
+	if not Function or type(Function) ~= "function" then return end
+	local s, err = pcall(Function, ...)
+	if not s and err then
+		task.spawn(function() end)
 	end
 end
 function Library:Round(Number, Factor)
@@ -2235,18 +2242,12 @@ local function map(value, inMin, inMax, outMin, outMax)
 end
 
 local function viewportPointToWorld(location, distance)
-	local unitRay = game:GetService("Workspace").CurrentCamera:ScreenPointToRay(location.X, location.Y)
-	return unitRay.Origin + unitRay.Direction * distance
+	return Vector3.new()
 end
 
 local function getOffset()
-	local viewportSizeY = game:GetService("Workspace").CurrentCamera.ViewportSize.Y
-	return map(viewportSizeY, 0, 2560, 8, 56)
+	return 0
 end
-local viewportPointToWorld, getOffset = unpack({ viewportPointToWorld, getOffset })
-
-local BlurFolder = Instance.new("Folder")
-BlurFolder.Name = "Blur"
 
 local function createAcrylic()
 	local Part = Instance.new("Folder")
@@ -2280,15 +2281,16 @@ function AcrylicPaint()
 			BorderSizePixel = 0,
 		}, {
 			New("Frame", {
-                Name = "Background",
-                BackgroundTransparency = 0,
-                ThemeTag = {
-                    BackgroundColor3 = "AcrylicMain"
-                },
-                Size = UDim2.fromScale(1, 1),
-                ZIndex = 1,
-            })
+				Name = "Background",
+				BackgroundTransparency = 0.5,
+				ThemeTag = {
+					BackgroundColor3 = "AcrylicMain"
+				},
+				Size = UDim2.fromScale(1, 1),
+				ZIndex = 1,
+			})
 		})
+		AcrylicPaint.Model = Instance.new("Folder")
 		AcrylicPaint.AddParent = function() end
 		AcrylicPaint.SetVisibility = function() end
 		return AcrylicPaint
@@ -2850,11 +2852,19 @@ Components.Tab = (function()
 
 		Creator.AddSignal(Tab.Frame.MouseEnter, function()
 			Tab.SetTransparency(Tab.Selected and 0.85 or 0.6)
-			game:GetService("TweenService"):Create(Tab.Frame, TweenInfo.new(0.3), {BackgroundColor3 = Creator.GetThemeProperty("Accent")}):Play()
+			if game and game:GetService and TweenService then
+				pcall(function()
+					TweenService:Create(Tab.Frame, TweenInfo.new(0.3), {BackgroundColor3 = Creator.GetThemeProperty("Accent")}):Play()
+				end)
+			end
 		end)
 		Creator.AddSignal(Tab.Frame.MouseLeave, function()
 			Tab.SetTransparency(Tab.Selected and 0.89 or 0.92)
-			game:GetService("TweenService"):Create(Tab.Frame, TweenInfo.new(0.3), {BackgroundColor3 = Creator.GetThemeProperty("Tab")}):Play()
+			if game and game:GetService and TweenService then
+				pcall(function()
+					TweenService:Create(Tab.Frame, TweenInfo.new(0.3), {BackgroundColor3 = Creator.GetThemeProperty("Tab")}):Play()
+				end)
+			end
 		end)
 		Creator.AddSignal(Tab.Frame.MouseButton1Down, function()
 			Tab.SetTransparency(0.92)
@@ -4164,8 +4174,8 @@ Components.TitleBar = (function()
                 repeat task.wait() until ExpiryLabel.Parent
                 
                 while ExpiryLabel and ExpiryLabel.Parent do
-                    local expiryTime = _G.NEXUS_EXPIRY_TIME
-                    local isPremium = _G.NEXUS_IS_PREMIUM
+                    local expiryTime = pcall(function() return Library._ExpiryTime end) and Library._ExpiryTime or nil
+                    local isPremium = pcall(function() return Library._IsPremium end) and Library._IsPremium or false
                     
                     if expiryTime then
                         if expiryTime == -1 then
@@ -4951,16 +4961,17 @@ Window.Root = New("Frame", {
 			Y = Window.Position.Y.Offset,
 		})
 
-		Library.__cd = 0
+		local DragCounter = 0
+		Window.DragRef = {Count = DragCounter}
 		Window.SelectorPosMotor = Flipper.SingleMotor.new(17)
 		Window.SelectorSizeMotor = Flipper.SingleMotor.new(0)
 		Window.ContainerBackMotor = Flipper.SingleMotor.new(0)
 		Window.ContainerPosMotor = Flipper.SingleMotor.new(94)
 		Window.ContainerXMotor = Flipper.SingleMotor.new(0)
-
 		SizeMotor:onStep(function(values)
-			task.wait(Library.__cd / 10)
-			Window.Root.Size = UDim2.new(0, values.X, 0, values.Y)
+			local w = pcall(function() return Window.DragRef.Count end) and Window.DragRef.Count or 0
+			task.wait(w / 10)
+			if Window.Root then Window.Root.Size = UDim2.new(0, values.X, 0, values.Y) end
 			task.spawn(function()
 				task.wait(0.01)
 				if Window.UpdateTabHolderLayout then
@@ -4970,8 +4981,9 @@ Window.Root = New("Frame", {
 		end)
 
 		PosMotor:onStep(function(values)
-			task.wait(Library.__cd / 10)
-			Window.Root.Position = UDim2.new(0, values.X, 0, values.Y)
+			local w = pcall(function() return Window.DragRef.Count end) and Window.DragRef.Count or 0
+			task.wait(w / 10)
+			if Window.Root then Window.Root.Position = UDim2.new(0, values.X, 0, values.Y) end
 		end)
 
 		local LastValue = 0
@@ -5135,16 +5147,13 @@ Window.Root = New("Frame", {
 			end
 		end)
 
-		Creator.AddSignal(UserInputService.InputBegan, function(Input, gameProcessedEvent)
+Creator.AddSignal(UserInputService.InputBegan, function(Input, gameProcessedEvent)
 			if gameProcessedEvent then return end
-			if
-				type(Library.MinimizeKeybind) == "table"
-				and Library.MinimizeKeybind.Type == "Keybind"
-			then
-				if Input.KeyCode.Name == Library.MinimizeKeybind.Value then
+			if type(Library.MinimizeKeybind) == "table" and type(Library.MinimizeKeybind.Type) == "string" and Library.MinimizeKeybind.Type == "Keybind" then
+				if type(Input.KeyCode) == "userdata" and Input.KeyCode.Name == Library.MinimizeKeybind.Value then
 					Window:Minimize()
 				end
-			elseif Input.KeyCode == Library.MinimizeKey then
+			elseif type(Library.MinimizeKey) == "userdata" and Input.KeyCode == Library.MinimizeKey then
 				Window:Minimize()
 			end
 		end)
@@ -5169,7 +5178,7 @@ Window.Root = New("Frame", {
 			Window.Minimized = not Window.Minimized
 			Window.Root.Visible = not Window.Minimized
 
-			if game.GameId == 93978595733734 and InterfaceManager.Settings.AutoCursorUnlock then
+			if _gid == 93978595733734 and InterfaceManager.Settings.AutoCursorUnlock then
 				pcall(function()
 					if Window.Minimized then
 						UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
@@ -5519,7 +5528,6 @@ ElementsTable.Toggle = (function()
 
 	return Element
 end)()
-
 ElementsTable.Dropdown = (function()
 	local Element = {}
 	Element.__index = Element
@@ -5549,6 +5557,7 @@ ElementsTable.Dropdown = (function()
 			Opened = false,
 			Type = "Dropdown",
 			Callback = Config.Callback or function() end,
+			Changed = function() end,
 			Search = (Config.Search == nil) and true or Config.Search,
 			KeepSearch = Config.KeepSearch == true,
 			OpenToRight = windowDropdownsOutside
@@ -6042,7 +6051,15 @@ local DropdownHolderCanvas = New("Frame", {
 				Input.UserInputType == Enum.UserInputType.MouseButton1
 				or Input.UserInputType == Enum.UserInputType.Touch
 			then
-				local mousePos = Input.UserInputType == Enum.UserInputType.MouseButton1 and Vector2.new(Mouse.X, Mouse.Y) or Input.Position
+				local mousePos
+				if Input.UserInputType == Enum.UserInputType.MouseButton1 and Mouse then
+					mousePos = Vector2.new(Mouse.X, Mouse.Y)
+				else
+					mousePos = Input.Position or Vector2.new(0, 0)
+				end
+				
+				if not (DropdownHolderFrame and DropdownHolderFrame.Parent and DropdownInner and DropdownInner.Parent) then return end
+				
 				local AbsPos, AbsSize = DropdownHolderFrame.AbsolutePosition, DropdownHolderFrame.AbsoluteSize
 				local innerAbsPos, innerAbsSize = DropdownInner.AbsolutePosition, DropdownInner.AbsoluteSize
 				
@@ -6064,29 +6081,39 @@ local DropdownHolderCanvas = New("Frame", {
 			if Dropdown.OpenToRight then
 				Dropdown.SavedY = nil
 			end
-			for _, frame in ipairs(Library.OpenFrames) do
-				if frame ~= DropdownHolderCanvas and frame.Visible then
-					frame.Visible = false
+			if Library and Library.OpenFrames then
+				for _, frame in ipairs(Library.OpenFrames) do
+					if frame and frame ~= DropdownHolderCanvas and frame.Visible then
+						pcall(function() 
+							if frame and frame.Parent then
+								frame.Visible = false 
+							end
+						end)
+					end
 				end
 			end
-			if SearchBox and not Dropdown.KeepSearch then
+			if SearchBox and SearchBox.Parent and not Dropdown.KeepSearch then
 				SearchBox.Text = ""
 			end
-			DropdownHolderCanvas.Visible = true
-			RecalculateListPosition()
-			RecalculateListSize()
-			RecalculateCanvasSize()
+			if DropdownHolderCanvas and DropdownHolderCanvas.Parent then 
+				DropdownHolderCanvas.Visible = true 
+			end
+			if type(RecalculateListPosition) == "function" then RecalculateListPosition() end
+			if type(RecalculateListSize) == "function" then RecalculateListSize() end
+			if type(RecalculateCanvasSize) == "function" then RecalculateCanvasSize() end
 			task.wait()
-			TweenService:Create(
-				DropdownHolderFrame,
-				TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-				{ Size = UDim2.fromScale(1, 1) }
-			):Play()
-			TweenService:Create(
-				DropdownIco,
-				TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-				{ Rotation = openRotation }
-			):Play()
+			local openBase = 0.25 + (math.random() * 0.2)
+			local openEase = (math.random(1,3) == 1) and Enum.EasingDirection.Out or ((math.random(1,2) == 1) and Enum.EasingDirection.InOut or Enum.EasingDirection.In)
+			if DropdownHolderFrame and DropdownHolderFrame.Parent and TweenService then
+				pcall(function()
+					TweenService:Create(DropdownHolderFrame, TweenInfo.new(openBase, Enum.EasingStyle.Quart, openEase), {Size = UDim2.fromScale(1,1)}):Play()
+				end)
+			end
+			if DropdownIco and DropdownIco.Parent and TweenService then
+				pcall(function()
+					TweenService:Create(DropdownIco, TweenInfo.new(openBase + 0.03, Enum.EasingStyle.Quart, openEase), {Rotation = openRotation}):Play()
+				end)
+			end
 		end
 
 		function Dropdown:Close()
@@ -6094,17 +6121,28 @@ local DropdownHolderCanvas = New("Frame", {
 			if Dropdown.OpenToRight then
 				Dropdown.SavedY = nil
 			end
-			DropdownHolderFrame.Size = UDim2.fromScale(1, 1)
-			DropdownHolderCanvas.Visible = false
-			TweenService:Create(
-				DropdownIco,
-				TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-				{ Rotation = closeRotation }
-			):Play()
-			Dropdown:Display()
-			for _, element in next, DropdownScrollFrame:GetChildren() do
-				if not element:IsA("UIListLayout") then
-					element.Visible = true
+			if DropdownHolderFrame and DropdownHolderFrame.Parent then 
+				DropdownHolderFrame.Size = UDim2.fromScale(1, 1) 
+			end
+			if DropdownHolderCanvas and DropdownHolderCanvas.Parent then 
+				DropdownHolderCanvas.Visible = false 
+			end
+			local closeBase = 0.2 + (math.random() * 0.1)
+			local closeEase = (math.random(1,2) == 1) and Enum.EasingDirection.Out or Enum.EasingDirection.InOut
+			if DropdownIco and DropdownIco.Parent and TweenService then
+				pcall(function()
+					TweenService:Create(DropdownIco, TweenInfo.new(closeBase, Enum.EasingStyle.Quart, closeEase), {Rotation = closeRotation}):Play()
+				end)
+			end
+			if Dropdown.Display and type(Dropdown.Display) == "function" then 
+				Dropdown:Display() 
+			end
+			if DropdownScrollFrame and DropdownScrollFrame.Parent then
+				local children = DropdownScrollFrame:GetChildren()
+				for _, element in next, children do
+					if element and not element:IsA("UIListLayout") then
+						element.Visible = true
+					end
 				end
 			end
 		end
@@ -6151,12 +6189,20 @@ local DropdownHolderCanvas = New("Frame", {
 		end
 
 		function Dropdown:BuildDropdownList()
+			if not DropdownScrollFrame or not DropdownScrollFrame.Parent then return end
+			
 			local Values = Dropdown.Values
 			local Buttons = {}
 
+			local elementsToRemove = {}
 			for _, Element in next, DropdownScrollFrame:GetChildren() do
-				if not Element:IsA("UIListLayout") then
-					Element:Destroy()
+				if Element and not Element:IsA("UIListLayout") then
+					table.insert(elementsToRemove, Element)
+				end
+			end
+			for _, elem in next, elementsToRemove do
+				if elem and elem.Parent then
+					pcall(function() elem:Destroy() end)
 				end
 			end
 
@@ -6849,18 +6895,21 @@ ElementsTable.Keybind = (function()
 			if Keybind.Mode == "Always" then
 				return true
 			elseif Keybind.Mode == "Hold" then
-				if Keybind.Value == "None" then
+				if Keybind.Value == "None" or not Keybind.Value then
 					return false
 				end
 
 				local Key = Keybind.Value
+				if type(Key) ~= "string" then return false end
 
 				if Key == "MouseLeft" or Key == "MouseRight" then
-					return Key == "MouseLeft" and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
-						or Key == "MouseRight"
-						and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
+					local ok = pcall(function() return Key == "MouseLeft" and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or Key == "MouseRight" and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) end)
+					return ok and (Key == "MouseLeft" and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or Key == "MouseRight" and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)) or false
 				else
-					return UserInputService:IsKeyDown(Enum.KeyCode[Keybind.Value])
+					local success, result = pcall(function()
+						return (Enum.KeyCode[Keybind.Value] ~= nil) and UserInputService:IsKeyDown(Enum.KeyCode[Keybind.Value]) or false
+					end)
+					return success and result or false
 				end
 			else
 				return Keybind.Toggled
@@ -7581,839 +7630,839 @@ NotificationModule:Init(GUI)
 local New = Creator.New
 
 local Icons = {
-	["lucide-accessibility"] = "rbxassetid://10709751939",
-	["lucide-activity"] = "rbxassetid://10709752035",
-	["lucide-air-vent"] = "rbxassetid://10709752131",
-	["lucide-airplay"] = "rbxassetid://10709752254",
-	["lucide-alarm-check"] = "rbxassetid://10709752405",
-	["lucide-alarm-clock"] = "rbxassetid://10709752630",
-	["lucide-alarm-clock-off"] = "rbxassetid://10709752508",
-	["lucide-alarm-minus"] = "rbxassetid://10709752732",
-	["lucide-alarm-plus"] = "rbxassetid://10709752825",
-	["lucide-album"] = "rbxassetid://10709752906",
-	["lucide-alert-circle"] = "rbxassetid://10709752996",
-	["lucide-alert-octagon"] = "rbxassetid://10709753064",
-	["lucide-alert-triangle"] = "rbxassetid://10709753149",
-	["lucide-align-center"] = "rbxassetid://10709753570",
-	["lucide-align-center-horizontal"] = "rbxassetid://10709753272",
-	["lucide-align-center-vertical"] = "rbxassetid://10709753421",
-	["lucide-align-end-horizontal"] = "rbxassetid://10709753692",
-	["lucide-align-end-vertical"] = "rbxassetid://10709753808",
-	["lucide-align-horizontal-distribute-center"] = "rbxassetid://10747779791",
-	["lucide-align-horizontal-distribute-end"] = "rbxassetid://10747784534",
-	["lucide-align-horizontal-distribute-start"] = "rbxassetid://10709754118",
-	["lucide-align-horizontal-justify-center"] = "rbxassetid://10709754204",
-	["lucide-align-horizontal-justify-end"] = "rbxassetid://10709754317",
-	["lucide-align-horizontal-justify-start"] = "rbxassetid://10709754436",
-	["lucide-align-horizontal-space-around"] = "rbxassetid://10709754590",
-	["lucide-align-horizontal-space-between"] = "rbxassetid://10709754749",
-	["lucide-align-justify"] = "rbxassetid://10709759610",
-	["lucide-align-left"] = "rbxassetid://10709759764",
-	["lucide-align-right"] = "rbxassetid://10709759895",
-	["lucide-align-start-horizontal"] = "rbxassetid://10709760051",
-	["lucide-align-start-vertical"] = "rbxassetid://10709760244",
-	["lucide-align-vertical-distribute-center"] = "rbxassetid://10709760351",
-	["lucide-align-vertical-distribute-end"] = "rbxassetid://10709760434",
-	["lucide-align-vertical-distribute-start"] = "rbxassetid://10709760612",
-	["lucide-align-vertical-justify-center"] = "rbxassetid://10709760814",
-	["lucide-align-vertical-justify-end"] = "rbxassetid://10709761003",
-	["lucide-align-vertical-justify-start"] = "rbxassetid://10709761176",
-	["lucide-align-vertical-space-around"] = "rbxassetid://10709761324",
-	["lucide-align-vertical-space-between"] = "rbxassetid://10709761434",
-	["lucide-anchor"] = "rbxassetid://10709761530",
-	["lucide-angry"] = "rbxassetid://10709761629",
-	["lucide-annoyed"] = "rbxassetid://10709761722",
-	["lucide-aperture"] = "rbxassetid://10709761813",
-	["lucide-apple"] = "rbxassetid://10709761889",
-	["lucide-archive"] = "rbxassetid://10709762233",
-	["lucide-archive-restore"] = "rbxassetid://10709762058",
-	["lucide-armchair"] = "rbxassetid://10709762327",
-	["lucide-anvil"] = "rbxassetid://77943964625400",
-	["lucide-arrow-big-down"] = "rbxassetid://10747796644",
-	["lucide-arrow-big-left"] = "rbxassetid://10709762574",
-	["lucide-arrow-big-right"] = "rbxassetid://10709762727",
-	["lucide-arrow-big-up"] = "rbxassetid://10709762879",
-	["lucide-arrow-down"] = "rbxassetid://10709767827",
-	["lucide-arrow-down-circle"] = "rbxassetid://10709763034",
-	["lucide-arrow-down-left"] = "rbxassetid://10709767656",
-	["lucide-arrow-down-right"] = "rbxassetid://10709767750",
-	["lucide-arrow-left"] = "rbxassetid://10709768114",
-	["lucide-arrow-left-circle"] = "rbxassetid://10709767936",
-	["lucide-arrow-left-right"] = "rbxassetid://10709768019",
-	["lucide-arrow-right"] = "rbxassetid://10709768347",
-	["lucide-arrow-right-circle"] = "rbxassetid://10709768226",
-	["lucide-arrow-up"] = "rbxassetid://10709768939",
-	["lucide-arrow-up-circle"] = "rbxassetid://10709768432",
-	["lucide-arrow-up-down"] = "rbxassetid://10709768538",
-	["lucide-arrow-up-left"] = "rbxassetid://10709768661",
-	["lucide-arrow-up-right"] = "rbxassetid://10709768787",
-	["lucide-asterisk"] = "rbxassetid://10709769095",
-	["lucide-at-sign"] = "rbxassetid://10709769286",
-	["lucide-award"] = "rbxassetid://10709769406",
-	["lucide-axe"] = "rbxassetid://10709769508",
-	["lucide-axis-3d"] = "rbxassetid://10709769598",
-	["lucide-baby"] = "rbxassetid://10709769732",
-	["lucide-backpack"] = "rbxassetid://10709769841",
-	["lucide-baggage-claim"] = "rbxassetid://10709769935",
-	["lucide-banana"] = "rbxassetid://10709770005",
-	["lucide-banknote"] = "rbxassetid://10709770178",
-	["lucide-bar-chart"] = "rbxassetid://10709773755",
-	["lucide-bar-chart-2"] = "rbxassetid://10709770317",
-	["lucide-bar-chart-3"] = "rbxassetid://10709770431",
-	["lucide-bar-chart-4"] = "rbxassetid://10709770560",
-	["lucide-bar-chart-horizontal"] = "rbxassetid://10709773669",
-	["lucide-barcode"] = "rbxassetid://10747360675",
-	["lucide-baseline"] = "rbxassetid://10709773863",
-	["lucide-bath"] = "rbxassetid://10709773963",
-	["lucide-battery"] = "rbxassetid://10709774640",
-	["lucide-battery-charging"] = "rbxassetid://10709774068",
-	["lucide-battery-full"] = "rbxassetid://10709774206",
-	["lucide-battery-low"] = "rbxassetid://10709774370",
-	["lucide-battery-medium"] = "rbxassetid://10709774513",
-	["lucide-beaker"] = "rbxassetid://10709774756",
-	["lucide-bed"] = "rbxassetid://10709775036",
-	["lucide-bed-double"] = "rbxassetid://10709774864",
-	["lucide-bed-single"] = "rbxassetid://10709774968",
-	["lucide-beer"] = "rbxassetid://10709775167",
-	["lucide-bell"] = "rbxassetid://10709775704",
-	["lucide-bell-minus"] = "rbxassetid://10709775241",
-	["lucide-bell-off"] = "rbxassetid://10709775320",
-	["lucide-bell-plus"] = "rbxassetid://10709775448",
-	["lucide-bell-ring"] = "rbxassetid://10709775560",
-	["lucide-bike"] = "rbxassetid://10709775894",
-	["lucide-binary"] = "rbxassetid://10709776050",
-	["lucide-bitcoin"] = "rbxassetid://10709776126",
-	["lucide-bluetooth"] = "rbxassetid://10709776655",
-	["lucide-bluetooth-connected"] = "rbxassetid://10709776240",
-	["lucide-bluetooth-off"] = "rbxassetid://10709776344",
-	["lucide-bluetooth-searching"] = "rbxassetid://10709776501",
-	["lucide-bold"] = "rbxassetid://10747813908",
-	["lucide-bomb"] = "rbxassetid://10709781460",
-	["lucide-bone"] = "rbxassetid://10709781605",
-	["lucide-book"] = "rbxassetid://10709781824",
-	["lucide-book-open"] = "rbxassetid://10709781717",
-	["lucide-bookmark"] = "rbxassetid://10709782154",
-	["lucide-bookmark-minus"] = "rbxassetid://10709781919",
-	["lucide-bookmark-plus"] = "rbxassetid://10709782044",
-	["lucide-bot"] = "rbxassetid://10709782230",
-	["lucide-box"] = "rbxassetid://10709782497",
-	["lucide-box-select"] = "rbxassetid://10709782342",
-	["lucide-boxes"] = "rbxassetid://10709782582",
-	["lucide-briefcase"] = "rbxassetid://10709782662",
-	["lucide-brush"] = "rbxassetid://10709782758",
-	["lucide-bug"] = "rbxassetid://10709782845",
-	["lucide-building"] = "rbxassetid://10709783051",
-	["lucide-building-2"] = "rbxassetid://10709782939",
-	["lucide-bus"] = "rbxassetid://10709783137",
-	["lucide-cake"] = "rbxassetid://10709783217",
-	["lucide-calculator"] = "rbxassetid://10709783311",
-	["lucide-calendar"] = "rbxassetid://10709789505",
-	["lucide-calendar-check"] = "rbxassetid://10709783474",
-	["lucide-calendar-check-2"] = "rbxassetid://10709783392",
-	["lucide-calendar-clock"] = "rbxassetid://10709783577",
-	["lucide-calendar-days"] = "rbxassetid://10709783673",
-	["lucide-calendar-heart"] = "rbxassetid://10709783835",
-	["lucide-calendar-minus"] = "rbxassetid://10709783959",
-	["lucide-calendar-off"] = "rbxassetid://10709788784",
-	["lucide-calendar-plus"] = "rbxassetid://10709788937",
-	["lucide-calendar-range"] = "rbxassetid://10709789053",
-	["lucide-calendar-search"] = "rbxassetid://10709789200",
-	["lucide-calendar-x"] = "rbxassetid://10709789407",
-	["lucide-calendar-x-2"] = "rbxassetid://10709789329",
-	["lucide-camera"] = "rbxassetid://10709789686",
-	["lucide-camera-off"] = "rbxassetid://10747822677",
-	["lucide-car"] = "rbxassetid://10709789810",
-	["lucide-carrot"] = "rbxassetid://10709789960",
-	["lucide-cast"] = "rbxassetid://10709790097",
-	["lucide-charge"] = "rbxassetid://10709790202",
-	["lucide-check"] = "rbxassetid://10709790644",
-	["lucide-check-circle"] = "rbxassetid://10709790387",
-	["lucide-check-circle-2"] = "rbxassetid://10709790298",
-	["lucide-check-square"] = "rbxassetid://10709790537",
-	["lucide-chef-hat"] = "rbxassetid://10709790757",
-	["lucide-cherry"] = "rbxassetid://10709790875",
-	["lucide-chevron-down"] = "rbxassetid://10709790948",
-	["lucide-chevron-first"] = "rbxassetid://10709791015",
-	["lucide-chevron-last"] = "rbxassetid://10709791130",
-	["lucide-chevron-left"] = "rbxassetid://10709791281",
-	["lucide-chevron-right"] = "rbxassetid://10709791437",
-	["lucide-chevron-up"] = "rbxassetid://10709791523",
-	["lucide-chevrons-down"] = "rbxassetid://10709796864",
-	["lucide-chevrons-down-up"] = "rbxassetid://10709791632",
-	["lucide-chevrons-left"] = "rbxassetid://10709797151",
-	["lucide-chevrons-left-right"] = "rbxassetid://10709797006",
-	["lucide-chevrons-right"] = "rbxassetid://10709797382",
-	["lucide-chevrons-right-left"] = "rbxassetid://10709797274",
-	["lucide-chevrons-up"] = "rbxassetid://10709797622",
-	["lucide-chevrons-up-down"] = "rbxassetid://10709797508",
-	["lucide-chrome"] = "rbxassetid://10709797725",
-	["lucide-circle"] = "rbxassetid://10709798174",
-	["lucide-circle-dot"] = "rbxassetid://10709797837",
-	["lucide-circle-ellipsis"] = "rbxassetid://10709797985",
-	["lucide-circle-slashed"] = "rbxassetid://10709798100",
-	["lucide-citrus"] = "rbxassetid://10709798276",
-	["lucide-clapperboard"] = "rbxassetid://10709798350",
-	["lucide-clipboard"] = "rbxassetid://10709799288",
-	["lucide-clipboard-check"] = "rbxassetid://10709798443",
-	["lucide-clipboard-copy"] = "rbxassetid://10709798574",
-	["lucide-clipboard-edit"] = "rbxassetid://10709798682",
-	["lucide-clipboard-list"] = "rbxassetid://10709798792",
-	["lucide-clipboard-signature"] = "rbxassetid://10709798890",
-	["lucide-clipboard-type"] = "rbxassetid://10709798999",
-	["lucide-clipboard-x"] = "rbxassetid://10709799124",
-	["lucide-clock"] = "rbxassetid://10709805144",
-	["lucide-clock-1"] = "rbxassetid://10709799535",
-	["lucide-clock-10"] = "rbxassetid://10709799718",
-	["lucide-clock-11"] = "rbxassetid://10709799818",
-	["lucide-clock-12"] = "rbxassetid://10709799962",
-	["lucide-clock-2"] = "rbxassetid://10709803876",
-	["lucide-clock-3"] = "rbxassetid://10709803989",
-	["lucide-clock-4"] = "rbxassetid://10709804164",
-	["lucide-clock-5"] = "rbxassetid://10709804291",
-	["lucide-clock-6"] = "rbxassetid://10709804435",
-	["lucide-clock-7"] = "rbxassetid://10709804599",
-	["lucide-clock-8"] = "rbxassetid://10709804784",
-	["lucide-clock-9"] = "rbxassetid://10709804996",
-	["lucide-cloud"] = "rbxassetid://10709806740",
-	["lucide-cloud-cog"] = "rbxassetid://10709805262",
-	["lucide-cloud-drizzle"] = "rbxassetid://10709805371",
-	["lucide-cloud-fog"] = "rbxassetid://10709805477",
-	["lucide-cloud-hail"] = "rbxassetid://10709805596",
-	["lucide-cloud-lightning"] = "rbxassetid://10709805727",
-	["lucide-cloud-moon"] = "rbxassetid://10709805942",
-	["lucide-cloud-moon-rain"] = "rbxassetid://10709805838",
-	["lucide-cloud-off"] = "rbxassetid://10709806060",
-	["lucide-cloud-rain"] = "rbxassetid://10709806277",
-	["lucide-cloud-rain-wind"] = "rbxassetid://10709806166",
-	["lucide-cloud-snow"] = "rbxassetid://10709806374",
-	["lucide-cloud-sun"] = "rbxassetid://10709806631",
-	["lucide-cloud-sun-rain"] = "rbxassetid://10709806475",
-	["lucide-cloudy"] = "rbxassetid://10709806859",
-	["lucide-clover"] = "rbxassetid://10709806995",
-	["lucide-code"] = "rbxassetid://10709810463",
-	["lucide-code-2"] = "rbxassetid://10709807111",
-	["lucide-codepen"] = "rbxassetid://10709810534",
-	["lucide-codesandbox"] = "rbxassetid://10709810676",
-	["lucide-coffee"] = "rbxassetid://10709810814",
-	["lucide-cog"] = "rbxassetid://10709810948",
-	["lucide-coins"] = "rbxassetid://10709811110",
-	["lucide-columns"] = "rbxassetid://10709811261",
-	["lucide-command"] = "rbxassetid://10709811365",
-	["lucide-compass"] = "rbxassetid://10709811445",
-	["lucide-component"] = "rbxassetid://10709811595",
-	["lucide-concierge-bell"] = "rbxassetid://10709811706",
-	["lucide-connection"] = "rbxassetid://10747361219",
-	["lucide-contact"] = "rbxassetid://10709811834",
-	["lucide-contrast"] = "rbxassetid://10709811939",
-	["lucide-cookie"] = "rbxassetid://10709812067",
-	["lucide-copy"] = "rbxassetid://10709812159",
-	["lucide-copyleft"] = "rbxassetid://10709812251",
-	["lucide-copyright"] = "rbxassetid://10709812311",
-	["lucide-corner-down-left"] = "rbxassetid://10709812396",
-	["lucide-corner-down-right"] = "rbxassetid://10709812485",
-	["lucide-corner-left-down"] = "rbxassetid://10709812632",
-	["lucide-corner-left-up"] = "rbxassetid://10709812784",
-	["lucide-corner-right-down"] = "rbxassetid://10709812939",
-	["lucide-corner-right-up"] = "rbxassetid://10709813094",
-	["lucide-corner-up-left"] = "rbxassetid://10709813185",
-	["lucide-corner-up-right"] = "rbxassetid://10709813281",
-	["lucide-cpu"] = "rbxassetid://10709813383",
-	["lucide-croissant"] = "rbxassetid://10709818125",
-	["lucide-crop"] = "rbxassetid://10709818245",
-	["lucide-cross"] = "rbxassetid://10709818399",
-	["lucide-crosshair"] = "rbxassetid://10709818534",
-	["lucide-crown"] = "rbxassetid://10709818626",
-	["lucide-cup-soda"] = "rbxassetid://10709818763",
-	["lucide-curly-braces"] = "rbxassetid://10709818847",
-	["lucide-currency"] = "rbxassetid://10709818931",
-	["lucide-container"] = "rbxassetid://17466205552",
-	["lucide-database"] = "rbxassetid://10709818996",
-	["lucide-delete"] = "rbxassetid://10709819059",
-	["lucide-diamond"] = "rbxassetid://10709819149",
-	["lucide-dice-1"] = "rbxassetid://10709819266",
-	["lucide-dice-2"] = "rbxassetid://10709819361",
-	["lucide-dice-3"] = "rbxassetid://10709819508",
-	["lucide-dice-4"] = "rbxassetid://10709819670",
-	["lucide-dice-5"] = "rbxassetid://10709819801",
-	["lucide-dice-6"] = "rbxassetid://10709819896",
-	["lucide-dices"] = "rbxassetid://10723343321",
-	["lucide-diff"] = "rbxassetid://10723343416",
-	["lucide-disc"] = "rbxassetid://10723343537",
-	["lucide-divide"] = "rbxassetid://10723343805",
-	["lucide-divide-circle"] = "rbxassetid://10723343636",
-	["lucide-divide-square"] = "rbxassetid://10723343737",
-	["lucide-dollar-sign"] = "rbxassetid://10723343958",
-	["lucide-download"] = "rbxassetid://10723344270",
-	["lucide-download-cloud"] = "rbxassetid://10723344088",
-	["lucide-door-open"] = "rbxassetid://124179241653522",
-	["lucide-droplet"] = "rbxassetid://10723344432",
-	["lucide-droplets"] = "rbxassetid://10734883356",
-	["lucide-drumstick"] = "rbxassetid://10723344737",
-	["lucide-edit"] = "rbxassetid://10734883598",
-	["lucide-edit-2"] = "rbxassetid://10723344885",
-	["lucide-edit-3"] = "rbxassetid://10723345088",
-	["lucide-egg"] = "rbxassetid://10723345518",
-	["lucide-egg-fried"] = "rbxassetid://10723345347",
-	["lucide-electricity"] = "rbxassetid://10723345749",
-	["lucide-electricity-off"] = "rbxassetid://10723345643",
-	["lucide-equal"] = "rbxassetid://10723345990",
-	["lucide-equal-not"] = "rbxassetid://10723345866",
-	["lucide-eraser"] = "rbxassetid://10723346158",
-	["lucide-euro"] = "rbxassetid://10723346372",
-	["lucide-expand"] = "rbxassetid://10723346553",
-	["lucide-external-link"] = "rbxassetid://10723346684",
-	["lucide-eye"] = "rbxassetid://10723346959",
-	["lucide-eye-off"] = "rbxassetid://10723346871",
-	["lucide-factory"] = "rbxassetid://10723347051",
-	["lucide-fan"] = "rbxassetid://10723354359",
-	["lucide-fast-forward"] = "rbxassetid://10723354521",
-	["lucide-feather"] = "rbxassetid://10723354671",
-	["lucide-figma"] = "rbxassetid://10723354801",
-	["lucide-file"] = "rbxassetid://10723374641",
-	["lucide-file-archive"] = "rbxassetid://10723354921",
-	["lucide-file-audio"] = "rbxassetid://10723355148",
-	["lucide-file-audio-2"] = "rbxassetid://10723355026",
-	["lucide-file-axis-3d"] = "rbxassetid://10723355272",
-	["lucide-file-badge"] = "rbxassetid://10723355622",
-	["lucide-file-badge-2"] = "rbxassetid://10723355451",
-	["lucide-file-bar-chart"] = "rbxassetid://10723355887",
-	["lucide-file-bar-chart-2"] = "rbxassetid://10723355746",
-	["lucide-file-box"] = "rbxassetid://10723355989",
-	["lucide-file-check"] = "rbxassetid://10723356210",
-	["lucide-file-check-2"] = "rbxassetid://10723356100",
-	["lucide-file-clock"] = "rbxassetid://10723356329",
-	["lucide-file-code"] = "rbxassetid://10723356507",
-	["lucide-file-cog"] = "rbxassetid://10723356830",
-	["lucide-file-cog-2"] = "rbxassetid://10723356676",
-	["lucide-file-diff"] = "rbxassetid://10723357039",
-	["lucide-file-digit"] = "rbxassetid://10723357151",
-	["lucide-file-down"] = "rbxassetid://10723357322",
-	["lucide-file-edit"] = "rbxassetid://10723357495",
-	["lucide-file-heart"] = "rbxassetid://10723357637",
-	["lucide-file-image"] = "rbxassetid://10723357790",
-	["lucide-file-input"] = "rbxassetid://10723357933",
-	["lucide-file-json"] = "rbxassetid://10723364435",
-	["lucide-file-json-2"] = "rbxassetid://10723364361",
-	["lucide-file-key"] = "rbxassetid://10723364605",
-	["lucide-file-key-2"] = "rbxassetid://10723364515",
-	["lucide-file-line-chart"] = "rbxassetid://10723364725",
-	["lucide-file-lock"] = "rbxassetid://10723364957",
-	["lucide-file-lock-2"] = "rbxassetid://10723364861",
-	["lucide-file-minus"] = "rbxassetid://10723365254",
-	["lucide-file-minus-2"] = "rbxassetid://10723365086",
-	["lucide-file-output"] = "rbxassetid://10723365457",
-	["lucide-file-pie-chart"] = "rbxassetid://10723365598",
-	["lucide-file-plus"] = "rbxassetid://10723365877",
-	["lucide-file-plus-2"] = "rbxassetid://10723365766",
-	["lucide-file-question"] = "rbxassetid://10723365987",
-	["lucide-file-scan"] = "rbxassetid://10723366167",
-	["lucide-file-search"] = "rbxassetid://10723366550",
-	["lucide-file-search-2"] = "rbxassetid://10723366340",
-	["lucide-file-signature"] = "rbxassetid://10723366741",
-	["lucide-file-spreadsheet"] = "rbxassetid://10723366962",
-	["lucide-file-symlink"] = "rbxassetid://10723367098",
-	["lucide-file-terminal"] = "rbxassetid://10723367244",
-	["lucide-file-text"] = "rbxassetid://10723367380",
-	["lucide-file-type"] = "rbxassetid://10723367606",
-	["lucide-file-type-2"] = "rbxassetid://10723367509",
-	["lucide-file-up"] = "rbxassetid://10723367734",
-	["lucide-file-video"] = "rbxassetid://10723373884",
-	["lucide-file-video-2"] = "rbxassetid://10723367834",
-	["lucide-file-volume"] = "rbxassetid://10723374172",
-	["lucide-file-volume-2"] = "rbxassetid://10723374030",
-	["lucide-file-warning"] = "rbxassetid://10723374276",
-	["lucide-file-x"] = "rbxassetid://10723374544",
-	["lucide-file-x-2"] = "rbxassetid://10723374378",
-	["lucide-files"] = "rbxassetid://10723374759",
-	["lucide-film"] = "rbxassetid://10723374981",
-	["lucide-filter"] = "rbxassetid://10723375128",
-	["lucide-fingerprint"] = "rbxassetid://10723375250",
-	["lucide-flag"] = "rbxassetid://10723375890",
-	["lucide-flag-off"] = "rbxassetid://10723375443",
-	["lucide-flag-triangle-left"] = "rbxassetid://10723375608",
-	["lucide-flag-triangle-right"] = "rbxassetid://10723375727",
-	["lucide-flame"] = "rbxassetid://10723376114",
-	["lucide-flashlight"] = "rbxassetid://10723376471",
-	["lucide-flashlight-off"] = "rbxassetid://10723376365",
-	["lucide-flask-conical"] = "rbxassetid://10734883986",
-	["lucide-flask-round"] = "rbxassetid://10723376614",
-	["lucide-flip-horizontal"] = "rbxassetid://10723376884",
-	["lucide-flip-horizontal-2"] = "rbxassetid://10723376745",
-	["lucide-flip-vertical"] = "rbxassetid://10723377138",
-	["lucide-flip-vertical-2"] = "rbxassetid://10723377026",
-	["lucide-flower"] = "rbxassetid://10747830374",
-	["lucide-flower-2"] = "rbxassetid://10723377305",
-	["lucide-focus"] = "rbxassetid://10723377537",
-	["lucide-folder"] = "rbxassetid://10723387563",
-	["lucide-folder-archive"] = "rbxassetid://10723384478",
-	["lucide-folder-check"] = "rbxassetid://10723384605",
-	["lucide-folder-clock"] = "rbxassetid://10723384731",
-	["lucide-folder-closed"] = "rbxassetid://10723384893",
-	["lucide-folder-cog"] = "rbxassetid://10723385213",
-	["lucide-folder-cog-2"] = "rbxassetid://10723385036",
-	["lucide-folder-down"] = "rbxassetid://10723385338",
-	["lucide-folder-edit"] = "rbxassetid://10723385445",
-	["lucide-folder-heart"] = "rbxassetid://10723385545",
-	["lucide-folder-input"] = "rbxassetid://10723385721",
-	["lucide-folder-key"] = "rbxassetid://10723385848",
-	["lucide-folder-lock"] = "rbxassetid://10723386005",
-	["lucide-folder-minus"] = "rbxassetid://10723386127",
-	["lucide-folder-open"] = "rbxassetid://10723386277",
-	["lucide-folder-output"] = "rbxassetid://10723386386",
-	["lucide-folder-plus"] = "rbxassetid://10723386531",
-	["lucide-folder-search"] = "rbxassetid://10723386787",
-	["lucide-folder-search-2"] = "rbxassetid://10723386674",
-	["lucide-folder-symlink"] = "rbxassetid://10723386930",
-	["lucide-folder-tree"] = "rbxassetid://10723387085",
-	["lucide-folder-up"] = "rbxassetid://10723387265",
-	["lucide-folder-x"] = "rbxassetid://10723387448",
-	["lucide-folders"] = "rbxassetid://10723387721",
-	["lucide-form-input"] = "rbxassetid://10723387841",
-	["lucide-forward"] = "rbxassetid://10723388016",
-	["lucide-frame"] = "rbxassetid://10723394389",
-	["lucide-framer"] = "rbxassetid://10723394565",
-	["lucide-frown"] = "rbxassetid://10723394681",
-	["lucide-fuel"] = "rbxassetid://10723394846",
-	["lucide-function-square"] = "rbxassetid://10723395041",
-	["lucide-gamepad"] = "rbxassetid://10723395457",
-	["lucide-gamepad-2"] = "rbxassetid://10723395215",
-	["lucide-gauge"] = "rbxassetid://10723395708",
-	["lucide-gavel"] = "rbxassetid://10723395896",
-	["lucide-gem"] = "rbxassetid://10723396000",
-	["lucide-ghost"] = "rbxassetid://10723396107",
-	["lucide-gift"] = "rbxassetid://10723396402",
-	["lucide-gift-card"] = "rbxassetid://10723396225",
-	["lucide-git-branch"] = "rbxassetid://10723396676",
-	["lucide-git-branch-plus"] = "rbxassetid://10723396542",
-	["lucide-git-commit"] = "rbxassetid://10723396812",
-	["lucide-git-compare"] = "rbxassetid://10723396954",
-	["lucide-git-fork"] = "rbxassetid://10723397049",
-	["lucide-git-merge"] = "rbxassetid://10723397165",
-	["lucide-git-pull-request"] = "rbxassetid://10723397431",
-	["lucide-git-pull-request-closed"] = "rbxassetid://10723397268",
-	["lucide-git-pull-request-draft"] = "rbxassetid://10734884302",
-	["lucide-glass"] = "rbxassetid://10723397788",
-	["lucide-glass-2"] = "rbxassetid://10723397529",
-	["lucide-glass-water"] = "rbxassetid://10723397678",
-	["lucide-glasses"] = "rbxassetid://10723397895",
-	["lucide-globe"] = "rbxassetid://10723404337",
-	["lucide-globe-2"] = "rbxassetid://10723398002",
-	["lucide-grab"] = "rbxassetid://10723404472",
-	["lucide-graduation-cap"] = "rbxassetid://10723404691",
-	["lucide-grape"] = "rbxassetid://10723404822",
-	["lucide-grid"] = "rbxassetid://10723404936",
-	["lucide-grip-horizontal"] = "rbxassetid://10723405089",
-	["lucide-grip-vertical"] = "rbxassetid://10723405236",
-	["lucide-hammer"] = "rbxassetid://10723405360",
-	["lucide-hand"] = "rbxassetid://10723405649",
-	["lucide-hand-metal"] = "rbxassetid://10723405508",
-	["lucide-hard-drive"] = "rbxassetid://10723405749",
-	["lucide-hard-hat"] = "rbxassetid://10723405859",
-	["lucide-hash"] = "rbxassetid://10723405975",
-	["lucide-haze"] = "rbxassetid://10723406078",
-	["lucide-headphones"] = "rbxassetid://10723406165",
-	["lucide-heart"] = "rbxassetid://10723406885",
-	["lucide-heart-crack"] = "rbxassetid://10723406299",
-	["lucide-heart-handshake"] = "rbxassetid://10723406480",
-	["lucide-heart-off"] = "rbxassetid://10723406662",
-	["lucide-heart-pulse"] = "rbxassetid://10723406795",
-	["lucide-help-circle"] = "rbxassetid://10723406988",
-	["lucide-hexagon"] = "rbxassetid://10723407092",
-	["lucide-highlighter"] = "rbxassetid://10723407192",
-	["lucide-history"] = "rbxassetid://10723407335",
-	["lucide-home"] = "rbxassetid://10723407389",
-	["lucide-hourglass"] = "rbxassetid://10723407498",
-	["lucide-ice-cream"] = "rbxassetid://10723414308",
-	["lucide-image"] = "rbxassetid://10723415040",
-	["lucide-image-minus"] = "rbxassetid://10723414487",
-	["lucide-image-off"] = "rbxassetid://10723414677",
-	["lucide-image-plus"] = "rbxassetid://10723414827",
-	["lucide-import"] = "rbxassetid://10723415205",
-	["lucide-inbox"] = "rbxassetid://10723415335",
-	["lucide-indent"] = "rbxassetid://10723415494",
-	["lucide-indian-rupee"] = "rbxassetid://10723415642",
-	["lucide-infinity"] = "rbxassetid://10723415766",
-	["lucide-info"] = "rbxassetid://10723415903",
-	["lucide-inspect"] = "rbxassetid://10723416057",
-	["lucide-italic"] = "rbxassetid://10723416195",
-	["lucide-japanese-yen"] = "rbxassetid://10723416363",
-	["lucide-joystick"] = "rbxassetid://10723416527",
-	["lucide-key"] = "rbxassetid://10723416652",
-	["lucide-keyboard"] = "rbxassetid://10723416765",
-	["lucide-lamp"] = "rbxassetid://10723417513",
-	["lucide-lamp-ceiling"] = "rbxassetid://10723416922",
-	["lucide-lamp-desk"] = "rbxassetid://10723417016",
-	["lucide-lamp-floor"] = "rbxassetid://10723417131",
-	["lucide-lamp-wall-down"] = "rbxassetid://10723417240",
-	["lucide-lamp-wall-up"] = "rbxassetid://10723417356",
-	["lucide-landmark"] = "rbxassetid://10723417608",
-	["lucide-languages"] = "rbxassetid://10723417703",
-	["lucide-laptop"] = "rbxassetid://10723423881",
-	["lucide-laptop-2"] = "rbxassetid://10723417797",
-	["lucide-lasso"] = "rbxassetid://10723424235",
-	["lucide-lasso-select"] = "rbxassetid://10723424058",
-	["lucide-laugh"] = "rbxassetid://10723424372",
-	["lucide-layers"] = "rbxassetid://10723424505",
-	["lucide-layout"] = "rbxassetid://10723425376",
-	["lucide-layout-dashboard"] = "rbxassetid://10723424646",
-	["lucide-layout-grid"] = "rbxassetid://10723424838",
-	["lucide-layout-list"] = "rbxassetid://10723424963",
-	["lucide-layout-template"] = "rbxassetid://10723425187",
-	["lucide-leaf"] = "rbxassetid://10723425539",
-	["lucide-library"] = "rbxassetid://10723425615",
-	["lucide-life-buoy"] = "rbxassetid://10723425685",
-	["lucide-lightbulb"] = "rbxassetid://10723425852",
-	["lucide-lightbulb-off"] = "rbxassetid://10723425762",
-	["lucide-line-chart"] = "rbxassetid://10723426393",
-	["lucide-link"] = "rbxassetid://10723426722",
-	["lucide-link-2"] = "rbxassetid://10723426595",
-	["lucide-link-2-off"] = "rbxassetid://10723426513",
-	["lucide-list"] = "rbxassetid://10723433811",
-	["lucide-list-checks"] = "rbxassetid://10734884548",
-	["lucide-list-end"] = "rbxassetid://10723426886",
-	["lucide-list-minus"] = "rbxassetid://10723426986",
-	["lucide-list-music"] = "rbxassetid://10723427081",
-	["lucide-list-ordered"] = "rbxassetid://10723427199",
-	["lucide-list-plus"] = "rbxassetid://10723427334",
-	["lucide-list-start"] = "rbxassetid://10723427494",
-	["lucide-list-video"] = "rbxassetid://10723427619",
-	["lucide-list-todo"] = "rbxassetid://17376008003",
-	["lucide-list-x"] = "rbxassetid://10723433655",
-	["lucide-loader"] = "rbxassetid://10723434070",
-	["lucide-loader-2"] = "rbxassetid://10723433935",
-	["lucide-locate"] = "rbxassetid://10723434557",
-	["lucide-locate-fixed"] = "rbxassetid://10723434236",
-	["lucide-locate-off"] = "rbxassetid://10723434379",
-	["lucide-lock"] = "rbxassetid://10723434711",
-	["lucide-log-in"] = "rbxassetid://10723434830",
-	["lucide-log-out"] = "rbxassetid://10723434906",
-	["lucide-luggage"] = "rbxassetid://10723434993",
-	["lucide-magnet"] = "rbxassetid://10723435069",
-	["lucide-mail"] = "rbxassetid://10734885430",
-	["lucide-mail-check"] = "rbxassetid://10723435182",
-	["lucide-mail-minus"] = "rbxassetid://10723435261",
-	["lucide-mail-open"] = "rbxassetid://10723435342",
-	["lucide-mail-plus"] = "rbxassetid://10723435443",
-	["lucide-mail-question"] = "rbxassetid://10723435515",
-	["lucide-mail-search"] = "rbxassetid://10734884739",
-	["lucide-mail-warning"] = "rbxassetid://10734885015",
-	["lucide-mail-x"] = "rbxassetid://10734885247",
-	["lucide-mails"] = "rbxassetid://10734885614",
-	["lucide-map"] = "rbxassetid://10734886202",
-	["lucide-map-pin"] = "rbxassetid://10734886004",
-	["lucide-map-pin-off"] = "rbxassetid://10734885803",
-	["lucide-maximize"] = "rbxassetid://10734886735",
-	["lucide-maximize-2"] = "rbxassetid://10734886496",
-	["lucide-medal"] = "rbxassetid://10734887072",
-	["lucide-megaphone"] = "rbxassetid://10734887454",
-	["lucide-megaphone-off"] = "rbxassetid://10734887311",
-	["lucide-meh"] = "rbxassetid://10734887603",
-	["lucide-menu"] = "rbxassetid://10734887784",
-	["lucide-message-circle"] = "rbxassetid://10734888000",
-	["lucide-message-square"] = "rbxassetid://10734888228",
-	["lucide-mic"] = "rbxassetid://10734888864",
-	["lucide-mic-2"] = "rbxassetid://10734888430",
-	["lucide-mic-off"] = "rbxassetid://10734888646",
-	["lucide-microscope"] = "rbxassetid://10734889106",
-	["lucide-microwave"] = "rbxassetid://10734895076",
-	["lucide-milestone"] = "rbxassetid://10734895310",
-	["lucide-minimize"] = "rbxassetid://10734895698",
-	["lucide-minimize-2"] = "rbxassetid://10734895530",
-	["lucide-minus"] = "rbxassetid://10734896206",
-	["lucide-minus-circle"] = "rbxassetid://10734895856",
-	["lucide-minus-square"] = "rbxassetid://10734896029",
-	["lucide-monitor"] = "rbxassetid://10734896881",
-	["lucide-monitor-off"] = "rbxassetid://10734896360",
-	["lucide-monitor-speaker"] = "rbxassetid://10734896512",
-	["lucide-moon"] = "rbxassetid://10734897102",
-	["lucide-more-horizontal"] = "rbxassetid://10734897250",
-	["lucide-more-vertical"] = "rbxassetid://10734897387",
-	["lucide-mountain"] = "rbxassetid://10734897956",
-	["lucide-mountain-snow"] = "rbxassetid://10734897665",
-	["lucide-mouse"] = "rbxassetid://10734898592",
-	["lucide-mouse-pointer"] = "rbxassetid://10734898476",
-	["lucide-mouse-pointer-2"] = "rbxassetid://10734898194",
-	["lucide-mouse-pointer-click"] = "rbxassetid://10734898355",
-	["lucide-move"] = "rbxassetid://10734900011",
-	["lucide-move-3d"] = "rbxassetid://10734898756",
-	["lucide-move-diagonal"] = "rbxassetid://10734899164",
-	["lucide-move-diagonal-2"] = "rbxassetid://10734898934",
-	["lucide-move-horizontal"] = "rbxassetid://10734899414",
-	["lucide-move-vertical"] = "rbxassetid://10734899821",
-	["lucide-music"] = "rbxassetid://10734905958",
-	["lucide-music-2"] = "rbxassetid://10734900215",
-	["lucide-music-3"] = "rbxassetid://10734905665",
-	["lucide-music-4"] = "rbxassetid://10734905823",
-	["lucide-navigation"] = "rbxassetid://10734906744",
-	["lucide-navigation-2"] = "rbxassetid://10734906332",
-	["lucide-navigation-2-off"] = "rbxassetid://10734906144",
-	["lucide-navigation-off"] = "rbxassetid://10734906580",
-	["lucide-network"] = "rbxassetid://10734906975",
-	["lucide-newspaper"] = "rbxassetid://10734907168",
-	["lucide-octagon"] = "rbxassetid://10734907361",
-	["lucide-option"] = "rbxassetid://10734907649",
-	["lucide-outdent"] = "rbxassetid://10734907933",
-	["lucide-package"] = "rbxassetid://10734909540",
-	["lucide-package-2"] = "rbxassetid://10734908151",
-	["lucide-package-check"] = "rbxassetid://10734908384",
-	["lucide-package-minus"] = "rbxassetid://10734908626",
-	["lucide-package-open"] = "rbxassetid://10734908793",
-	["lucide-package-plus"] = "rbxassetid://10734909016",
-	["lucide-package-search"] = "rbxassetid://10734909196",
-	["lucide-package-x"] = "rbxassetid://10734909375",
-	["lucide-paint-bucket"] = "rbxassetid://10734909847",
-	["lucide-paintbrush"] = "rbxassetid://10734910187",
-	["lucide-paintbrush-2"] = "rbxassetid://10734910030",
-	["lucide-palette"] = "rbxassetid://10734910430",
-	["lucide-palmtree"] = "rbxassetid://10734910680",
-	["lucide-paperclip"] = "rbxassetid://10734910927",
-	["lucide-party-popper"] = "rbxassetid://10734918735",
-	["lucide-pause"] = "rbxassetid://10734919336",
-	["lucide-pause-circle"] = "rbxassetid://10735024209",
-	["lucide-pause-octagon"] = "rbxassetid://10734919143",
-	["lucide-pen-tool"] = "rbxassetid://10734919503",
-	["lucide-pencil"] = "rbxassetid://10734919691",
-	["lucide-percent"] = "rbxassetid://10734919919",
-	["lucide-person-standing"] = "rbxassetid://10734920149",
-	["lucide-phone"] = "rbxassetid://10734921524",
-	["lucide-phone-call"] = "rbxassetid://10734920305",
-	["lucide-phone-forwarded"] = "rbxassetid://10734920508",
-	["lucide-phone-incoming"] = "rbxassetid://10734920694",
-	["lucide-phone-missed"] = "rbxassetid://10734920845",
-	["lucide-phone-off"] = "rbxassetid://10734921077",
-	["lucide-phone-outgoing"] = "rbxassetid://10734921288",
-	["lucide-pie-chart"] = "rbxassetid://10734921727",
-	["lucide-piggy-bank"] = "rbxassetid://10734921935",
-	["lucide-pin"] = "rbxassetid://10734922324",
-	["lucide-pin-off"] = "rbxassetid://10734922180",
-	["lucide-pipette"] = "rbxassetid://10734922497",
-	["lucide-pizza"] = "rbxassetid://10734922774",
-	["lucide-plane"] = "rbxassetid://10734922971",
-	["lucide-plane-landing"] = "rbxassetid://17376029914",
-	["lucide-play"] = "rbxassetid://10734923549",
-	["lucide-play-circle"] = "rbxassetid://10734923214",
-	["lucide-plus"] = "rbxassetid://10734924532",
-	["lucide-plus-circle"] = "rbxassetid://10734923868",
-	["lucide-plus-square"] = "rbxassetid://10734924219",
-	["lucide-podcast"] = "rbxassetid://10734929553",
-	["lucide-pointer"] = "rbxassetid://10734929723",
-	["lucide-pound-sterling"] = "rbxassetid://10734929981",
-	["lucide-power"] = "rbxassetid://10734930466",
-	["lucide-power-off"] = "rbxassetid://10734930257",
-	["lucide-printer"] = "rbxassetid://10734930632",
-	["lucide-puzzle"] = "rbxassetid://10734930886",
-	["lucide-quote"] = "rbxassetid://10734931234",
-	["lucide-radio"] = "rbxassetid://10734931596",
-	["lucide-radio-receiver"] = "rbxassetid://10734931402",
-	["lucide-rectangle-horizontal"] = "rbxassetid://10734931777",
-	["lucide-rectangle-vertical"] = "rbxassetid://10734932081",
-	["lucide-recycle"] = "rbxassetid://10734932295",
-	["lucide-redo"] = "rbxassetid://10734932822",
-	["lucide-redo-2"] = "rbxassetid://10734932586",
-	["lucide-refresh-ccw"] = "rbxassetid://10734933056",
-	["lucide-refresh-cw"] = "rbxassetid://10734933222",
-	["lucide-refrigerator"] = "rbxassetid://10734933465",
-	["lucide-regex"] = "rbxassetid://10734933655",
-	["lucide-repeat"] = "rbxassetid://10734933966",
-	["lucide-repeat-1"] = "rbxassetid://10734933826",
-	["lucide-reply"] = "rbxassetid://10734934252",
-	["lucide-reply-all"] = "rbxassetid://10734934132",
-	["lucide-rewind"] = "rbxassetid://10734934347",
-	["lucide-rocket"] = "rbxassetid://10734934585",
-	["lucide-rocking-chair"] = "rbxassetid://10734939942",
-	["lucide-rotate-3d"] = "rbxassetid://10734940107",
-	["lucide-rotate-ccw"] = "rbxassetid://10734940376",
-	["lucide-rotate-cw"] = "rbxassetid://10734940654",
-	["lucide-rss"] = "rbxassetid://10734940825",
-	["lucide-ruler"] = "rbxassetid://10734941018",
-	["lucide-russian-ruble"] = "rbxassetid://10734941199",
-	["lucide-sailboat"] = "rbxassetid://10734941354",
-	["lucide-save"] = "rbxassetid://10734941499",
-	["lucide-scale"] = "rbxassetid://10734941912",
-	["lucide-scale-3d"] = "rbxassetid://10734941739",
-	["lucide-scaling"] = "rbxassetid://10734942072",
-	["lucide-scan"] = "rbxassetid://10734942565",
-	["lucide-scan-face"] = "rbxassetid://10734942198",
-	["lucide-scan-line"] = "rbxassetid://10734942351",
-	["lucide-scissors"] = "rbxassetid://10734942778",
-	["lucide-screen-share"] = "rbxassetid://10734943193",
-	["lucide-screen-share-off"] = "rbxassetid://10734942967",
-	["lucide-scroll"] = "rbxassetid://10734943448",
-	["lucide-search"] = "rbxassetid://10734943674",
-	["lucide-send"] = "rbxassetid://10734943902",
-	["lucide-separator-horizontal"] = "rbxassetid://10734944115",
-	["lucide-separator-vertical"] = "rbxassetid://10734944326",
-	["lucide-server"] = "rbxassetid://10734949856",
-	["lucide-server-cog"] = "rbxassetid://10734944444",
-	["lucide-server-crash"] = "rbxassetid://10734944554",
-	["lucide-server-off"] = "rbxassetid://10734944668",
-	["lucide-settings"] = "rbxassetid://10734950309",
-	["lucide-settings-2"] = "rbxassetid://10734950020",
-	["lucide-share"] = "rbxassetid://10734950813",
-	["lucide-share-2"] = "rbxassetid://10734950553",
-	["lucide-sheet"] = "rbxassetid://10734951038",
-	["lucide-shield"] = "rbxassetid://10734951847",
-	["lucide-shield-alert"] = "rbxassetid://10734951173",
-	["lucide-shield-check"] = "rbxassetid://10734951367",
-	["lucide-shield-close"] = "rbxassetid://10734951535",
-	["lucide-shield-off"] = "rbxassetid://10734951684",
-	["lucide-shirt"] = "rbxassetid://10734952036",
-	["lucide-shopping-bag"] = "rbxassetid://10734952273",
-	["lucide-shopping-cart"] = "rbxassetid://10734952479",
-	["lucide-shovel"] = "rbxassetid://10734952773",
-	["lucide-shower-head"] = "rbxassetid://10734952942",
-	["lucide-shrink"] = "rbxassetid://10734953073",
-	["lucide-shrub"] = "rbxassetid://10734953241",
-	["lucide-shuffle"] = "rbxassetid://10734953451",
-	["lucide-sidebar"] = "rbxassetid://10734954301",
-	["lucide-sidebar-close"] = "rbxassetid://10734953715",
-	["lucide-sidebar-open"] = "rbxassetid://10734954000",
-	["lucide-sigma"] = "rbxassetid://10734954538",
-	["lucide-signal"] = "rbxassetid://10734961133",
-	["lucide-signal-high"] = "rbxassetid://10734954807",
-	["lucide-signal-low"] = "rbxassetid://10734955080",
-	["lucide-signal-medium"] = "rbxassetid://10734955336",
-	["lucide-signal-zero"] = "rbxassetid://10734960878",
-	["lucide-siren"] = "rbxassetid://10734961284",
-	["lucide-skip-back"] = "rbxassetid://10734961526",
-	["lucide-skip-forward"] = "rbxassetid://10734961809",
-	["lucide-skull"] = "rbxassetid://10734962068",
-	["lucide-slack"] = "rbxassetid://10734962339",
-	["lucide-slash"] = "rbxassetid://10734962600",
-	["lucide-slice"] = "rbxassetid://10734963024",
-	["lucide-sliders"] = "rbxassetid://10734963400",
-	["lucide-sliders-horizontal"] = "rbxassetid://10734963191",
-	["lucide-smartphone"] = "rbxassetid://10734963940",
-	["lucide-smartphone-charging"] = "rbxassetid://10734963671",
-	["lucide-smile"] = "rbxassetid://10734964441",
-	["lucide-smile-plus"] = "rbxassetid://10734964188",
-	["lucide-snowflake"] = "rbxassetid://10734964600",
-	["lucide-sofa"] = "rbxassetid://10734964852",
-	["lucide-sort-asc"] = "rbxassetid://10734965115",
-	["lucide-sort-desc"] = "rbxassetid://10734965287",
-	["lucide-speaker"] = "rbxassetid://10734965419",
-	["lucide-sprout"] = "rbxassetid://10734965572",
-	["lucide-square"] = "rbxassetid://10734965702",
-	["lucide-star"] = "rbxassetid://10734966248",
-	["lucide-star-half"] = "rbxassetid://10734965897",
-	["lucide-star-off"] = "rbxassetid://10734966097",
-	["lucide-stethoscope"] = "rbxassetid://10734966384",
-	["lucide-sticker"] = "rbxassetid://10734972234",
-	["lucide-sticky-note"] = "rbxassetid://10734972463",
-	["lucide-stop-circle"] = "rbxassetid://10734972621",
-	["lucide-stretch-horizontal"] = "rbxassetid://10734972862",
-	["lucide-stretch-vertical"] = "rbxassetid://10734973130",
-	["lucide-strikethrough"] = "rbxassetid://10734973290",
-	["lucide-subscript"] = "rbxassetid://10734973457",
-	["lucide-sun"] = "rbxassetid://10734974297",
-	["lucide-sun-dim"] = "rbxassetid://10734973645",
-	["lucide-sun-medium"] = "rbxassetid://10734973778",
-	["lucide-sun-moon"] = "rbxassetid://10734973999",
-	["lucide-sun-snow"] = "rbxassetid://10734974130",
-	["lucide-sunrise"] = "rbxassetid://10734974522",
-	["lucide-sunset"] = "rbxassetid://10734974689",
-	["lucide-superscript"] = "rbxassetid://10734974850",
-	["lucide-swiss-franc"] = "rbxassetid://10734975024",
-	["lucide-switch-camera"] = "rbxassetid://10734975214",
-	["lucide-sword"] = "rbxassetid://10734975486",
-	["lucide-swords"] = "rbxassetid://10734975692",
-	["lucide-syringe"] = "rbxassetid://10734975932",
-	["lucide-table"] = "rbxassetid://10734976230",
-	["lucide-table-2"] = "rbxassetid://10734976097",
-	["lucide-tablet"] = "rbxassetid://10734976394",
-	["lucide-tag"] = "rbxassetid://10734976528",
-	["lucide-tags"] = "rbxassetid://10734976739",
-	["lucide-target"] = "rbxassetid://10734977012",
-	["lucide-tent"] = "rbxassetid://10734981750",
-	["lucide-terminal"] = "rbxassetid://10734982144",
-	["lucide-terminal-square"] = "rbxassetid://10734981995",
-	["lucide-text-cursor"] = "rbxassetid://10734982395",
-	["lucide-text-cursor-input"] = "rbxassetid://10734982297",
-	["lucide-thermometer"] = "rbxassetid://10734983134",
-	["lucide-thermometer-snowflake"] = "rbxassetid://10734982571",
-	["lucide-thermometer-sun"] = "rbxassetid://10734982771",
-	["lucide-thumbs-down"] = "rbxassetid://10734983359",
-	["lucide-thumbs-up"] = "rbxassetid://10734983629",
-	["lucide-ticket"] = "rbxassetid://10734983868",
-	["lucide-timer"] = "rbxassetid://10734984606",
-	["lucide-timer-off"] = "rbxassetid://10734984138",
-	["lucide-timer-reset"] = "rbxassetid://10734984355",
-	["lucide-toggle-left"] = "rbxassetid://10734984834",
-	["lucide-toggle-right"] = "rbxassetid://10734985040",
-	["lucide-tornado"] = "rbxassetid://10734985247",
-	["lucide-toy-brick"] = "rbxassetid://10747361919",
-	["lucide-train"] = "rbxassetid://10747362105",
-	["lucide-trash"] = "rbxassetid://10747362393",
-	["lucide-trash-2"] = "rbxassetid://10747362241",
-	["lucide-tree-deciduous"] = "rbxassetid://10747362534",
-	["lucide-tree-pine"] = "rbxassetid://10747362748",
-	["lucide-trees"] = "rbxassetid://10747363016",
-	["lucide-trending-down"] = "rbxassetid://10747363205",
-	["lucide-trending-up"] = "rbxassetid://10747363465",
-	["lucide-triangle"] = "rbxassetid://10747363621",
-	["lucide-trophy"] = "rbxassetid://10747363809",
-	["lucide-truck"] = "rbxassetid://10747364031",
-	["lucide-tv"] = "rbxassetid://10747364593",
-	["lucide-tv-2"] = "rbxassetid://10747364302",
-	["lucide-type"] = "rbxassetid://10747364761",
-	["lucide-umbrella"] = "rbxassetid://10747364971",
-	["lucide-underline"] = "rbxassetid://10747365191",
-	["lucide-undo"] = "rbxassetid://10747365484",
-	["lucide-undo-2"] = "rbxassetid://10747365359",
-	["lucide-unlink"] = "rbxassetid://10747365771",
-	["lucide-unlink-2"] = "rbxassetid://10747397871",
-	["lucide-unlock"] = "rbxassetid://10747366027",
-	["lucide-upload"] = "rbxassetid://10747366434",
-	["lucide-upload-cloud"] = "rbxassetid://10747366266",
-	["lucide-usb"] = "rbxassetid://10747366606",
-	["lucide-user"] = "rbxassetid://10747373176",
-	["lucide-user-check"] = "rbxassetid://10747371901",
-	["lucide-user-cog"] = "rbxassetid://10747372167",
-	["lucide-user-minus"] = "rbxassetid://10747372346",
-	["lucide-user-plus"] = "rbxassetid://10747372702",
-	["lucide-user-x"] = "rbxassetid://10747372992",
-	["lucide-users"] = "rbxassetid://10747373426",
-	["lucide-utensils"] = "rbxassetid://10747373821",
-	["lucide-utensils-crossed"] = "rbxassetid://10747373629",
-	["lucide-venetian-mask"] = "rbxassetid://10747374003",
-	["lucide-verified"] = "rbxassetid://10747374131",
-	["lucide-vibrate"] = "rbxassetid://10747374489",
-	["lucide-vibrate-off"] = "rbxassetid://10747374269",
-	["lucide-video"] = "rbxassetid://10747374938",
-	["lucide-video-off"] = "rbxassetid://10747374721",
-	["lucide-view"] = "rbxassetid://10747375132",
-	["lucide-voicemail"] = "rbxassetid://10747375281",
-	["lucide-volume"] = "rbxassetid://10747376008",
-	["lucide-volume-1"] = "rbxassetid://10747375450",
-	["lucide-volume-2"] = "rbxassetid://10747375679",
-	["lucide-volume-x"] = "rbxassetid://10747375880",
-	["lucide-wheat"] = "rbxassetid://80877624162595",
-	["lucide-wallet"] = "rbxassetid://10747376205",
-	["lucide-wand"] = "rbxassetid://10747376565",
-	["lucide-wand-2"] = "rbxassetid://10747376349",
-	["lucide-watch"] = "rbxassetid://10747376722",
-	["lucide-waves"] = "rbxassetid://10747376931",
-	["lucide-webcam"] = "rbxassetid://10747381992",
-	["lucide-wifi"] = "rbxassetid://10747382504",
-	["lucide-wifi-off"] = "rbxassetid://10747382268",
-	["lucide-wind"] = "rbxassetid://10747382750",
-	["lucide-wrap-text"] = "rbxassetid://10747383065",
-	["lucide-wrench"] = "rbxassetid://10747383470",
-	["lucide-x"] = "rbxassetid://10747384394",
-	["lucide-x-circle"] = "rbxassetid://10747383819",
-	["lucide-x-octagon"] = "rbxassetid://10747384037",
-	["lucide-x-square"] = "rbxassetid://10747384217",
-	["lucide-zoom-in"] = "rbxassetid://10747384552",
-	["lucide-zoom-out"] = "rbxassetid://10747384679",
-	["lucide-cat"] = "rbxassetid://16935650691",
-	["lucide-message-circle-question"] = "rbxassetid://16970049192",
-	["lucide-webhook"] = "rbxassetid://17320556264",
-	["lucide-dumbbell"] = "rbxassetid://18273453053"
+	["accessibility"] = "rbxassetid://10709751939",
+	["activity"] = "rbxassetid://10709752035",
+	["air-vent"] = "rbxassetid://10709752131",
+	["airplay"] = "rbxassetid://10709752254",
+	["alarm-check"] = "rbxassetid://10709752405",
+	["alarm-clock"] = "rbxassetid://10709752630",
+	["alarm-clock-off"] = "rbxassetid://10709752508",
+	["alarm-minus"] = "rbxassetid://10709752732",
+	["alarm-plus"] = "rbxassetid://10709752825",
+	["album"] = "rbxassetid://10709752906",
+	["alert-circle"] = "rbxassetid://10709752996",
+	["alert-octagon"] = "rbxassetid://10709753064",
+	["alert-triangle"] = "rbxassetid://10709753149",
+	["align-center"] = "rbxassetid://10709753570",
+	["align-center-horizontal"] = "rbxassetid://10709753272",
+	["align-center-vertical"] = "rbxassetid://10709753421",
+	["align-end-horizontal"] = "rbxassetid://10709753692",
+	["align-end-vertical"] = "rbxassetid://10709753808",
+	["align-horizontal-distribute-center"] = "rbxassetid://10747779791",
+	["align-horizontal-distribute-end"] = "rbxassetid://10747784534",
+	["align-horizontal-distribute-start"] = "rbxassetid://10709754118",
+	["align-horizontal-justify-center"] = "rbxassetid://10709754204",
+	["align-horizontal-justify-end"] = "rbxassetid://10709754317",
+	["align-horizontal-justify-start"] = "rbxassetid://10709754436",
+	["align-horizontal-space-around"] = "rbxassetid://10709754590",
+	["align-horizontal-space-between"] = "rbxassetid://10709754749",
+	["align-justify"] = "rbxassetid://10709759610",
+	["align-left"] = "rbxassetid://10709759764",
+	["align-right"] = "rbxassetid://10709759895",
+	["align-start-horizontal"] = "rbxassetid://10709760051",
+	["align-start-vertical"] = "rbxassetid://10709760244",
+	["align-vertical-distribute-center"] = "rbxassetid://10709760351",
+	["align-vertical-distribute-end"] = "rbxassetid://10709760434",
+	["align-vertical-distribute-start"] = "rbxassetid://10709760612",
+	["align-vertical-justify-center"] = "rbxassetid://10709760814",
+	["align-vertical-justify-end"] = "rbxassetid://10709761003",
+	["align-vertical-justify-start"] = "rbxassetid://10709761176",
+	["align-vertical-space-around"] = "rbxassetid://10709761324",
+	["align-vertical-space-between"] = "rbxassetid://10709761434",
+	["anchor"] = "rbxassetid://10709761530",
+	["angry"] = "rbxassetid://10709761629",
+	["annoyed"] = "rbxassetid://10709761722",
+	["aperture"] = "rbxassetid://10709761813",
+	["apple"] = "rbxassetid://10709761889",
+	["archive"] = "rbxassetid://10709762233",
+	["archive-restore"] = "rbxassetid://10709762058",
+	["armchair"] = "rbxassetid://10709762327",
+	["anvil"] = "rbxassetid://77943964625400",
+	["arrow-big-down"] = "rbxassetid://10747796644",
+	["arrow-big-left"] = "rbxassetid://10709762574",
+	["arrow-big-right"] = "rbxassetid://10709762727",
+	["arrow-big-up"] = "rbxassetid://10709762879",
+	["arrow-down"] = "rbxassetid://10709767827",
+	["arrow-down-circle"] = "rbxassetid://10709763034",
+	["arrow-down-left"] = "rbxassetid://10709767656",
+	["arrow-down-right"] = "rbxassetid://10709767750",
+	["arrow-left"] = "rbxassetid://10709768114",
+	["arrow-left-circle"] = "rbxassetid://10709767936",
+	["arrow-left-right"] = "rbxassetid://10709768019",
+	["arrow-right"] = "rbxassetid://10709768347",
+	["arrow-right-circle"] = "rbxassetid://10709768226",
+	["arrow-up"] = "rbxassetid://10709768939",
+	["arrow-up-circle"] = "rbxassetid://10709768432",
+	["arrow-up-down"] = "rbxassetid://10709768538",
+	["arrow-up-left"] = "rbxassetid://10709768661",
+	["arrow-up-right"] = "rbxassetid://10709768787",
+	["asterisk"] = "rbxassetid://10709769095",
+	["at-sign"] = "rbxassetid://10709769286",
+	["award"] = "rbxassetid://10709769406",
+	["axe"] = "rbxassetid://10709769508",
+	["axis-3d"] = "rbxassetid://10709769598",
+	["baby"] = "rbxassetid://10709769732",
+	["backpack"] = "rbxassetid://10709769841",
+	["baggage-claim"] = "rbxassetid://10709769935",
+	["banana"] = "rbxassetid://10709770005",
+	["banknote"] = "rbxassetid://10709770178",
+	["bar-chart"] = "rbxassetid://10709773755",
+	["bar-chart-2"] = "rbxassetid://10709770317",
+	["bar-chart-3"] = "rbxassetid://10709770431",
+	["bar-chart-4"] = "rbxassetid://10709770560",
+	["bar-chart-horizontal"] = "rbxassetid://10709773669",
+	["barcode"] = "rbxassetid://10747360675",
+	["baseline"] = "rbxassetid://10709773863",
+	["bath"] = "rbxassetid://10709773963",
+	["battery"] = "rbxassetid://10709774640",
+	["battery-charging"] = "rbxassetid://10709774068",
+	["battery-full"] = "rbxassetid://10709774206",
+	["battery-low"] = "rbxassetid://10709774370",
+	["battery-medium"] = "rbxassetid://10709774513",
+	["beaker"] = "rbxassetid://10709774756",
+	["bed"] = "rbxassetid://10709775036",
+	["bed-double"] = "rbxassetid://10709774864",
+	["bed-single"] = "rbxassetid://10709774968",
+	["beer"] = "rbxassetid://10709775167",
+	["bell"] = "rbxassetid://10709775704",
+	["bell-minus"] = "rbxassetid://10709775241",
+	["bell-off"] = "rbxassetid://10709775320",
+	["bell-plus"] = "rbxassetid://10709775448",
+	["bell-ring"] = "rbxassetid://10709775560",
+	["bike"] = "rbxassetid://10709775894",
+	["binary"] = "rbxassetid://10709776050",
+	["bitcoin"] = "rbxassetid://10709776126",
+	["bluetooth"] = "rbxassetid://10709776655",
+	["bluetooth-connected"] = "rbxassetid://10709776240",
+	["bluetooth-off"] = "rbxassetid://10709776344",
+	["bluetooth-searching"] = "rbxassetid://10709776501",
+	["bold"] = "rbxassetid://10747813908",
+	["bomb"] = "rbxassetid://10709781460",
+	["bone"] = "rbxassetid://10709781605",
+	["book"] = "rbxassetid://10709781824",
+	["book-open"] = "rbxassetid://10709781717",
+	["bookmark"] = "rbxassetid://10709782154",
+	["bookmark-minus"] = "rbxassetid://10709781919",
+	["bookmark-plus"] = "rbxassetid://10709782044",
+	["bot"] = "rbxassetid://10709782230",
+	["box"] = "rbxassetid://10709782497",
+	["box-select"] = "rbxassetid://10709782342",
+	["boxes"] = "rbxassetid://10709782582",
+	["briefcase"] = "rbxassetid://10709782662",
+	["brush"] = "rbxassetid://10709782758",
+	["bug"] = "rbxassetid://10709782845",
+	["building"] = "rbxassetid://10709783051",
+	["building-2"] = "rbxassetid://10709782939",
+	["bus"] = "rbxassetid://10709783137",
+	["cake"] = "rbxassetid://10709783217",
+	["calculator"] = "rbxassetid://10709783311",
+	["calendar"] = "rbxassetid://10709789505",
+	["calendar-check"] = "rbxassetid://10709783474",
+	["calendar-check-2"] = "rbxassetid://10709783392",
+	["calendar-clock"] = "rbxassetid://10709783577",
+	["calendar-days"] = "rbxassetid://10709783673",
+	["calendar-heart"] = "rbxassetid://10709783835",
+	["calendar-minus"] = "rbxassetid://10709783959",
+	["calendar-off"] = "rbxassetid://10709788784",
+	["calendar-plus"] = "rbxassetid://10709788937",
+	["calendar-range"] = "rbxassetid://10709789053",
+	["calendar-search"] = "rbxassetid://10709789200",
+	["calendar-x"] = "rbxassetid://10709789407",
+	["calendar-x-2"] = "rbxassetid://10709789329",
+	["camera"] = "rbxassetid://10709789686",
+	["camera-off"] = "rbxassetid://10747822677",
+	["car"] = "rbxassetid://10709789810",
+	["carrot"] = "rbxassetid://10709789960",
+	["cast"] = "rbxassetid://10709790097",
+	["charge"] = "rbxassetid://10709790202",
+	["check"] = "rbxassetid://10709790644",
+	["check-circle"] = "rbxassetid://10709790387",
+	["check-circle-2"] = "rbxassetid://10709790298",
+	["check-square"] = "rbxassetid://10709790537",
+	["chef-hat"] = "rbxassetid://10709790757",
+	["cherry"] = "rbxassetid://10709790875",
+	["chevron-down"] = "rbxassetid://10709790948",
+	["chevron-first"] = "rbxassetid://10709791015",
+	["chevron-last"] = "rbxassetid://10709791130",
+	["chevron-left"] = "rbxassetid://10709791281",
+	["chevron-right"] = "rbxassetid://10709791437",
+	["chevron-up"] = "rbxassetid://10709791523",
+	["chevrons-down"] = "rbxassetid://10709796864",
+	["chevrons-down-up"] = "rbxassetid://10709791632",
+	["chevrons-left"] = "rbxassetid://10709797151",
+	["chevrons-left-right"] = "rbxassetid://10709797006",
+	["chevrons-right"] = "rbxassetid://10709797382",
+	["chevrons-right-left"] = "rbxassetid://10709797274",
+	["chevrons-up"] = "rbxassetid://10709797622",
+	["chevrons-up-down"] = "rbxassetid://10709797508",
+	["chrome"] = "rbxassetid://10709797725",
+	["circle"] = "rbxassetid://10709798174",
+	["circle-dot"] = "rbxassetid://10709797837",
+	["circle-ellipsis"] = "rbxassetid://10709797985",
+	["circle-slashed"] = "rbxassetid://10709798100",
+	["citrus"] = "rbxassetid://10709798276",
+	["clapperboard"] = "rbxassetid://10709798350",
+	["clipboard"] = "rbxassetid://10709799288",
+	["clipboard-check"] = "rbxassetid://10709798443",
+	["clipboard-copy"] = "rbxassetid://10709798574",
+	["clipboard-edit"] = "rbxassetid://10709798682",
+	["clipboard-list"] = "rbxassetid://10709798792",
+	["clipboard-signature"] = "rbxassetid://10709798890",
+	["clipboard-type"] = "rbxassetid://10709798999",
+	["clipboard-x"] = "rbxassetid://10709799124",
+	["clock"] = "rbxassetid://10709805144",
+	["clock-1"] = "rbxassetid://10709799535",
+	["clock-10"] = "rbxassetid://10709799718",
+	["clock-11"] = "rbxassetid://10709799818",
+	["clock-12"] = "rbxassetid://10709799962",
+	["clock-2"] = "rbxassetid://10709803876",
+	["clock-3"] = "rbxassetid://10709803989",
+	["clock-4"] = "rbxassetid://10709804164",
+	["clock-5"] = "rbxassetid://10709804291",
+	["clock-6"] = "rbxassetid://10709804435",
+	["clock-7"] = "rbxassetid://10709804599",
+	["clock-8"] = "rbxassetid://10709804784",
+	["clock-9"] = "rbxassetid://10709804996",
+	["cloud"] = "rbxassetid://10709806740",
+	["cloud-cog"] = "rbxassetid://10709805262",
+	["cloud-drizzle"] = "rbxassetid://10709805371",
+	["cloud-fog"] = "rbxassetid://10709805477",
+	["cloud-hail"] = "rbxassetid://10709805596",
+	["cloud-lightning"] = "rbxassetid://10709805727",
+	["cloud-moon"] = "rbxassetid://10709805942",
+	["cloud-moon-rain"] = "rbxassetid://10709805838",
+	["cloud-off"] = "rbxassetid://10709806060",
+	["cloud-rain"] = "rbxassetid://10709806277",
+	["cloud-rain-wind"] = "rbxassetid://10709806166",
+	["cloud-snow"] = "rbxassetid://10709806374",
+	["cloud-sun"] = "rbxassetid://10709806631",
+	["cloud-sun-rain"] = "rbxassetid://10709806475",
+	["cloudy"] = "rbxassetid://10709806859",
+	["clover"] = "rbxassetid://10709806995",
+	["code"] = "rbxassetid://10709810463",
+	["code-2"] = "rbxassetid://10709807111",
+	["codepen"] = "rbxassetid://10709810534",
+	["codesandbox"] = "rbxassetid://10709810676",
+	["coffee"] = "rbxassetid://10709810814",
+	["cog"] = "rbxassetid://10709810948",
+	["coins"] = "rbxassetid://10709811110",
+	["columns"] = "rbxassetid://10709811261",
+	["command"] = "rbxassetid://10709811365",
+	["compass"] = "rbxassetid://10709811445",
+	["component"] = "rbxassetid://10709811595",
+	["concierge-bell"] = "rbxassetid://10709811706",
+	["connection"] = "rbxassetid://10747361219",
+	["contact"] = "rbxassetid://10709811834",
+	["contrast"] = "rbxassetid://10709811939",
+	["cookie"] = "rbxassetid://10709812067",
+	["copy"] = "rbxassetid://10709812159",
+	["copyleft"] = "rbxassetid://10709812251",
+	["copyright"] = "rbxassetid://10709812311",
+	["corner-down-left"] = "rbxassetid://10709812396",
+	["corner-down-right"] = "rbxassetid://10709812485",
+	["corner-left-down"] = "rbxassetid://10709812632",
+	["corner-left-up"] = "rbxassetid://10709812784",
+	["corner-right-down"] = "rbxassetid://10709812939",
+	["corner-right-up"] = "rbxassetid://10709813094",
+	["corner-up-left"] = "rbxassetid://10709813185",
+	["corner-up-right"] = "rbxassetid://10709813281",
+	["cpu"] = "rbxassetid://10709813383",
+	["croissant"] = "rbxassetid://10709818125",
+	["crop"] = "rbxassetid://10709818245",
+	["cross"] = "rbxassetid://10709818399",
+	["crosshair"] = "rbxassetid://10709818534",
+	["crown"] = "rbxassetid://10709818626",
+	["cup-soda"] = "rbxassetid://10709818763",
+	["curly-braces"] = "rbxassetid://10709818847",
+	["currency"] = "rbxassetid://10709818931",
+	["container"] = "rbxassetid://17466205552",
+	["database"] = "rbxassetid://10709818996",
+	["delete"] = "rbxassetid://10709819059",
+	["diamond"] = "rbxassetid://10709819149",
+	["dice-1"] = "rbxassetid://10709819266",
+	["dice-2"] = "rbxassetid://10709819361",
+	["dice-3"] = "rbxassetid://10709819508",
+	["dice-4"] = "rbxassetid://10709819670",
+	["dice-5"] = "rbxassetid://10709819801",
+	["dice-6"] = "rbxassetid://10709819896",
+	["dices"] = "rbxassetid://10723343321",
+	["diff"] = "rbxassetid://10723343416",
+	["disc"] = "rbxassetid://10723343537",
+	["divide"] = "rbxassetid://10723343805",
+	["divide-circle"] = "rbxassetid://10723343636",
+	["divide-square"] = "rbxassetid://10723343737",
+	["dollar-sign"] = "rbxassetid://10723343958",
+	["download"] = "rbxassetid://10723344270",
+	["download-cloud"] = "rbxassetid://10723344088",
+	["door-open"] = "rbxassetid://124179241653522",
+	["droplet"] = "rbxassetid://10723344432",
+	["droplets"] = "rbxassetid://10734883356",
+	["drumstick"] = "rbxassetid://10723344737",
+	["edit"] = "rbxassetid://10734883598",
+	["edit-2"] = "rbxassetid://10723344885",
+	["edit-3"] = "rbxassetid://10723345088",
+	["egg"] = "rbxassetid://10723345518",
+	["egg-fried"] = "rbxassetid://10723345347",
+	["electricity"] = "rbxassetid://10723345749",
+	["electricity-off"] = "rbxassetid://10723345643",
+	["equal"] = "rbxassetid://10723345990",
+	["equal-not"] = "rbxassetid://10723345866",
+	["eraser"] = "rbxassetid://10723346158",
+	["euro"] = "rbxassetid://10723346372",
+	["expand"] = "rbxassetid://10723346553",
+	["external-link"] = "rbxassetid://10723346684",
+	["eye"] = "rbxassetid://10723346959",
+	["eye-off"] = "rbxassetid://10723346871",
+	["factory"] = "rbxassetid://10723347051",
+	["fan"] = "rbxassetid://10723354359",
+	["fast-forward"] = "rbxassetid://10723354521",
+	["feather"] = "rbxassetid://10723354671",
+	["figma"] = "rbxassetid://10723354801",
+	["file"] = "rbxassetid://10723374641",
+	["file-archive"] = "rbxassetid://10723354921",
+	["file-audio"] = "rbxassetid://10723355148",
+	["file-audio-2"] = "rbxassetid://10723355026",
+	["file-axis-3d"] = "rbxassetid://10723355272",
+	["file-badge"] = "rbxassetid://10723355622",
+	["file-badge-2"] = "rbxassetid://10723355451",
+	["file-bar-chart"] = "rbxassetid://10723355887",
+	["file-bar-chart-2"] = "rbxassetid://10723355746",
+	["file-box"] = "rbxassetid://10723355989",
+	["file-check"] = "rbxassetid://10723356210",
+	["file-check-2"] = "rbxassetid://10723356100",
+	["file-clock"] = "rbxassetid://10723356329",
+	["file-code"] = "rbxassetid://10723356507",
+	["file-cog"] = "rbxassetid://10723356830",
+	["file-cog-2"] = "rbxassetid://10723356676",
+	["file-diff"] = "rbxassetid://10723357039",
+	["file-digit"] = "rbxassetid://10723357151",
+	["file-down"] = "rbxassetid://10723357322",
+	["file-edit"] = "rbxassetid://10723357495",
+	["file-heart"] = "rbxassetid://10723357637",
+	["file-image"] = "rbxassetid://10723357790",
+	["file-input"] = "rbxassetid://10723357933",
+	["file-json"] = "rbxassetid://10723364435",
+	["file-json-2"] = "rbxassetid://10723364361",
+	["file-key"] = "rbxassetid://10723364605",
+	["file-key-2"] = "rbxassetid://10723364515",
+	["file-line-chart"] = "rbxassetid://10723364725",
+	["file-lock"] = "rbxassetid://10723364957",
+	["file-lock-2"] = "rbxassetid://10723364861",
+	["file-minus"] = "rbxassetid://10723365254",
+	["file-minus-2"] = "rbxassetid://10723365086",
+	["file-output"] = "rbxassetid://10723365457",
+	["file-pie-chart"] = "rbxassetid://10723365598",
+	["file-plus"] = "rbxassetid://10723365877",
+	["file-plus-2"] = "rbxassetid://10723365766",
+	["file-question"] = "rbxassetid://10723365987",
+	["file-scan"] = "rbxassetid://10723366167",
+	["file-search"] = "rbxassetid://10723366550",
+	["file-search-2"] = "rbxassetid://10723366340",
+	["file-signature"] = "rbxassetid://10723366741",
+	["file-spreadsheet"] = "rbxassetid://10723366962",
+	["file-symlink"] = "rbxassetid://10723367098",
+	["file-terminal"] = "rbxassetid://10723367244",
+	["file-text"] = "rbxassetid://10723367380",
+	["file-type"] = "rbxassetid://10723367606",
+	["file-type-2"] = "rbxassetid://10723367509",
+	["file-up"] = "rbxassetid://10723367734",
+	["file-video"] = "rbxassetid://10723373884",
+	["file-video-2"] = "rbxassetid://10723367834",
+	["file-volume"] = "rbxassetid://10723374172",
+	["file-volume-2"] = "rbxassetid://10723374030",
+	["file-warning"] = "rbxassetid://10723374276",
+	["file-x"] = "rbxassetid://10723374544",
+	["file-x-2"] = "rbxassetid://10723374378",
+	["files"] = "rbxassetid://10723374759",
+	["film"] = "rbxassetid://10723374981",
+	["filter"] = "rbxassetid://10723375128",
+	["fingerprint"] = "rbxassetid://10723375250",
+	["flag"] = "rbxassetid://10723375890",
+	["flag-off"] = "rbxassetid://10723375443",
+	["flag-triangle-left"] = "rbxassetid://10723375608",
+	["flag-triangle-right"] = "rbxassetid://10723375727",
+	["flame"] = "rbxassetid://10723376114",
+	["flashlight"] = "rbxassetid://10723376471",
+	["flashlight-off"] = "rbxassetid://10723376365",
+	["flask-conical"] = "rbxassetid://10734883986",
+	["flask-round"] = "rbxassetid://10723376614",
+	["flip-horizontal"] = "rbxassetid://10723376884",
+	["flip-horizontal-2"] = "rbxassetid://10723376745",
+	["flip-vertical"] = "rbxassetid://10723377138",
+	["flip-vertical-2"] = "rbxassetid://10723377026",
+	["flower"] = "rbxassetid://10747830374",
+	["flower-2"] = "rbxassetid://10723377305",
+	["focus"] = "rbxassetid://10723377537",
+	["folder"] = "rbxassetid://10723387563",
+	["folder-archive"] = "rbxassetid://10723384478",
+	["folder-check"] = "rbxassetid://10723384605",
+	["folder-clock"] = "rbxassetid://10723384731",
+	["folder-closed"] = "rbxassetid://10723384893",
+	["folder-cog"] = "rbxassetid://10723385213",
+	["folder-cog-2"] = "rbxassetid://10723385036",
+	["folder-down"] = "rbxassetid://10723385338",
+	["folder-edit"] = "rbxassetid://10723385445",
+	["folder-heart"] = "rbxassetid://10723385545",
+	["folder-input"] = "rbxassetid://10723385721",
+	["folder-key"] = "rbxassetid://10723385848",
+	["folder-lock"] = "rbxassetid://10723386005",
+	["folder-minus"] = "rbxassetid://10723386127",
+	["folder-open"] = "rbxassetid://10723386277",
+	["folder-output"] = "rbxassetid://10723386386",
+	["folder-plus"] = "rbxassetid://10723386531",
+	["folder-search"] = "rbxassetid://10723386787",
+	["folder-search-2"] = "rbxassetid://10723386674",
+	["folder-symlink"] = "rbxassetid://10723386930",
+	["folder-tree"] = "rbxassetid://10723387085",
+	["folder-up"] = "rbxassetid://10723387265",
+	["folder-x"] = "rbxassetid://10723387448",
+	["folders"] = "rbxassetid://10723387721",
+	["form-input"] = "rbxassetid://10723387841",
+	["forward"] = "rbxassetid://10723388016",
+	["frame"] = "rbxassetid://10723394389",
+	["framer"] = "rbxassetid://10723394565",
+	["frown"] = "rbxassetid://10723394681",
+	["fuel"] = "rbxassetid://10723394846",
+	["function-square"] = "rbxassetid://10723395041",
+	["gamepad"] = "rbxassetid://10723395457",
+	["gamepad-2"] = "rbxassetid://10723395215",
+	["gauge"] = "rbxassetid://10723395708",
+	["gavel"] = "rbxassetid://10723395896",
+	["gem"] = "rbxassetid://10723396000",
+	["ghost"] = "rbxassetid://10723396107",
+	["gift"] = "rbxassetid://10723396402",
+	["gift-card"] = "rbxassetid://10723396225",
+	["git-branch"] = "rbxassetid://10723396676",
+	["git-branch-plus"] = "rbxassetid://10723396542",
+	["git-commit"] = "rbxassetid://10723396812",
+	["git-compare"] = "rbxassetid://10723396954",
+	["git-fork"] = "rbxassetid://10723397049",
+	["git-merge"] = "rbxassetid://10723397165",
+	["git-pull-request"] = "rbxassetid://10723397431",
+	["git-pull-request-closed"] = "rbxassetid://10723397268",
+	["git-pull-request-draft"] = "rbxassetid://10734884302",
+	["glass"] = "rbxassetid://10723397788",
+	["glass-2"] = "rbxassetid://10723397529",
+	["glass-water"] = "rbxassetid://10723397678",
+	["glasses"] = "rbxassetid://10723397895",
+	["globe"] = "rbxassetid://10723404337",
+	["globe-2"] = "rbxassetid://10723398002",
+	["grab"] = "rbxassetid://10723404472",
+	["graduation-cap"] = "rbxassetid://10723404691",
+	["grape"] = "rbxassetid://10723404822",
+	["grid"] = "rbxassetid://10723404936",
+	["grip-horizontal"] = "rbxassetid://10723405089",
+	["grip-vertical"] = "rbxassetid://10723405236",
+	["hammer"] = "rbxassetid://10723405360",
+	["hand"] = "rbxassetid://10723405649",
+	["hand-metal"] = "rbxassetid://10723405508",
+	["hard-drive"] = "rbxassetid://10723405749",
+	["hard-hat"] = "rbxassetid://10723405859",
+	["hash"] = "rbxassetid://10723405975",
+	["haze"] = "rbxassetid://10723406078",
+	["headphones"] = "rbxassetid://10723406165",
+	["heart"] = "rbxassetid://10723406885",
+	["heart-crack"] = "rbxassetid://10723406299",
+	["heart-handshake"] = "rbxassetid://10723406480",
+	["heart-off"] = "rbxassetid://10723406662",
+	["heart-pulse"] = "rbxassetid://10723406795",
+	["help-circle"] = "rbxassetid://10723406988",
+	["hexagon"] = "rbxassetid://10723407092",
+	["highlighter"] = "rbxassetid://10723407192",
+	["history"] = "rbxassetid://10723407335",
+	["home"] = "rbxassetid://10723407389",
+	["hourglass"] = "rbxassetid://10723407498",
+	["ice-cream"] = "rbxassetid://10723414308",
+	["image"] = "rbxassetid://10723415040",
+	["image-minus"] = "rbxassetid://10723414487",
+	["image-off"] = "rbxassetid://10723414677",
+	["image-plus"] = "rbxassetid://10723414827",
+	["import"] = "rbxassetid://10723415205",
+	["inbox"] = "rbxassetid://10723415335",
+	["indent"] = "rbxassetid://10723415494",
+	["indian-rupee"] = "rbxassetid://10723415642",
+	["infinity"] = "rbxassetid://10723415766",
+	["info"] = "rbxassetid://10723415903",
+	["inspect"] = "rbxassetid://10723416057",
+	["italic"] = "rbxassetid://10723416195",
+	["japanese-yen"] = "rbxassetid://10723416363",
+	["joystick"] = "rbxassetid://10723416527",
+	["key"] = "rbxassetid://10723416652",
+	["keyboard"] = "rbxassetid://10723416765",
+	["lamp"] = "rbxassetid://10723417513",
+	["lamp-ceiling"] = "rbxassetid://10723416922",
+	["lamp-desk"] = "rbxassetid://10723417016",
+	["lamp-floor"] = "rbxassetid://10723417131",
+	["lamp-wall-down"] = "rbxassetid://10723417240",
+	["lamp-wall-up"] = "rbxassetid://10723417356",
+	["landmark"] = "rbxassetid://10723417608",
+	["languages"] = "rbxassetid://10723417703",
+	["laptop"] = "rbxassetid://10723423881",
+	["laptop-2"] = "rbxassetid://10723417797",
+	["lasso"] = "rbxassetid://10723424235",
+	["lasso-select"] = "rbxassetid://10723424058",
+	["laugh"] = "rbxassetid://10723424372",
+	["layers"] = "rbxassetid://10723424505",
+	["layout"] = "rbxassetid://10723425376",
+	["layout-dashboard"] = "rbxassetid://10723424646",
+	["layout-grid"] = "rbxassetid://10723424838",
+	["layout-list"] = "rbxassetid://10723424963",
+	["layout-template"] = "rbxassetid://10723425187",
+	["leaf"] = "rbxassetid://10723425539",
+	["library"] = "rbxassetid://10723425615",
+	["life-buoy"] = "rbxassetid://10723425685",
+	["lightbulb"] = "rbxassetid://10723425852",
+	["lightbulb-off"] = "rbxassetid://10723425762",
+	["line-chart"] = "rbxassetid://10723426393",
+	["link"] = "rbxassetid://10723426722",
+	["link-2"] = "rbxassetid://10723426595",
+	["link-2-off"] = "rbxassetid://10723426513",
+	["list"] = "rbxassetid://10723433811",
+	["list-checks"] = "rbxassetid://10734884548",
+	["list-end"] = "rbxassetid://10723426886",
+	["list-minus"] = "rbxassetid://10723426986",
+	["list-music"] = "rbxassetid://10723427081",
+	["list-ordered"] = "rbxassetid://10723427199",
+	["list-plus"] = "rbxassetid://10723427334",
+	["list-start"] = "rbxassetid://10723427494",
+	["list-video"] = "rbxassetid://10723427619",
+	["list-todo"] = "rbxassetid://17376008003",
+	["list-x"] = "rbxassetid://10723433655",
+	["loader"] = "rbxassetid://10723434070",
+	["loader-2"] = "rbxassetid://10723433935",
+	["locate"] = "rbxassetid://10723434557",
+	["locate-fixed"] = "rbxassetid://10723434236",
+	["locate-off"] = "rbxassetid://10723434379",
+	["lock"] = "rbxassetid://10723434711",
+	["log-in"] = "rbxassetid://10723434830",
+	["log-out"] = "rbxassetid://10723434906",
+	["luggage"] = "rbxassetid://10723434993",
+	["magnet"] = "rbxassetid://10723435069",
+	["mail"] = "rbxassetid://10734885430",
+	["mail-check"] = "rbxassetid://10723435182",
+	["mail-minus"] = "rbxassetid://10723435261",
+	["mail-open"] = "rbxassetid://10723435342",
+	["mail-plus"] = "rbxassetid://10723435443",
+	["mail-question"] = "rbxassetid://10723435515",
+	["mail-search"] = "rbxassetid://10734884739",
+	["mail-warning"] = "rbxassetid://10734885015",
+	["mail-x"] = "rbxassetid://10734885247",
+	["mails"] = "rbxassetid://10734885614",
+	["map"] = "rbxassetid://10734886202",
+	["map-pin"] = "rbxassetid://10734886004",
+	["map-pin-off"] = "rbxassetid://10734885803",
+	["maximize"] = "rbxassetid://10734886735",
+	["maximize-2"] = "rbxassetid://10734886496",
+	["medal"] = "rbxassetid://10734887072",
+	["megaphone"] = "rbxassetid://10734887454",
+	["megaphone-off"] = "rbxassetid://10734887311",
+	["meh"] = "rbxassetid://10734887603",
+	["menu"] = "rbxassetid://10734887784",
+	["message-circle"] = "rbxassetid://10734888000",
+	["message-square"] = "rbxassetid://10734888228",
+	["mic"] = "rbxassetid://10734888864",
+	["mic-2"] = "rbxassetid://10734888430",
+	["mic-off"] = "rbxassetid://10734888646",
+	["microscope"] = "rbxassetid://10734889106",
+	["microwave"] = "rbxassetid://10734895076",
+	["milestone"] = "rbxassetid://10734895310",
+	["minimize"] = "rbxassetid://10734895698",
+	["minimize-2"] = "rbxassetid://10734895530",
+	["minus"] = "rbxassetid://10734896206",
+	["minus-circle"] = "rbxassetid://10734895856",
+	["minus-square"] = "rbxassetid://10734896029",
+	["monitor"] = "rbxassetid://10734896881",
+	["monitor-off"] = "rbxassetid://10734896360",
+	["monitor-speaker"] = "rbxassetid://10734896512",
+	["moon"] = "rbxassetid://10734897102",
+	["more-horizontal"] = "rbxassetid://10734897250",
+	["more-vertical"] = "rbxassetid://10734897387",
+	["mountain"] = "rbxassetid://10734897956",
+	["mountain-snow"] = "rbxassetid://10734897665",
+	["mouse"] = "rbxassetid://10734898592",
+	["mouse-pointer"] = "rbxassetid://10734898476",
+	["mouse-pointer-2"] = "rbxassetid://10734898194",
+	["mouse-pointer-click"] = "rbxassetid://10734898355",
+	["move"] = "rbxassetid://10734900011",
+	["move-3d"] = "rbxassetid://10734898756",
+	["move-diagonal"] = "rbxassetid://10734899164",
+	["move-diagonal-2"] = "rbxassetid://10734898934",
+	["move-horizontal"] = "rbxassetid://10734899414",
+	["move-vertical"] = "rbxassetid://10734899821",
+	["music"] = "rbxassetid://10734905958",
+	["music-2"] = "rbxassetid://10734900215",
+	["music-3"] = "rbxassetid://10734905665",
+	["music-4"] = "rbxassetid://10734905823",
+	["navigation"] = "rbxassetid://10734906744",
+	["navigation-2"] = "rbxassetid://10734906332",
+	["navigation-2-off"] = "rbxassetid://10734906144",
+	["navigation-off"] = "rbxassetid://10734906580",
+	["network"] = "rbxassetid://10734906975",
+	["newspaper"] = "rbxassetid://10734907168",
+	["octagon"] = "rbxassetid://10734907361",
+	["option"] = "rbxassetid://10734907649",
+	["outdent"] = "rbxassetid://10734907933",
+	["package"] = "rbxassetid://10734909540",
+	["package-2"] = "rbxassetid://10734908151",
+	["package-check"] = "rbxassetid://10734908384",
+	["package-minus"] = "rbxassetid://10734908626",
+	["package-open"] = "rbxassetid://10734908793",
+	["package-plus"] = "rbxassetid://10734909016",
+	["package-search"] = "rbxassetid://10734909196",
+	["package-x"] = "rbxassetid://10734909375",
+	["paint-bucket"] = "rbxassetid://10734909847",
+	["paintbrush"] = "rbxassetid://10734910187",
+	["paintbrush-2"] = "rbxassetid://10734910030",
+	["palette"] = "rbxassetid://10734910430",
+	["palmtree"] = "rbxassetid://10734910680",
+	["paperclip"] = "rbxassetid://10734910927",
+	["party-popper"] = "rbxassetid://10734918735",
+	["pause"] = "rbxassetid://10734919336",
+	["pause-circle"] = "rbxassetid://10735024209",
+	["pause-octagon"] = "rbxassetid://10734919143",
+	["pen-tool"] = "rbxassetid://10734919503",
+	["pencil"] = "rbxassetid://10734919691",
+	["percent"] = "rbxassetid://10734919919",
+	["person-standing"] = "rbxassetid://10734920149",
+	["phone"] = "rbxassetid://10734921524",
+	["phone-call"] = "rbxassetid://10734920305",
+	["phone-forwarded"] = "rbxassetid://10734920508",
+	["phone-incoming"] = "rbxassetid://10734920694",
+	["phone-missed"] = "rbxassetid://10734920845",
+	["phone-off"] = "rbxassetid://10734921077",
+	["phone-outgoing"] = "rbxassetid://10734921288",
+	["pie-chart"] = "rbxassetid://10734921727",
+	["piggy-bank"] = "rbxassetid://10734921935",
+	["pin"] = "rbxassetid://10734922324",
+	["pin-off"] = "rbxassetid://10734922180",
+	["pipette"] = "rbxassetid://10734922497",
+	["pizza"] = "rbxassetid://10734922774",
+	["plane"] = "rbxassetid://10734922971",
+	["plane-landing"] = "rbxassetid://17376029914",
+	["play"] = "rbxassetid://10734923549",
+	["play-circle"] = "rbxassetid://10734923214",
+	["plus"] = "rbxassetid://10734924532",
+	["plus-circle"] = "rbxassetid://10734923868",
+	["plus-square"] = "rbxassetid://10734924219",
+	["podcast"] = "rbxassetid://10734929553",
+	["pointer"] = "rbxassetid://10734929723",
+	["pound-sterling"] = "rbxassetid://10734929981",
+	["power"] = "rbxassetid://10734930466",
+	["power-off"] = "rbxassetid://10734930257",
+	["printer"] = "rbxassetid://10734930632",
+	["puzzle"] = "rbxassetid://10734930886",
+	["quote"] = "rbxassetid://10734931234",
+	["radio"] = "rbxassetid://10734931596",
+	["radio-receiver"] = "rbxassetid://10734931402",
+	["rectangle-horizontal"] = "rbxassetid://10734931777",
+	["rectangle-vertical"] = "rbxassetid://10734932081",
+	["recycle"] = "rbxassetid://10734932295",
+	["redo"] = "rbxassetid://10734932822",
+	["redo-2"] = "rbxassetid://10734932586",
+	["refresh-ccw"] = "rbxassetid://10734933056",
+	["refresh-cw"] = "rbxassetid://10734933222",
+	["refrigerator"] = "rbxassetid://10734933465",
+	["regex"] = "rbxassetid://10734933655",
+	["repeat"] = "rbxassetid://10734933966",
+	["repeat-1"] = "rbxassetid://10734933826",
+	["reply"] = "rbxassetid://10734934252",
+	["reply-all"] = "rbxassetid://10734934132",
+	["rewind"] = "rbxassetid://10734934347",
+	["rocket"] = "rbxassetid://10734934585",
+	["rocking-chair"] = "rbxassetid://10734939942",
+	["rotate-3d"] = "rbxassetid://10734940107",
+	["rotate-ccw"] = "rbxassetid://10734940376",
+	["rotate-cw"] = "rbxassetid://10734940654",
+	["rss"] = "rbxassetid://10734940825",
+	["ruler"] = "rbxassetid://10734941018",
+	["russian-ruble"] = "rbxassetid://10734941199",
+	["sailboat"] = "rbxassetid://10734941354",
+	["save"] = "rbxassetid://10734941499",
+	["scale"] = "rbxassetid://10734941912",
+	["scale-3d"] = "rbxassetid://10734941739",
+	["scaling"] = "rbxassetid://10734942072",
+	["scan"] = "rbxassetid://10734942565",
+	["scan-face"] = "rbxassetid://10734942198",
+	["scan-line"] = "rbxassetid://10734942351",
+	["scissors"] = "rbxassetid://10734942778",
+	["screen-share"] = "rbxassetid://10734943193",
+	["screen-share-off"] = "rbxassetid://10734942967",
+	["scroll"] = "rbxassetid://10734943448",
+	["search"] = "rbxassetid://10734943674",
+	["send"] = "rbxassetid://10734943902",
+	["separator-horizontal"] = "rbxassetid://10734944115",
+	["separator-vertical"] = "rbxassetid://10734944326",
+	["server"] = "rbxassetid://10734949856",
+	["server-cog"] = "rbxassetid://10734944444",
+	["server-crash"] = "rbxassetid://10734944554",
+	["server-off"] = "rbxassetid://10734944668",
+	["settings"] = "rbxassetid://10734950309",
+	["settings-2"] = "rbxassetid://10734950020",
+	["share"] = "rbxassetid://10734950813",
+	["share-2"] = "rbxassetid://10734950553",
+	["sheet"] = "rbxassetid://10734951038",
+	["shield"] = "rbxassetid://10734951847",
+	["shield-alert"] = "rbxassetid://10734951173",
+	["shield-check"] = "rbxassetid://10734951367",
+	["shield-close"] = "rbxassetid://10734951535",
+	["shield-off"] = "rbxassetid://10734951684",
+	["shirt"] = "rbxassetid://10734952036",
+	["shopping-bag"] = "rbxassetid://10734952273",
+	["shopping-cart"] = "rbxassetid://10734952479",
+	["shovel"] = "rbxassetid://10734952773",
+	["shower-head"] = "rbxassetid://10734952942",
+	["shrink"] = "rbxassetid://10734953073",
+	["shrub"] = "rbxassetid://10734953241",
+	["shuffle"] = "rbxassetid://10734953451",
+	["sidebar"] = "rbxassetid://10734954301",
+	["sidebar-close"] = "rbxassetid://10734953715",
+	["sidebar-open"] = "rbxassetid://10734954000",
+	["sigma"] = "rbxassetid://10734954538",
+	["signal"] = "rbxassetid://10734961133",
+	["signal-high"] = "rbxassetid://10734954807",
+	["signal-low"] = "rbxassetid://10734955080",
+	["signal-medium"] = "rbxassetid://10734955336",
+	["signal-zero"] = "rbxassetid://10734960878",
+	["siren"] = "rbxassetid://10734961284",
+	["skip-back"] = "rbxassetid://10734961526",
+	["skip-forward"] = "rbxassetid://10734961809",
+	["skull"] = "rbxassetid://10734962068",
+	["slack"] = "rbxassetid://10734962339",
+	["slash"] = "rbxassetid://10734962600",
+	["slice"] = "rbxassetid://10734963024",
+	["sliders"] = "rbxassetid://10734963400",
+	["sliders-horizontal"] = "rbxassetid://10734963191",
+	["smartphone"] = "rbxassetid://10734963940",
+	["smartphone-charging"] = "rbxassetid://10734963671",
+	["smile"] = "rbxassetid://10734964441",
+	["smile-plus"] = "rbxassetid://10734964188",
+	["snowflake"] = "rbxassetid://10734964600",
+	["sofa"] = "rbxassetid://10734964852",
+	["sort-asc"] = "rbxassetid://10734965115",
+	["sort-desc"] = "rbxassetid://10734965287",
+	["speaker"] = "rbxassetid://10734965419",
+	["sprout"] = "rbxassetid://10734965572",
+	["square"] = "rbxassetid://10734965702",
+	["star"] = "rbxassetid://10734966248",
+	["star-half"] = "rbxassetid://10734965897",
+	["star-off"] = "rbxassetid://10734966097",
+	["stethoscope"] = "rbxassetid://10734966384",
+	["sticker"] = "rbxassetid://10734972234",
+	["sticky-note"] = "rbxassetid://10734972463",
+	["stop-circle"] = "rbxassetid://10734972621",
+	["stretch-horizontal"] = "rbxassetid://10734972862",
+	["stretch-vertical"] = "rbxassetid://10734973130",
+	["strikethrough"] = "rbxassetid://10734973290",
+	["subscript"] = "rbxassetid://10734973457",
+	["sun"] = "rbxassetid://10734974297",
+	["sun-dim"] = "rbxassetid://10734973645",
+	["sun-medium"] = "rbxassetid://10734973778",
+	["sun-moon"] = "rbxassetid://10734973999",
+	["sun-snow"] = "rbxassetid://10734974130",
+	["sunrise"] = "rbxassetid://10734974522",
+	["sunset"] = "rbxassetid://10734974689",
+	["superscript"] = "rbxassetid://10734974850",
+	["swiss-franc"] = "rbxassetid://10734975024",
+	["switch-camera"] = "rbxassetid://10734975214",
+	["sword"] = "rbxassetid://10734975486",
+	["swords"] = "rbxassetid://10734975692",
+	["syringe"] = "rbxassetid://10734975932",
+	["table"] = "rbxassetid://10734976230",
+	["table-2"] = "rbxassetid://10734976097",
+	["tablet"] = "rbxassetid://10734976394",
+	["tag"] = "rbxassetid://10734976528",
+	["tags"] = "rbxassetid://10734976739",
+	["target"] = "rbxassetid://10734977012",
+	["tent"] = "rbxassetid://10734981750",
+	["terminal"] = "rbxassetid://10734982144",
+	["terminal-square"] = "rbxassetid://10734981995",
+	["text-cursor"] = "rbxassetid://10734982395",
+	["text-cursor-input"] = "rbxassetid://10734982297",
+	["thermometer"] = "rbxassetid://10734983134",
+	["thermometer-snowflake"] = "rbxassetid://10734982571",
+	["thermometer-sun"] = "rbxassetid://10734982771",
+	["thumbs-down"] = "rbxassetid://10734983359",
+	["thumbs-up"] = "rbxassetid://10734983629",
+	["ticket"] = "rbxassetid://10734983868",
+	["timer"] = "rbxassetid://10734984606",
+	["timer-off"] = "rbxassetid://10734984138",
+	["timer-reset"] = "rbxassetid://10734984355",
+	["toggle-left"] = "rbxassetid://10734984834",
+	["toggle-right"] = "rbxassetid://10734985040",
+	["tornado"] = "rbxassetid://10734985247",
+	["toy-brick"] = "rbxassetid://10747361919",
+	["train"] = "rbxassetid://10747362105",
+	["trash"] = "rbxassetid://10747362393",
+	["trash-2"] = "rbxassetid://10747362241",
+	["tree-deciduous"] = "rbxassetid://10747362534",
+	["tree-pine"] = "rbxassetid://10747362748",
+	["trees"] = "rbxassetid://10747363016",
+	["trending-down"] = "rbxassetid://10747363205",
+	["trending-up"] = "rbxassetid://10747363465",
+	["triangle"] = "rbxassetid://10747363621",
+	["trophy"] = "rbxassetid://10747363809",
+	["truck"] = "rbxassetid://10747364031",
+	["tv"] = "rbxassetid://10747364593",
+	["tv-2"] = "rbxassetid://10747364302",
+	["type"] = "rbxassetid://10747364761",
+	["umbrella"] = "rbxassetid://10747364971",
+	["underline"] = "rbxassetid://10747365191",
+	["undo"] = "rbxassetid://10747365484",
+	["undo-2"] = "rbxassetid://10747365359",
+	["unlink"] = "rbxassetid://10747365771",
+	["unlink-2"] = "rbxassetid://10747397871",
+	["unlock"] = "rbxassetid://10747366027",
+	["upload"] = "rbxassetid://10747366434",
+	["upload-cloud"] = "rbxassetid://10747366266",
+	["usb"] = "rbxassetid://10747366606",
+	["user"] = "rbxassetid://10747373176",
+	["user-check"] = "rbxassetid://10747371901",
+	["user-cog"] = "rbxassetid://10747372167",
+	["user-minus"] = "rbxassetid://10747372346",
+	["user-plus"] = "rbxassetid://10747372702",
+	["user-x"] = "rbxassetid://10747372992",
+	["users"] = "rbxassetid://10747373426",
+	["utensils"] = "rbxassetid://10747373821",
+	["utensils-crossed"] = "rbxassetid://10747373629",
+	["venetian-mask"] = "rbxassetid://10747374003",
+	["verified"] = "rbxassetid://10747374131",
+	["vibrate"] = "rbxassetid://10747374489",
+	["vibrate-off"] = "rbxassetid://10747374269",
+	["video"] = "rbxassetid://10747374938",
+	["video-off"] = "rbxassetid://10747374721",
+	["view"] = "rbxassetid://10747375132",
+	["voicemail"] = "rbxassetid://10747375281",
+	["volume"] = "rbxassetid://10747376008",
+	["volume-1"] = "rbxassetid://10747375450",
+	["volume-2"] = "rbxassetid://10747375679",
+	["volume-x"] = "rbxassetid://10747375880",
+	["wheat"] = "rbxassetid://80877624162595",
+	["wallet"] = "rbxassetid://10747376205",
+	["wand"] = "rbxassetid://10747376565",
+	["wand-2"] = "rbxassetid://10747376349",
+	["watch"] = "rbxassetid://10747376722",
+	["waves"] = "rbxassetid://10747376931",
+	["webcam"] = "rbxassetid://10747381992",
+	["wifi"] = "rbxassetid://10747382504",
+	["wifi-off"] = "rbxassetid://10747382268",
+	["wind"] = "rbxassetid://10747382750",
+	["wrap-text"] = "rbxassetid://10747383065",
+	["wrench"] = "rbxassetid://10747383470",
+	["x"] = "rbxassetid://10747384394",
+	["x-circle"] = "rbxassetid://10747383819",
+	["x-octagon"] = "rbxassetid://10747384037",
+	["x-square"] = "rbxassetid://10747384217",
+	["zoom-in"] = "rbxassetid://10747384552",
+	["zoom-out"] = "rbxassetid://10747384679",
+	["cat"] = "rbxassetid://16935650691",
+	["message-circle-question"] = "rbxassetid://16970049192",
+	["webhook"] = "rbxassetid://17320556264",
+	["dumbbell"] = "rbxassetid://18273453053"
 }
 
 function Library:GetIcon(Name)
-	if Name ~= nil and Icons["lucide-" .. Name] then
-		return Icons["lucide-" .. Name]
+	if Name ~= nil and Icons[Name] then
+		return Icons[Name]
 	end
 	return nil
 end
@@ -8437,6 +8486,10 @@ end
 
 Library.Elements = Elements
 
+-- Anti-detection layer
+local _a,_b,_c=debug.getinfo,debug.traceback,getfENV or function()return _G end
+local function _d(t)if type(t)=='table'then for i,v in pairs(t)do if type(v)=='function'then debug.setlocal(2,i,'')end end end return t end
+
 if RunService:IsStudio() then
 	makefolder = function(...) return ... end;
 	makefile = function(...) return ... end;
@@ -8451,7 +8504,7 @@ local SaveManager = {} do
 
 
 
-	SaveManager.Folder = "NexusSettings"
+	SaveManager.Folder = _ConfigFolderName or "Config_Data"
 
 
 	SaveManager.Ignore = {}
@@ -8796,12 +8849,11 @@ local SaveManager = {} do
 
 
 
-
-
-			for _, option in next, decoded.objects do
-
-
-				if self.Parser[option.type] and not self.Ignore[option.idx] then
+		if not (decoded and type(decoded) == "table" and decoded.objects) then 
+			return false, "invalid config format" 
+		end
+		for _, option in next, decoded.objects do
+			if option and self.Parser and self.Parser[option.type] and not self.Ignore[option.idx] then
 
 
 					task.spawn(function() self.Parser[option.type].Load(option.idx, option) end)
@@ -8820,6 +8872,7 @@ local SaveManager = {} do
 
 
 			return true, decoded
+
 
 		end
 
@@ -9405,7 +9458,7 @@ end
 local InterfaceManager = {} do
 
 
-	InterfaceManager.Folder = "NexusSettings"
+	InterfaceManager.Folder = _ConfigFolderName or "Config_Data"
 
 
 	InterfaceManager.Settings = {
@@ -9701,7 +9754,7 @@ end
 			end
 		})
 
-		if game.GameId == 93978595733734 then
+		if _gid == 93978595733734 then
 			section:AddToggle("AutoCursorUnlock", {
 				Title = "Auto Cursor Unlock",
 				Description = "Automatically show cursor when UI opens and hide when closed.",
@@ -9758,7 +9811,6 @@ Library.CreateWindow = function(self, Config)
 	assert(Config.Title, "Window - Missing Title")
 
 	if Library.Window then
-		print("You cannot create more than one window.")
 		return
 	end
 
@@ -9816,6 +9868,7 @@ Library.CreateWindow = function(self, Config)
 
 
 		end
+
 
 
 
@@ -10126,19 +10179,10 @@ function Library:CreateMinimizer(Config)
 
 
 	if isMobile then
-
-
 		holder = New("Frame", {
-
-
-			Name = "UIButton",
-
-
+			Name = "Minimizer_" .. math.random(1000, 9999),
 			Parent = parentGui,
-
-
 			Size = Config.Size or UDim2.fromOffset(36, 36),
-
 			Position = Config.Position or UDim2.new(0.45, 0, 0.025, 0),
 
 
@@ -10160,7 +10204,7 @@ function Library:CreateMinimizer(Config)
 		holder = New("Frame", {
 
 
-			Name = "UIButton",
+			Name = RandomString(),
 
 
 			Parent = parentGui,
@@ -10330,30 +10374,13 @@ function Library:CreateMinimizer(Config)
 
 
 			Creator.AddSignal(RunService.Heartbeat, function()
-
-
-				if isDragging and dragStart and dragOffset and holder and holder.Parent then
-
-
-					local mouse = {
-					X = UserInputService:GetMouseLocation().X,
-					Y = UserInputService:GetMouseLocation().Y - 36
-					}
-
-
-					local current = Vector2.new(mouse.X, mouse.Y)
-
-
-					local delta = current - dragStart
-
-
-					local newX = dragOffset.X.Offset + delta.X
-
-
-					local newY = dragOffset.Y.Offset + delta.Y
-
-
-					local viewport = workspace.Camera.ViewportSize
+			if isDragging and dragStart and dragOffset and holder and holder.Parent then
+				local mouse = LocalPlayer and type(LocalPlayer.GetMouse) == "function" and pcall(function() return LocalPlayer:GetMouse() end) and LocalPlayer:GetMouse() or nil
+				if not mouse then return end
+				local current = Vector2.new(mouse.X, mouse.Y)
+				local delta = current - dragStart
+				local newX = dragOffset.X.Offset + delta.X
+				local newY = dragOffset.Y.Offset + delta.Y
 
 
 					local size = holder.AbsoluteSize
@@ -10507,7 +10534,7 @@ function Library:ToggleTransparency(Value)
 	if Library.Window and Library.Window.AcrylicPaint and Library.Window.AcrylicPaint.Frame and Library.Window.AcrylicPaint.Frame:FindFirstChild("Background") then
 
 
-		Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value and 0.15 or 0
+		Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value and 0.5 or 0
 
 
 	end
@@ -10580,7 +10607,8 @@ function Library:SetWindowTransparency(Value)
 
 			if Library.Window.AcrylicPaint.Frame:FindFirstChild("Background") then
 			    Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = math.min(backgroundTransparency, 0.99)
-            end
+			end
+
 
 
 
@@ -10608,14 +10636,14 @@ function Library:SetWindowTransparency(Value)
 
 		else
 
-
 			if Library.Window.AcrylicPaint.Model then
 			    Library.Window.AcrylicPaint.Model.Transparency = 0.98
-            end
+			end
 
 			if Library.Window.AcrylicPaint.Frame:FindFirstChild("Background") then
 			    Library.Window.AcrylicPaint.Frame.Background.BackgroundTransparency = Value == 0 and 0 or (Value * 0.3)
-            end
+			end
+
 
 		end
 
@@ -10630,18 +10658,18 @@ end
 
 
 function Library:Notify(Config)
-
-
-	return NotificationModule:New(Config)
-
-
+	if NotificationModule and type(NotificationModule.New) == "function" then
+		return pcall(function() return NotificationModule:New(Config) end)
+	end
 end
 
 
 
 
 
--- _G.Fluent removed for AC bypass
+Library._Name = ""
+Library._Version = 0
+if not getfenv then setmetatable(Library, {__metatable = false}) end
 
 
 
@@ -10820,6 +10848,7 @@ local MinimizeButton = New("TextButton", {
 	})
 
 })
+
 
 
 
@@ -11107,17 +11136,9 @@ Creator.AddSignal(RunService.Heartbeat, function()
 
 
 		if debugCount % 30 == 1 then
-
-
 		end
-
-
-		local Mouse = {
-			X = UserInputService:GetMouseLocation().X,
-			Y = UserInputService:GetMouseLocation().Y - 36
-		}
-
-
+		local Mouse = pcall(function() return game:GetService("Players").LocalPlayer:GetMouse() end) and game:GetService("Players").LocalPlayer:GetMouse() or nil
+		if not Mouse then return end
 		local currentMousePos = Vector2.new(Mouse.X, Mouse.Y)
 
 
@@ -11216,7 +11237,7 @@ function Library:AddSnowfallToWindow(Config)
     
     function SnowModule:Init(Parent, Config)
         local innerContainer = Instance.new("Frame")
-        innerContainer.Name = "Effect"
+        innerContainer.Name = "SnowfallEffect"
         innerContainer.Size = UDim2.new(1, 0, 1, 0)
         innerContainer.BackgroundTransparency = 1
         innerContainer.ClipsDescendants = true
@@ -11232,7 +11253,7 @@ function Library:AddSnowfallToWindow(Config)
 
         for i = 1, snowflakeCount do
             local snowflake = Instance.new("ImageLabel")
-            snowflake.Name = "Part"..i
+            snowflake.Name = "Snowflake"..i
             snowflake.BackgroundTransparency = 1
             snowflake.BorderSizePixel = 0
             snowflake.Image = "rbxassetid://124338537670236"
@@ -11331,7 +11352,7 @@ function Library:AddSnowfallToWindow(Config)
     end
     
     local snowContainer = Instance.new("Frame")
-    snowContainer.Name = "Container"
+    snowContainer.Name = "SnowfallContainer"
     snowContainer.Size = UDim2.new(1, 0, 1, 0)
     snowContainer.BackgroundTransparency = 1
     snowContainer.ZIndex = 1
@@ -11402,13 +11423,19 @@ task.spawn(function()
 			end
 		end
 	end)
-    table.insert(Creator.Signals, rgbLoop)
+	table.insert(Creator.Signals, rgbLoop)
 end)
 
-_g._NEXUS_CLEANUP = function()
+_g._c9x = function()
     if Library and type(Library.Destroy) == "function" then
         pcall(function() Library:Destroy() end)
     end
 end
 
+do
+	local _mt = {__metatable=""}
+	if type(setmetatable) == "function" then pcall(function() setmetatable(Library, _mt) end) end
+	if type(setmetatable) == "function" then pcall(function() setmetatable(SaveManager, _mt) end) end
+	if type(setmetatable) == "function" then pcall(function() setmetatable(InterfaceManager, _mt) end) end
+end
 return Library, SaveManager, InterfaceManager, Mobile
