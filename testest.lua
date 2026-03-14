@@ -1,8 +1,5 @@
-local _g
-do
-    local _ok, _env = pcall(function() return getgenv() end)
-    _g = (_ok and _env) or shared or _G
-end
+local _g = shared or _G
+pcall(function() _g = getgenv() end)
 if type(_g._c9x) == "function" then
     pcall(_g._c9x)
 end
