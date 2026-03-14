@@ -6,22 +6,47 @@ local TweenService = game:GetService("TweenService")
 local TextService = game:GetService("TextService")
 local Camera = game:GetService("Workspace").CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
+-- Anti-Detection Cleanup / Session Management
+local SessionLockFile = "nexus_session_lock.dat"
 local httpService = game:GetService("HttpService")
 
--- Anti-Detection Cleanup
-if type(getgenv().NexusCleanup) == "function" then
-    pcall(getgenv().NexusCleanup)
+local function GetSessionKey()
+    if isfile and isfile(SessionLockFile) then
+        return readfile(SessionLockFile)
+    end
+    return nil
 end
 
-if getgenv().NexusInstance and typeof(getgenv().NexusInstance) == "Instance" then
-    pcall(function() getgenv().NexusInstance:Destroy() end)
+local function SetSessionKey(key)
+    if writefile then
+        writefile(SessionLockFile, key)
+    end
 end
-if getgenv().NexusBlur and typeof(getgenv().NexusBlur) == "Instance" then
-    pcall(function() getgenv().NexusBlur:Destroy() end)
+
+-- Try to clean up previous session
+local oldKey = GetSessionKey()
+if oldKey and getgenv()[oldKey] then
+    local oldCleanup = getgenv()[oldKey]
+    if type(oldCleanup) == "function" then
+        pcall(oldCleanup)
+    end
+    getgenv()[oldKey] = nil
 end
-getgenv().NexusInstance = nil
-getgenv().NexusBlur = nil
-getgenv().NexusCleanup = nil
+
+-- Generate new session key for this execution
+local CurrentSessionKey = httpService:GenerateGUID(false)
+SetSessionKey(CurrentSessionKey)
+
+-- Cleanup function registration (Hidden under random key)
+getgenv()[CurrentSessionKey] = function()
+    if getgenv().NexusGlobalInstance then
+        pcall(function() getgenv().NexusGlobalInstance:Destroy() end)
+    end
+    if getgenv().NexusGlobalBlur then
+        pcall(function() getgenv().NexusGlobalBlur:Destroy() end)
+    end
+    -- Reset other states if needed
+end
 
 local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) ~= nil
 
