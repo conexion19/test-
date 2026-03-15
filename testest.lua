@@ -7792,60 +7792,52 @@ function SaveManager:MakeFolder(path)
     return false
 end
 
-	SaveManager.Parser = {
-		Toggle = {
-			Save = function(idx, object)
-				return { type = "Toggle", idx = idx, value = object.Value } 
-			end,
-			Load = function(idx, data)
-				if SaveManager.Options[idx] then 
-					SaveManager.Options[idx]:SetValue(data.value)
-				end
-			end,
-		},
-		Slider = {
-			Save = function(idx, object)
-				return { type = "Slider", idx = idx, value = tostring(object.Value) }
-			end,
-			Load = function(idx, data)
-				if SaveManager.Options[idx] then 
-					SaveManager.Options[idx]:SetValue(data.value)
-				end
-			end,
-		},
-		Dropdown = {
-
-
-			Save = function(idx, object)
-
-
-				return { type = "Dropdown", idx = idx, value = object.Value, mutli = object.Multi }
-
-
-			end,
-
-
-			Load = function(idx, data)
-				if SaveManager.Options[idx] then 
-					SaveManager.Options[idx]:SetValue(data.value)
-				end
-			end,
-		},
-		Colorpicker = {
-			Save = function(idx, object)
-				return { type = "Colorpicker", idx = idx, value = object.Value:ToHex(), transparency = object.Transparency }
-			end,
-			Load = function(idx, data)
-				if SaveManager.Options[idx] then 
-					SaveManager.Options[idx]:SetValueRGB(Color3.fromHex(data.value), data.transparency)
-				end
-			end,
-		},
-		Keybind = {
-			Save = function(idx, object)
-				return { type = "Keybind", idx = idx, mode = object.Mode, key = object.Value, toggled = object.Toggled }
-			end,
-			Load = function(idx, data)
+SaveManager.Parser = {
+    Toggle = {
+        Save = function(idx, object)
+            return { type = "Toggle", idx = idx, value = object.Value } 
+        end,
+        Load = function(idx, data)
+            if SaveManager.Options[idx] then 
+                SaveManager.Options[idx]:SetValue(data.value)
+            end
+        end,
+    },
+    Slider = {
+        Save = function(idx, object)
+            return { type = "Slider", idx = idx, value = tostring(object.Value) }
+        end,
+        Load = function(idx, data)
+            if SaveManager.Options[idx] then 
+                SaveManager.Options[idx]:SetValue(data.value)
+            end
+        end,
+    },
+    Dropdown = {
+        Save = function(idx, object)
+            return { type = "Dropdown", idx = idx, value = object.Value, mutli = object.Multi }
+        end,
+        Load = function(idx, data)
+            if SaveManager.Options[idx] then 
+                SaveManager.Options[idx]:SetValue(data.value)
+            end
+        end,
+    },
+    Colorpicker = {
+        Save = function(idx, object)
+            return { type = "Colorpicker", idx = idx, value = object.Value:ToHex(), transparency = object.Transparency }
+        end,
+        Load = function(idx, data)
+            if SaveManager.Options[idx] then 
+                SaveManager.Options[idx]:SetValueRGB(Color3.fromHex(data.value), data.transparency)
+            end
+        end,
+    },
+    Keybind = {
+        Save = function(idx, object)
+            return { type = "Keybind", idx = idx, mode = object.Mode, key = object.Value, toggled = object.Toggled }
+        end,
+        Load = function(idx, data)
 				if SaveManager.Options[idx] then 
                     if data.toggled ~= nil then
                         SaveManager.Options[idx].Toggled = data.toggled
@@ -7870,204 +7862,86 @@ end
 	SaveManager.Folder = "NexusConfigs"
 
 	function SaveManager:SetIgnoreIndexes(list)
-
-
 		for _, key in next, list do
-
-
 			self.Ignore[key] = true
-
-
 		end
-
-
 	end
 
 
 	function SaveManager:SetFolder(folder)
-
-
 		self.Folder = folder;
-
-
 		self:BuildFolderTree()
-
-
 	end
 
-
-
-
-
 	function SaveManager:Save(name)
-
-
 		if (not name) then
-
-
 			return false, "no config file is selected"
-
-
 		end
-
-
-
-
 
 		local fullPath = self.Folder .. "/" .. name .. ".json"
 
-
-
-
-
 		local data = {
-
-
 			objects = {}
-
-
 		}
 
-
-
-
-
-
-
-
 		for idx, option in next, SaveManager.Options do
-
-
 			if self.Parser[option.Type] and not self.Ignore[idx] then
-
-
 				table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
-
-
 			end
-
-
 		end	
 
-
-
-
-
 		local success, encoded = pcall(httpService.JSONEncode, httpService, data)
-
-
 		if not success then
-
-
 			return false, "failed to encode data"
-
-
 		end
 
-
-
-
-
-		writefile(fullPath, encoded)
-
-
+		local write_file = GetSafeGlobal("writefile")
+		if write_file then
+			pcall(write_file, fullPath, encoded)
+		end
 		return true
-
-
 	end
 
-
-
-
-
-	if not RunService:IsStudio() then
+	function SaveManager:Load(name)
 
 
 		function SaveManager:Load(name)
+			local httpService = GetSafeGlobal("HttpService")
+			local readfile = GetSafeGlobal("readfile")
+			local isfile = GetSafeGlobal("isfile")
 
+			if not (httpService and readfile and isfile) then
+				return false, "filesystem not supported"
+			end
 
 			if (not name) then
-
-
 				return false, "no config file is selected"
-
-
 			end
-
-
-
-
 
 			local file = self.Folder .. "/" .. name .. ".json"
-
-
 			if not isfile(file) then return false, "Create Config Save File" end
 
-
-
-
-
 			local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
-
-
 			if not success then return false, "decode error" end
 
-
-
-
-
 			for _, option in next, decoded.objects do
-
-
 				if self.Parser[option.type] and not self.Ignore[option.idx] then
-
-
 					task.spawn(function() self.Parser[option.type].Load(option.idx, option) end)
-
 				end
-
-
 			end
 
-
-
-
-
 			Fluent.SettingLoaded = true
-
-
 
 			return true, decoded
 		end
 
-
-	end
-
-
-
-
-
-	SaveManager.IgnoreThemeSettings = function(self)
-
-
-		self:SetIgnoreIndexes({ 
-
-
-			"InterfaceTheme", "AcrylicToggle", "TransparentToggle", "MenuKeybind"
-
-
-		})
-
-
-	end
-
-
-
-
+		function SaveManager:IgnoreThemeSettings()
+			self:SetIgnoreIndexes({ 
+				"InterfaceTheme", "AcrylicToggle", "TransparentToggle", "MenuKeybind"
+		    })
+	    end
 
 	function SaveManager:BuildFolderTree()
-
-
 		local paths = {
 
 
@@ -8206,72 +8080,29 @@ end
 
 
 
-	if not RunService:IsStudio() then
+	function SaveManager:LoadAutoloadConfig()
+		local is_file = GetSafeGlobal("isfile")
+		local read_file = GetSafeGlobal("readfile")
+		if is_file and read_file and is_file(self.Folder .. "/autoload.txt") then
+			local name = read_file(self.Folder .. "/autoload.txt")
 
-
-		function SaveManager:LoadAutoloadConfig()
-
-
-			if isfile(self.Folder .. "/autoload.txt") then
-
-
-				local name = readfile(self.Folder .. "/autoload.txt")
-
-
-
-
-
-				local success, err = self:Load(name)
-
-
-				if not success then
-
-
-					return self.Library:Notify({
-
-
-						Title = "Interface",
-
-
-						Content = "Config loader",
-
-
-						SubContent = "Failed to load autoload config: " .. err,
-
-
-						Duration = 7
-
-					})
-
-
-				end
-
-
-
-
-
-				self.Library:Notify({
-
-
+			local success, err = self:Load(name)
+			if not success then
+				return self.Library:Notify({
 					Title = "Interface",
-
-
 					Content = "Config loader",
-
-					SubContent = string.format("Auto loaded config %q", name),
-
+					SubContent = "Failed to load autoload config: " .. err,
 					Duration = 7
-
-
 				})
-
-
 			end
 
-
+			self.Library:Notify({
+				Title = "Interface",
+				Content = "Config loader",
+				SubContent = string.format("Auto loaded config %q", name),
+				Duration = 7
+			})
 		end
-
-
 	end
 
 
@@ -8303,119 +8134,48 @@ end
 
 
 		section:AddButton({
-
-
 			Title = "Create config",
-
-
 			Callback = function()
-
-
 				local name = SaveManager.Options.SaveManager_ConfigName.Value
 
-
-
-
-
 				if name:gsub(" ", "") == "" then 
-
-
 					return self.Library:Notify({
-
-
 						Title = "Interface",
-
-
 						Content = "Config loader",
-
-
 						SubContent = "Invalid config name (empty)",
-
 						Duration = 7
-
-
 					})
-
-
 				end
-
-
-
-
 
 				local success, err = self:Save(name)
-
-
 				if not success then
-
-
 					return self.Library:Notify({
-
-
 						Title = "Interface",
-
-
 						Content = "Config loader",
-
-
 						SubContent = "Failed to save config: " .. err,
-
-
 						Duration = 7
-
-
 					})
-
-
 				end
 
-
-
-
-
 				self.Library:Notify({
-
-
 					Title = "Interface",
-
-
 					Content = "Config loader",
-
-
 					SubContent = string.format("Created config %q", name),
-
-
 					Duration = 7
-
-
 				})
 
-
-
-
-
 				SaveManager.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
-
-
 				SaveManager.Options.SaveManager_ConfigList:SetValue(nil)
-
 			end
-
-
 		})
 
 
 
 
 		section:AddButton({Title = "Load config", Callback = function()
-
 			local name = SaveManager.Options.SaveManager_ConfigList.Value
 
-
-
-
 			local success, err = self:Load(name)
-
 			if not success then
 
 
@@ -8490,103 +8250,53 @@ end
 					SubContent = "Failed to overwrite config: " .. err,
 
 
+		section:AddButton({Title = "Overwrote config", Callback = function()
+			local name = SaveManager.Options.SaveManager_ConfigList.Value
+			local success, err = self:Save(name)
+			if not success then
+				return self.Library:Notify({
+					Title = "Interface",
+					Content = "Config loader",
+					SubContent = "Failed to overwrite config: " .. err,
 					Duration = 7
-
-
 				})
-
-
 			end
 
-
-
-
-
 			self.Library:Notify({
-
-
 				Title = "Interface",
-
-
 				Content = "Config loader",
-
-
 				SubContent = string.format("Overwrote config %q", name),
-
-
 				Duration = 7
-
-
 			})
-
-
 		end})
-
-
-
-
 
 		section:AddButton({Title = "Refresh list", Callback = function()
-
-
 			SaveManager.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
-
-
 			SaveManager.Options.SaveManager_ConfigList:SetValue(nil)
-
-
 		end})
-
-
-
-
 
 		local AutoloadButton
-
-
 		AutoloadButton = section:AddButton({Title = "Set as autoload", Description = "Current autoload config: none", Callback = function()
-
-
 			local name = SaveManager.Options.SaveManager_ConfigList.Value
-
-
-			writefile(self.Folder .. "/autoload.txt", name)
-
-
+			local write_file = GetSafeGlobal("writefile")
+			if write_file then
+				pcall(write_file, self.Folder .. "/autoload.txt", name)
+			end
 			AutoloadButton:SetDesc("Current autoload config: " .. name)
-
-
 			self.Library:Notify({
-
-
 				Title = "Interface",
-
-
 				Content = "Config loader",
-
-
 				SubContent = string.format("Set %q to auto load", name),
-
-
 				Duration = 7
-
-
 			})
-
-
 		end})
 
-
-
-
-
-		if isfile(self.Folder .. "/autoload.txt") then
-
-
-			local name = readfile(self.Folder .. "/autoload.txt")
-
-
+		local is_file = GetSafeGlobal("isfile")
+		local read_file = GetSafeGlobal("readfile")
+		if is_file and read_file and is_file(self.Folder .. "/autoload.txt") then
+			local name = read_file(self.Folder .. "/autoload.txt")
 			AutoloadButton:SetDesc("Current autoload config: " .. name)
+		end
 
 
 		end
@@ -8679,56 +8389,24 @@ local InterfaceManager = {} do
 
 
 	function InterfaceManager:BuildFolderTree()
-
-
 		local paths = {}
-
-
-
-
+		local is_folder = GetSafeGlobal("isfolder")
+		local make_folder = GetSafeGlobal("makefolder")
 
 		local parts = self.Folder:split("/")
-
-
 		for idx = 1, #parts do
-
-
 			paths[#paths + 1] = table.concat(parts, "/", 1, idx)
-
-
 		end
-
-
-
-
 
 		table.insert(paths, self.Folder)
-
-
 		table.insert(paths, self.Folder .. "/")
 
-
-
-
-
 		for i = 1, #paths do
-
-
 			local str = paths[i]
-
-
-			if not isfolder(str) then
-
-
-				makefolder(str)
-
-
+			if is_folder and make_folder and not is_folder(str) then
+				pcall(make_folder, str)
 			end
-
-
 		end
-
-
 	end
 
 
@@ -8784,89 +8462,33 @@ end
 
 
 		local section = tab:AddSection("Interface", "monitor")
-
-
 		local InterfaceTheme = section:AddDropdown("InterfaceTheme", {
-
-
 			Title = "Theme",
-
-
 			Description = "Changes the interface theme.",
-
-
 			Values = Library.Themes,
-
-
 			Default = self.Library.Theme,
-
-
 			Callback = function(Value)
-
-
 				Library:SetTheme(Value)
-
-
 				Settings.Theme = Value
-
-
 				InterfaceManager:SaveSettings()
-
-
 			end
-
-
 		})
-
-
-
-
 
 		InterfaceTheme:SetValue(Settings.Theme)
 
-
-
-
-
 		if Library.UseAcrylic and not Mobile then
-
-
 			section:AddToggle("AcrylicToggle", {
-
-
 				Title = "Acrylic",
-
-
 				Description = "The blurred background requires graphic quality 8+",
-
-
 				Default = Settings.Acrylic,
-
-
 				Callback = function(Value)
-
-
 					Library:ToggleAcrylic(Value)
-
-
 					Settings.Acrylic = Value
-
-
 					InterfaceManager:SaveSettings()
-
-
 				end
-
-
 			})
-
-
 		elseif Mobile then
-
-
 			Settings.Acrylic = false
-
-
 		end
 
 
@@ -8944,31 +8566,15 @@ end
 
 
 		local MenuKeybind = section:AddKeybind("MenuKeybind", { Title = "Minimize Bind", Default = Library.MinimizeKey.Name or Settings.MenuKeybind, NoDisplay = true })
-
-
 		MenuKeybind:OnChanged(function()
-
-
 			Settings.MenuKeybind = MenuKeybind.Value
-
-
 			InterfaceManager:SaveSettings()
-
-
 		end)
-
-
 		Library.MinimizeKeybind = MenuKeybind
-
-
 	end
-
-
 end
 
-
 Library.CreateWindow = function(self, Config)
-
 	assert(Config.Title, "Window - Missing Title")
 
 	if Library.Window then
@@ -8977,14 +8583,8 @@ Library.CreateWindow = function(self, Config)
 	end
 
 	Library.MinimizeKey = Config.MinimizeKey or Enum.KeyCode.LeftControl
-
-
 	Library.UseAcrylic = Config.Acrylic or false
-
-
 	Library.Acrylic = Config.Acrylic or false
-
-
 	Library.Theme = "Slate"
 
 	if Config.BackgroundImage == nil then
@@ -9008,72 +8608,29 @@ Library.CreateWindow = function(self, Config)
 
 
 	if Config.Acrylic then
-
-
 		Acrylic.init()
-
-
 	end
-
-
 
 	local Icon = Config.Icon
-
-
 	if not fischbypass then 
-
-
 		if Library:GetIcon(Icon) then
-
-
 			Icon = Library:GetIcon(Icon)
-
-
 		end
-
-
 
 		if Icon == "" or Icon == nil then
-
 			Icon = nil
-
-
 		end
-
-
 	end
 
-
-
-
-
 	local Window = Components.Window({
-
-
 		Parent = GUI,
-
-
 		Size = Config.Size,
-
-
 		Title = Config.Title,
-
-
 		Icon = Icon,
-
-
 		Image = Config.Image,
-
-
 		BackgroundImage = Config.BackgroundImage,
-
-
 		BackgroundTransparency = Config.BackgroundTransparency,
-
-
 		BackgroundImageTransparency = Config.BackgroundImageTransparency,
-
-
 		SubTitle = Config.SubTitle,
 
 
@@ -9142,102 +8699,37 @@ end
 
 
 function Library:CreateMinimizer(Config)
-
-
 	Config = Config or {}
-
-
 	if self.Minimizer and self.Minimizer.Parent then
-
-
 		return self.Minimizer
-
-
 	end
-
-
-
-
 
 	local parentGui = Library.GUI or GUI
-
-
 	if parentGui then parentGui.DisplayOrder = 1000 end
-
-
 	local isMobile = Mobile and true or false
 
-
-
-
-
 	local iconAsset = "rbxassetid://10734897102"
-
-
 	if type(Config.Icon) == "string" and Config.Icon ~= "" then
-
-
 		pcall(function()
-
-
 			local resolved = Library:GetIcon(Config.Icon)
-
-
 			if resolved then
-
-
 				iconAsset = resolved
-
-
 			elseif string.match(Config.Icon, "^rbxassetid://%d+$") then
-
-
 				iconAsset = Config.Icon
-
-
 			end
-
-
 		end)
-
-
 	end
 
-
-
-
-
 	local useAcrylic = (Config.Acrylic == true)
-
-
-
-
-
 	local cornerRadius = tonumber(Config.Corner)
-
-
 	local backgroundTransparency = (typeof(Config.Transparency) == "number") and math.clamp(Config.Transparency, 0, 1) or 0
-
-
 	local draggableWhole = (Config.Draggable == true)
 
-
-
-
 	local holder
-
-
 	local function createButton(isDesktop)
-
-
 		return New("TextButton", {
-
 			Name = "MinimizeButton",
-
-
 			Size = UDim2.new(1, 0, 1, 0),
-
-
 			BorderSizePixel = 0,
 
 
@@ -9339,70 +8831,29 @@ function Library:CreateMinimizer(Config)
 
 
 	if isMobile then
-
-
 		holder = New("Frame", {
-
-
 			Name = "UIButton",
-
-
 			Parent = parentGui,
-
-
 			Size = Config.Size or UDim2.fromOffset(36, 36),
-
 			Position = Config.Position or UDim2.new(0.45, 0, 0.025, 0),
-
-
 			BackgroundTransparency = 1,
-
-
 			ZIndex = 999999999,
-
-
 			Visible = (Config.Visible ~= false),
-
-
 		})
-
-
 	else
-
-
 		holder = New("Frame", {
-
-
 			Name = "UIButton",
-
-
 			Parent = parentGui,
-
-
 			Size = Config.Size or UDim2.fromOffset(36, 36),
 			Position = Config.Position or UDim2.new(0, 300, 0, 20),
-
-
 			BackgroundTransparency = 1,
-
-
 			ZIndex = 999999999,
-
-
 			Visible = (Config.Visible ~= false),
-
-
 		})
-
-
 	end
 
-
-
 	if useAcrylic then
-
 		local miniAcrylic = Acrylic.AcrylicPaint()
-
 		miniAcrylic.Frame.Parent = holder
 
 
@@ -9459,92 +8910,34 @@ function Library:CreateMinimizer(Config)
 
 
 	local btnInstance = createButton(not isMobile)
-
-
 	btnInstance.Parent = holder
-
-
 	btnInstance.ZIndex = (holder.ZIndex or 0) + 1
 
-
-
-
-
 	local button = holder:FindFirstChildOfClass("TextButton")
-
-
 	if button then
-
-
 		local isDragging = false
-
-
 		local dragStart, dragOffset
 
-
-
-
-
 		if draggableWhole then
-
-
 			Creator.AddSignal(button.InputBegan, function(Input)
-
-
 				if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-
-
 					isDragging = true
-
-
 					local pos = Input.Position
-
-
 					dragStart = Vector2.new(pos.X, pos.Y)
-
-
 					dragOffset = holder.Position
-
-
 					local conn
-
-
 					conn = Input.Changed:Connect(function()
-
-
 						if Input.UserInputState == Enum.UserInputState.End then
-
-
 							isDragging = false
-
-
 							dragStart = nil
-
-
 							dragOffset = nil
-
-
 							conn:Disconnect()
-
-
 						end
-
-
 					end)
-
-
 				end
-
-
 			end)
 
-
-
-
-
 			Creator.AddSignal(RunService.Heartbeat, function()
-
-
 				if isDragging and dragStart and dragOffset and holder and holder.Parent then
 
 
@@ -9644,65 +9037,27 @@ function Library:SetTheme(Value)
 	Creator.UpdateTheme()
 end
 
-
 function Library:Destroy()
-
-
 	if Library.Window then
-
-
 		Library.Unloaded = true
-
-
 		if Library.UseAcrylic then
-
-
 			Library.Window.AcrylicPaint.Model:Destroy()
-
-
 		end
-
-
 		Creator.Disconnect()
-
-
 		Library.GUI:Destroy()
-
-
 	end
-
-
 end
 
-
-
-
-
 function Library:ToggleAcrylic(Value)
-
-
 	if Library.Window then
-
-
 		if Library.UseAcrylic then
-
-
 			Library.Acrylic = Value
-
-
 			if Library.Window.AcrylicPaint and Library.Window.AcrylicPaint.Model then
-
-
 				Library.Window.AcrylicPaint.Model.Transparency = Value and 0.95 or 1
-
-
 			end
-
-
 		end
-
-
 	end
+end
 
 
 end
@@ -9838,9 +9193,8 @@ end
 
 
 function Library:Notify(Config)
-
-
 	return NotificationModule:New(Config)
+end
 
 
 end
@@ -9857,91 +9211,34 @@ end
 
 local MinimizeButton = New("TextButton", {
     Name = httpService:GenerateGUID(false),
-
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
-
-
 	Size = UDim2.new(1, 0, 1, 0),
-
-
 	BorderSizePixel = 0,
-
-
 	BackgroundTransparency = 0.05, 
-
-
 }, {
-
-
 	New("UICorner", {
-
-
 		CornerRadius = UDim.new(0, 14),
-
-
 	}),
-
-
 	New("UIGradient", {
-
-
 		Color = ColorSequence.new{
-
-
 			ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 50)),
-
-
 			ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
-
-
 		},
-
-
 		Rotation = 45,
-
-
 	}),
-
-
 	New("UIStroke", {
-
-
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-
-
 		Color = Color3.fromRGB(100, 150, 255),
-
-
 		Transparency = 0.6,
-
-
 		Thickness = 2,
-
-
 	}),
-
-
 	New("Frame", {
-
-
 		BackgroundColor3 = Color3.fromRGB(100, 150, 255),
-
-
 		BackgroundTransparency = 0.9,
-
-
 		Size = UDim2.new(1, -6, 1, -6),
-
-
 		Position = UDim2.new(0, 3, 0, 3),
-
-
 		BorderSizePixel = 0,
-
-
 	}, {
-
-
 		New("UICorner", {
 
 
@@ -10035,71 +9332,27 @@ local MinimizeButton = New("TextButton", {
 local MobileMinimizeButton = New("TextButton", {
     Name = httpService:GenerateGUID(false),
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
-
-
 	Size = UDim2.new(1, 0, 1, 0),
-
-
 	BorderSizePixel = 0,
-
-
 	BackgroundTransparency = 0.05,
-
-
 }, {
-
-
 	New("UICorner", {
-
-
 		CornerRadius = UDim.new(0, 12),
-
-
 	}),
-
-
 	New("UIGradient", {
-
-
 		Color = ColorSequence.new{
-
-
 			ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 50)),
-
-
 			ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
-
-
 		},
-
-
 		Rotation = 45,
-
-
 	}),
-
-
 	New("UIStroke", {
-
-
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-
-
 		Color = Color3.fromRGB(100, 150, 255),
-
-
 		Transparency = 0.7,
-
-
 		Thickness = 1.5,
-
-
 	}),
-
-
 	New("Frame", {
-
-
 		BackgroundColor3 = Color3.fromRGB(100, 150, 255),
 
 
@@ -10196,153 +9449,51 @@ local dragOffset = nil
 
 
 Creator.AddSignal(MinimizeButton.InputBegan, function(Input)
-
-
 	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-
-
 		isDragging = true
-
-
 		dragStart = Vector2.new(Input.Position.X, Input.Position.Y)
-
-
 		dragOffset = (Library.Minimizer or Minimizer).Position
 
-
-
-
-
 		local connection
-
-
 		connection = Input.Changed:Connect(function()
-
-
 			if Input.UserInputState == Enum.UserInputState.End then
-
-
 				isDragging = false
-
-
 				dragStart = nil
-
-
 				dragOffset = nil
-
-
 				connection:Disconnect()
-
-
 			end
-
-
 		end)
-
-
 	end
-
-
 end)
-
-
-
 
 Creator.AddSignal(MobileMinimizeButton.InputBegan, function(Input)
-
 	if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-
-
 		isDragging = true
-
-
 		dragStart = Vector2.new(Input.Position.X, Input.Position.Y)
-
-
 		dragOffset = (Library.Minimizer or Minimizer).Position
-
-
 		local connection
-
-
 		connection = Input.Changed:Connect(function()
-
-
 			if Input.UserInputState == Enum.UserInputState.End then
-
-
 				isDragging = false
-
-
 				dragStart = nil
-
-
 				dragOffset = nil
-
-
 				connection:Disconnect()
-
-
 			end
-
-
 		end)
-
-
 	end
-
-
 end)
 
-
-
-
-
 local debugCount = 0
-
-
 Creator.AddSignal(RunService.Heartbeat, function()
-
-
 	local activeMin = Library.Minimizer or Minimizer
-
-
 	if isDragging and dragStart and dragOffset and activeMin and activeMin.Parent then
-
-
-		debugCount = debugCount + 1
-
-
-		if debugCount % 30 == 1 then
-
-
-		end
-
-
 		local Mouse = game:GetService("Players").LocalPlayer:GetMouse()
-
-
 		local currentMousePos = Vector2.new(Mouse.X, Mouse.Y)
-
-
 		local delta = currentMousePos - dragStart
-
 		local newX = dragOffset.X.Offset + delta.X
-
-
 		local newY = dragOffset.Y.Offset + delta.Y
 
-
-		local viewportSize = workspace.Camera.ViewportSize
-		local minimizerSize = activeMin.AbsoluteSize
-
-
-
-
-
 		if newX < 0 then newX = 0 end
-
-
 		if newY < 0 then newY = 0 end
 
 		if newX > viewportSize.X - minimizerSize.X then 
@@ -10581,34 +9732,8 @@ function Library:AddSnowfallToWindow(Config)
 end
 
 if RunService:IsStudio() then task.wait(0.01) end
-task.spawn(function()
-	local hue = 0
-	RunService.Heartbeat:Connect(function(dt)
-		if Library.Theme == "RGB" then
-			hue = hue + dt * 0.1
-			if hue > 1 then hue = 0 end
-			local rgbColor = Color3.fromHSV(hue, 0.8, 1)
-			local rgbColor2 = Color3.fromHSV((hue + 0.5) % 1, 0.8, 1)
-			local theme = Themes["RGB"]
-			if theme then
-				theme.Accent = rgbColor
-				theme.TitleBarLine = rgbColor
-				theme.Tab = rgbColor 
-				theme.ElementBorder = rgbColor
-				theme.ToggleToggled = rgbColor
-				theme.SliderRail = rgbColor
-				theme.DropdownFrame = rgbColor
-				theme.InputIndicatorFocus = rgbColor
-				theme.Text = Color3.new(1,1,1)
-				if Library.Window then
-					Library:SetTheme("Slate") 
-				end
-			end
-		end
-	end)
-end)
 
--- Update session cleanup with captured locals
+
 getgenv()[CurrentSessionKey] = function()
     pcall(function() 
         if Library then Library:Destroy() end 
@@ -10619,7 +9744,6 @@ getgenv()[CurrentSessionKey] = function()
     pcall(function() 
         if BlurFolder then BlurFolder:Destroy() end 
     end)
-    -- Remove the key itself after cleanup
     getgenv()[CurrentSessionKey] = nil
 end
 
