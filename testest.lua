@@ -6,7 +6,6 @@ local TweenService = game:GetService("TweenService")
 local TextService = game:GetService("TextService")
 local Camera = game:GetService("Workspace").CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
--- Anti-Detection Cleanup
 local httpService = game:GetService("HttpService")
 
 local function GetSafeGlobal(name)
@@ -15,7 +14,6 @@ local function GetSafeGlobal(name)
     return target[name]
 end
 
--- Generate new session key for this execution
 local CurrentSessionKey = httpService:GenerateGUID(false)
 local g_env = (getfenv(0) or getfenv())
 local target_env = g_env["get" .. "genv"] and g_env["get" .. "genv"]() or _G
@@ -7743,15 +7741,17 @@ end
 Library.Elements = Elements
 
 if RunService:IsStudio() then
-	makefolder = function(...) return ... end;
-	makefile = function(...) return ... end;
-	isfile = function(...) return ... end;
-	isfolder = function(...) return ... end;
-	readfile = function(...) return ... end;
-	writefile = function(...) return ... end;
-	listfiles = function (...) return {...} end;
-    local noop = function(...) return ... end
+	local noop = function(...) return ... end
 	makefolder = noop;
+	makefile = noop;
+	isfile = noop;
+	isfolder = noop;
+	readfile = noop;
+	writefile = noop;
+	listfiles = function (...) return {} end;
+end
+
+local SaveManager = {}
 function SaveManager:WriteFile(path, content)
     local write_file = GetSafeGlobal("writefile")
     if write_file then
@@ -7790,63 +7790,29 @@ function SaveManager:MakeFolder(path)
         return pcall(make_folder, path)
     end
     return false
-end 
+end
 
-
-				return { type = "Toggle", idx = idx, value = object.Value } 
-
-
-			end,
-
-
-			Load = function(idx, data)
-
-
-				if SaveManager.Options[idx] then 
-
-
-					SaveManager.Options[idx]:SetValue(data.value)
-
-
-				end
-
-
-			end,
-
-
-		},
-
-
-		Slider = {
-
-
+	SaveManager.Parser = {
+		Toggle = {
 			Save = function(idx, object)
-
-
-				return { type = "Slider", idx = idx, value = tostring(object.Value) }
-
-
+				return { type = "Toggle", idx = idx, value = object.Value } 
 			end,
-
-
 			Load = function(idx, data)
-
-
 				if SaveManager.Options[idx] then 
-
-
 					SaveManager.Options[idx]:SetValue(data.value)
-
-
 				end
-
-
 			end,
-
-
 		},
-
-
+		Slider = {
+			Save = function(idx, object)
+				return { type = "Slider", idx = idx, value = tostring(object.Value) }
+			end,
+			Load = function(idx, data)
+				if SaveManager.Options[idx] then 
+					SaveManager.Options[idx]:SetValue(data.value)
+				end
+			end,
+		},
 		Dropdown = {
 
 
@@ -7860,123 +7826,48 @@ end
 
 
 			Load = function(idx, data)
-
-
 				if SaveManager.Options[idx] then 
-
-
 					SaveManager.Options[idx]:SetValue(data.value)
-
-
 				end
-
-
 			end,
-
-
 		},
-
-
 		Colorpicker = {
-
-
 			Save = function(idx, object)
-
-
 				return { type = "Colorpicker", idx = idx, value = object.Value:ToHex(), transparency = object.Transparency }
-
-
 			end,
-
-
 			Load = function(idx, data)
-
-
 				if SaveManager.Options[idx] then 
-
-
 					SaveManager.Options[idx]:SetValueRGB(Color3.fromHex(data.value), data.transparency)
-
-
 				end
-
-
 			end,
-
-
 		},
-
-
 		Keybind = {
-
-
 			Save = function(idx, object)
-
-
 				return { type = "Keybind", idx = idx, mode = object.Mode, key = object.Value, toggled = object.Toggled }
-
-
 			end,
-
-
 			Load = function(idx, data)
-
-
 				if SaveManager.Options[idx] then 
                     if data.toggled ~= nil then
                         SaveManager.Options[idx].Toggled = data.toggled
                     end
-
 					SaveManager.Options[idx]:SetValue(data.key, data.mode)
-
-
 				end
-
-
 			end,
-
-
 		},
-
-
-
-
-
 		Input = {
-
-
 			Save = function(idx, object)
-
-
 				return { type = "Input", idx = idx, text = object.Value }
-
-
 			end,
-
-
 			Load = function(idx, data)
-
-
 				if SaveManager.Options[idx] and type(data.text) == "string" then
-
-
 					SaveManager.Options[idx]:SetValue(data.text)
-
-
 				end
-
-
 			end,
-
-
 		},
-
-
 	}
 
-
-
-
+	SaveManager.Ignore = {}
+	SaveManager.Folder = "NexusConfigs"
 
 	function SaveManager:SetIgnoreIndexes(list)
 
