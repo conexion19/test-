@@ -38,7 +38,7 @@ local function SecureCall(name, ...)
 end
 
 local ProtectGui = function(obj)
-    local p_gui = GetSafeGlobal("protect" .. "_gui") or (GetSafeGlobal("syn") and GetSafeGlobal("syn").protect_gui)
+    local p_gui = (getgenv and getgenv().protect_gui) or (syn and syn.protect_gui)
     if type(p_gui) == "function" then
         return p_gui(obj)
     end
