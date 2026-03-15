@@ -6,47 +6,7 @@ local TweenService = game:GetService("TweenService")
 local TextService = game:GetService("TextService")
 local Camera = game:GetService("Workspace").CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
--- Anti-Detection Cleanup / Session Management
-local SessionLockFile = "nexus_session_lock.dat"
 local httpService = game:GetService("HttpService")
-
-local function GetSessionKey()
-    if isfile and isfile(SessionLockFile) then
-        return readfile(SessionLockFile)
-    end
-    return nil
-end
-
-local function SetSessionKey(key)
-    if writefile then
-        writefile(SessionLockFile, key)
-    end
-end
-
--- Try to clean up previous session
-local oldKey = GetSessionKey()
-if oldKey and getgenv()[oldKey] then
-    local oldCleanup = getgenv()[oldKey]
-    if type(oldCleanup) == "function" then
-        pcall(oldCleanup)
-    end
-    getgenv()[oldKey] = nil
-end
-
--- Generate new session key for this execution
-local CurrentSessionKey = httpService:GenerateGUID(false)
-SetSessionKey(CurrentSessionKey)
-
--- Cleanup function registration (Hidden under random key)
-getgenv()[CurrentSessionKey] = function()
-    if getgenv().NexusGlobalInstance then
-        pcall(function() getgenv().NexusGlobalInstance:Destroy() end)
-    end
-    if getgenv().NexusGlobalBlur then
-        pcall(function() getgenv().NexusGlobalBlur:Destroy() end)
-    end
-    -- Reset other states if needed
-end
 
 local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) ~= nil
 
@@ -783,7 +743,7 @@ local Themes = {
 		InElementBorder = Color3.fromRGB(60, 30, 40),
 		ElementTransparency = 0.92,
 		ToggleSlider = Color3.fromRGB(80, 40, 50),
-		ToggleToggled = Color3.fromRGB(255, 255, 255),
+		ToggleToggled = Color3.fromRGB(255, 105, 180),
 		SliderRail = Color3.fromRGB(80, 40, 50),
 		DropdownFrame = Color3.fromRGB(80, 40, 50),
 		DropdownHolder = Color3.fromRGB(40, 20, 25),
@@ -801,7 +761,7 @@ local Themes = {
 		DialogBorder = Color3.fromRGB(60, 30, 40),
 		DialogInput = Color3.fromRGB(40, 20, 25),
 		DialogInputLine = Color3.fromRGB(100, 50, 60),
-		Text = Color3.fromRGB(255, 255, 255),
+		Text = Color3.fromRGB(255, 230, 240),
 		SubText = Color3.fromRGB(200, 160, 170),
 		Hover = Color3.fromRGB(80, 40, 50),
 		HoverChange = 0.03,
@@ -2082,41 +2042,20 @@ Library.MiniMessageToRichText = MiniMessageToRichText
 
 local New = Creator.New
 
-local get_hui = gethui or function() return nil end
-local clref = cloneref or function(o) return o end
-
-local function GetBestParent()
-    -- 1. Try gethui() (Hidden UI container)
-    local success, hiddenUI = pcall(function() return get_hui() end)
-    if success and hiddenUI and typeof(hiddenUI) == "Instance" then
-        return hiddenUI
-    end
-    
-    -- 2. Try hiding inside RobloxGui (Whitelisted by many ACs)
-    local CoreGui = game:GetService("CoreGui")
-    local RobloxGui = CoreGui:FindFirstChild("RobloxGui")
-    if RobloxGui then
-        return RobloxGui
-    end
-    
-    -- 3. Fallback to CoreGui
-    return CoreGui
-end
+local get_hui = gethui or function() return game:GetService("CoreGui") end
 
 local GUI = Creator.New("ScreenGui", {
-    Name = httpService:GenerateGUID(false),
-    Parent = clref(GetBestParent()), 
+    Parent = get_hui(), 
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     ResetOnSpawn = false,
     DisplayOrder = 999
 })
 
-getgenv().NexusInstance = GUI
 Library.GUI = GUI
 ProtectGui(GUI)
 
 local KeybindDisplayContainer = Instance.new("Frame")
-KeybindDisplayContainer.Name = httpService:GenerateGUID(false)
+KeybindDisplayContainer.Name = "UIFrame"
 KeybindDisplayContainer.BackgroundTransparency = 1
 KeybindDisplayContainer.Size = UDim2.new(0, 250, 1, 0)
 KeybindDisplayContainer.Position = UDim2.new(1, -260, 0, 0)
@@ -2254,8 +2193,7 @@ end
 local viewportPointToWorld, getOffset = unpack({ viewportPointToWorld, getOffset })
 
 local BlurFolder = Instance.new("Folder")
-BlurFolder.Name = httpService:GenerateGUID(false)
-getgenv().NexusBlur = BlurFolder
+BlurFolder.Name = "Blur"
 do
 	local ws = game:GetService("Workspace")
 	local function attachToCurrentCamera()
@@ -2270,7 +2208,7 @@ end
 
 local function createAcrylic()
 	local Part = Creator.New("Part", {
-		Name = httpService:GenerateGUID(false),
+		Name = "Body",
 		Color = Color3.new(0, 0, 0),
 		Material = Enum.Material.Glass,
 		Size = Vector3.new(1, 1, 0),
@@ -2281,7 +2219,7 @@ local function createAcrylic()
 		Transparency = 0.98,
 	}, {
 		Creator.New("SpecialMesh", {
-			Name = httpService:GenerateGUID(false),
+			Name = "Mesh",
 			MeshType = Enum.MeshType.Brick,
 			Offset = Vector3.new(0, 0, -0.000001),
 		}),
@@ -3921,7 +3859,6 @@ Components.Notification = (function()
 		Library.ActiveNotifications = Library.ActiveNotifications or {}
 
 		Notification.Holder = New("Frame", {
-            Name = httpService:GenerateGUID(false),
 			Position = UDim2.new(1, -30, 1, -30),
 			Size = UDim2.new(0, 310, 1, -30),
 			AnchorPoint = Vector2.new(1, 1),
@@ -3998,6 +3935,7 @@ Components.Notification = (function()
 				TextColor3 = "SubText",
 			},
 		})
+
 		NewNotification.LabelHolder = New("Frame", {
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -5081,7 +5019,6 @@ Window.ContainerCanvas = New("Frame", {
 		table.insert(rootChildren, ResizeStartFrame)
 
 Window.Root = New("Frame", {
-    Name = httpService:GenerateGUID(false),
     BackgroundTransparency = 1,
     Size = Window.Size,
     Position = Window.Position,
@@ -5347,8 +5284,8 @@ Window.Root = New("Frame", {
 				local Delta = Input.Position - MousePos
 				Window.Position = UDim2.fromOffset(StartPos.X.Offset + Delta.X, StartPos.Y.Offset + Delta.Y)
 				PosMotor:setGoal({
-					X = Flipper.Instant.new(Window.Position.X.Offset),
-					Y = Flipper.Instant.new(Window.Position.Y.Offset),
+					X = Flipper.Spring.new(Window.Position.X.Offset, {frequency = 5, dampingRatio = 0.8}),
+					Y = Flipper.Spring.new(Window.Position.Y.Offset, {frequency = 5, dampingRatio = 0.8}),
 				})
 			end
 
@@ -5702,13 +5639,12 @@ ElementsTable.Toggle = (function()
 
 		local ToggleCircle = New("ImageLabel", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Size = UDim2.fromOffset(14, 14),
+			Size = UDim2.fromOffset(0, 0),
 			Position = UDim2.new(0.5, 0, 0.5, 0),
-			Image = "rbxassetid://10709790644",
+			Image = "",
 			ImageTransparency = 1,
-			BackgroundTransparency = 1,
 			ThemeTag = {
-				ImageColor3 = "ToggleToggled",
+				ImageColor3 = "ToggleSlider",
 			},
 		})
 
@@ -5746,18 +5682,11 @@ ElementsTable.Toggle = (function()
 			Toggle.Value = Value
 
 			Creator.OverrideTag(ToggleBorder, { Color = Toggle.Value and "Accent" or "ToggleSlider" })
-            Creator.OverrideTag(ToggleCircle, { ImageColor3 = Toggle.Value and "Text" or "ToggleSlider" })
 			
 			TweenService:Create(
 				ToggleSlider,
 				TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
 				{ BackgroundTransparency = Toggle.Value and 0 or 1 }
-			):Play()
-            
-            TweenService:Create(
-				ToggleCircle,
-				TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-				{ ImageTransparency = Toggle.Value and 0 or 1, Size = Toggle.Value and UDim2.fromOffset(14, 14) or UDim2.fromOffset(0, 0) }
 			):Play()
 
 			Library:SafeCallback(Toggle.Callback, Toggle.Value)
@@ -8709,7 +8638,11 @@ if RunService:IsStudio() then
 end
 
 local SaveManager = {} do
-    SaveManager.Folder = "Config_" .. tostring(game.GameId)
+
+
+
+	SaveManager.Folder = "FluentSettings"
+
 
 	SaveManager.Ignore = {}
 
@@ -8997,6 +8930,7 @@ local SaveManager = {} do
 
 		if not success then
 
+
 			return false, "failed to encode data"
 
 
@@ -9063,7 +8997,6 @@ local SaveManager = {} do
 					task.spawn(function() self.Parser[option.type].Load(option.idx, option) end)
 
 				end
-
 
 			end
 
@@ -9658,7 +9591,10 @@ end
 
 
 local InterfaceManager = {} do
-    InterfaceManager.Folder = "Config_" .. tostring(game.GameId) .. "_UI"
+
+
+	InterfaceManager.Folder = "FluentSettings"
+
 
 	InterfaceManager.Settings = {
 
@@ -10894,7 +10830,7 @@ end
 
 
 local MinimizeButton = New("TextButton", {
-    Name = httpService:GenerateGUID(false),
+
 
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
 
@@ -10997,6 +10933,7 @@ local MinimizeButton = New("TextButton", {
 
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 
+
 		BackgroundTransparency = 0.94,
 
 
@@ -11061,7 +10998,6 @@ local MinimizeButton = New("TextButton", {
 
 		})
 
-
 	})
 
 })
@@ -11070,7 +11006,7 @@ local MinimizeButton = New("TextButton", {
 
 
 local MobileMinimizeButton = New("TextButton", {
-    Name = httpService:GenerateGUID(false),
+
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
 
 
@@ -11457,7 +11393,7 @@ function Library:AddSnowfallToWindow(Config)
     
     function SnowModule:Init(Parent, Config)
         local innerContainer = Instance.new("Frame")
-        innerContainer.Name = httpService:GenerateGUID(false)
+        innerContainer.Name = "Effect"
         innerContainer.Size = UDim2.new(1, 0, 1, 0)
         innerContainer.BackgroundTransparency = 1
         innerContainer.ClipsDescendants = true
@@ -11473,7 +11409,7 @@ function Library:AddSnowfallToWindow(Config)
 
         for i = 1, snowflakeCount do
             local snowflake = Instance.new("ImageLabel")
-            snowflake.Name = httpService:GenerateGUID(false)
+            snowflake.Name = "Part"..i
             snowflake.BackgroundTransparency = 1
             snowflake.BorderSizePixel = 0
             snowflake.Image = "rbxassetid://124338537670236"
@@ -11644,15 +11580,4 @@ task.spawn(function()
 		end
 	end)
 end)
-
-getgenv().NexusCleanup = function()
-    pcall(function() Library:Destroy() end)
-    pcall(function() InterfaceManager:DisableCursorUnlock() end)
-    if getgenv().NexusInstance then
-        pcall(function() getgenv().NexusInstance:Destroy() end)
-    end
-    getgenv().NexusInstance = nil
-    getgenv().NexusBlur = nil
-end
-
 return Library, SaveManager, InterfaceManager, Mobile
