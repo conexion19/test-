@@ -37,9 +37,16 @@ end
 local CurrentSessionKey = httpService:GenerateGUID(false)
 SetSessionKey(CurrentSessionKey)
 
--- Session Cleanup Placeholder
-getgenv()[CurrentSessionKey] = function() end 
-
+-- Cleanup function registration (Hidden under random key)
+getgenv()[CurrentSessionKey] = function()
+    if getgenv().NexusGlobalInstance then
+        pcall(function() getgenv().NexusGlobalInstance:Destroy() end)
+    end
+    if getgenv().NexusGlobalBlur then
+        pcall(function() getgenv().NexusGlobalBlur:Destroy() end)
+    end
+    -- Reset other states if needed
+end
 
 local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) ~= nil
 
@@ -2085,44 +2092,28 @@ local function GetBestParent()
         return hiddenUI
     end
     
-    -- 2. Try hiding inside CoreGui (fallback)
+    -- 2. Try hiding inside RobloxGui (Whitelisted by many ACs)
     local CoreGui = game:GetService("CoreGui")
-    if CoreGui then
-        local RobloxGui = CoreGui:FindFirstChild("RobloxGui")
-        if RobloxGui then
-            return RobloxGui
-        end
-        return CoreGui
+    local RobloxGui = CoreGui:FindFirstChild("RobloxGui")
+    if RobloxGui then
+        return RobloxGui
     end
     
-    -- 3. Fallback to PlayerGui
-    local Players = game:GetService("Players")
-    local LocalPlayer = Players.LocalPlayer
-    if LocalPlayer then
-        return LocalPlayer:WaitForChild("PlayerGui")
-    end
-    
-    return game:GetService("CoreGui")
+    -- 3. Fallback to CoreGui
+    return CoreGui
 end
 
 local GUI = Creator.New("ScreenGui", {
     Name = httpService:GenerateGUID(false),
-    -- Parent is set later
+    Parent = clref(GetBestParent()), 
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     ResetOnSpawn = false,
-    DisplayOrder = 99999 -- Maximum priority
+    DisplayOrder = 999
 })
 
--- SECURE PARENTING
-local targetParent = clref(GetBestParent())
-if ProtectGui and type(ProtectGui) == "function" then
-    ProtectGui(GUI)
-end
-GUI.Parent = targetParent
-
--- HIDE FROM GETGENV (Use Random Key for Internal Reference Only)
--- We remove explicit global reference like "NexusInstance" to be undetectable
+getgenv().NexusInstance = GUI
 Library.GUI = GUI
+ProtectGui(GUI)
 
 local KeybindDisplayContainer = Instance.new("Frame")
 KeybindDisplayContainer.Name = httpService:GenerateGUID(false)
@@ -2264,7 +2255,7 @@ local viewportPointToWorld, getOffset = unpack({ viewportPointToWorld, getOffset
 
 local BlurFolder = Instance.new("Folder")
 BlurFolder.Name = httpService:GenerateGUID(false)
--- getgenv().NexusBlur assignment removed for security
+getgenv().NexusBlur = BlurFolder
 do
 	local ws = game:GetService("Workspace")
 	local function attachToCurrentCamera()
@@ -4007,7 +3998,6 @@ Components.Notification = (function()
 				TextColor3 = "SubText",
 			},
 		})
-
 		NewNotification.LabelHolder = New("Frame", {
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -9001,11 +8991,11 @@ local SaveManager = {} do
 
 
 
+
 		local success, encoded = pcall(httpService.JSONEncode, httpService, data)
 
 
 		if not success then
-
 
 			return false, "failed to encode data"
 
@@ -10998,6 +10988,7 @@ local MinimizeButton = New("TextButton", {
 
 		}),
 
+
 	}),
 
 
@@ -11005,7 +10996,6 @@ local MinimizeButton = New("TextButton", {
 
 
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-
 
 		BackgroundTransparency = 0.94,
 
@@ -11655,19 +11645,14 @@ task.spawn(function()
 	end)
 end)
 
--- Update session cleanup with captured locals
-getgenv()[CurrentSessionKey] = function()
-    pcall(function() 
-        if Library then Library:Destroy() end 
-    end)
-    pcall(function() 
-        if GUI then GUI:Destroy() end 
-    end)
-    pcall(function() 
-        if BlurFolder then BlurFolder:Destroy() end 
-    end)
-    -- Remove the key itself after cleanup
-    getgenv()[CurrentSessionKey] = nil
+getgenv().NexusCleanup = function()
+    pcall(function() Library:Destroy() end)
+    pcall(function() InterfaceManager:DisableCursorUnlock() end)
+    if getgenv().NexusInstance then
+        pcall(function() getgenv().NexusInstance:Destroy() end)
+    end
+    getgenv().NexusInstance = nil
+    getgenv().NexusBlur = nil
 end
 
 return Library, SaveManager, InterfaceManager, Mobile
