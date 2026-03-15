@@ -15,6 +15,17 @@ local function GetSafeGlobal(name)
     return success and res or nil
 end
 
+local function GetSafeField(source, field)
+	if type(source) ~= "table" then
+		return nil
+	end
+
+	local success, res = pcall(function()
+		return source[field]
+	end)
+	return success and res or nil
+end
+
 local CurrentSessionKey = httpService:GenerateGUID(false)
 local target_env = _G
 target_env[CurrentSessionKey] = function() end 
@@ -38,7 +49,10 @@ local function SecureCall(name, ...)
 end
 
 local ProtectGui = function(obj)
-    local p_gui = _G.protect_gui or (syn and syn.protect_gui)
+	local p_gui = GetSafeGlobal("protectgui")
+		or GetSafeGlobal("protect_gui")
+		or GetSafeField(GetSafeGlobal("syn"), "protect_gui")
+
     if type(p_gui) == "function" then
         return p_gui(obj)
     end
