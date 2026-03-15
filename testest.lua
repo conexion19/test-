@@ -13,7 +13,7 @@ local function GetSafeGlobal(name)
         return _G[name]
     end)
     return success and res or nil
-end
+			Title = "Overwrite config",
 
 local function GetSafeField(source, field)
 	if type(source) ~= "table" then
@@ -35,347 +35,136 @@ local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum
 
 local fischbypass
 
-if game.GameId == 5750914919 then
-	fischbypass = true
-end
-
-local RenderStepped = RunService.RenderStepped
-
-local function SecureCall(name, ...)
-    local func = GetSafeGlobal(name)
-    if type(func) == "function" then
-        local success, result = pcall(func, ...)
-        return success and result or nil
-    end
-end
-
-local ProtectGui = function(obj)
-    if type(obj) ~= "userdata" and type(obj) ~= "table" then return obj end
-    
-    local p_gui = GetSafeGlobal("protectgui")
-        or GetSafeGlobal("protect_gui")
-        or GetSafeField(GetSafeGlobal("syn"), "protect_gui")
-
-    if type(p_gui) == "function" then
-        pcall(p_gui, obj)
-    end
-    return obj
-end
-
-local Executor = "Unknown"
-local Themes = {
-	Names = {
-		"Slate",
-	},
-	Slate = {
-		Name = "Slate",
-		Accent = Color3.fromRGB(255, 105, 180),
-		AcrylicMain = Color3.fromRGB(40, 20, 25),
-		AcrylicBorder = Color3.fromRGB(60, 30, 40),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(30, 15, 20), Color3.fromRGB(40, 20, 25)),
-		AcrylicNoise = 0.95,
-		TitleBarLine = Color3.fromRGB(80, 40, 50),
-		Tab = Color3.fromRGB(100, 50, 60),
-		Element = Color3.fromRGB(40, 20, 25),
-		ElementBorder = Color3.fromRGB(60, 30, 40),
-		InElementBorder = Color3.fromRGB(60, 30, 40),
-		ElementTransparency = 0.92,
-		ToggleSlider = Color3.fromRGB(80, 40, 50),
-		ToggleToggled = Color3.fromRGB(255, 255, 255),
-		SliderRail = Color3.fromRGB(80, 40, 50),
-		DropdownFrame = Color3.fromRGB(80, 40, 50),
-		DropdownHolder = Color3.fromRGB(40, 20, 25),
-		DropdownBorder = Color3.fromRGB(60, 30, 40),
-		DropdownOption = Color3.fromRGB(80, 40, 50),
-		Keybind = Color3.fromRGB(80, 40, 50),
-		Input = Color3.fromRGB(80, 40, 50),
-		InputFocused = Color3.fromRGB(30, 15, 20),
-		InputIndicator = Color3.fromRGB(80, 40, 50),
-		Dialog = Color3.fromRGB(40, 20, 25),
-		DialogHolder = Color3.fromRGB(40, 20, 25),
-		DialogHolderLine = Color3.fromRGB(60, 30, 40),
-		DialogButton = Color3.fromRGB(50, 25, 30),
-		DialogButtonBorder = Color3.fromRGB(60, 30, 40),
-		DialogBorder = Color3.fromRGB(60, 30, 40),
-		DialogInput = Color3.fromRGB(40, 20, 25),
-		DialogInputLine = Color3.fromRGB(100, 50, 60),
-		Text = Color3.fromRGB(255, 255, 255),
-		SubText = Color3.fromRGB(200, 160, 170),
-		Hover = Color3.fromRGB(80, 40, 50),
-		HoverChange = 0.03,
-	},
-}
-
-local Library = {
-	Version = "1.2.2",
-
-	OpenFrames = {},
-	Options = {},
-	Themes = Themes.Names,
-	Windows = {},
-
-	Window = nil,
-	WindowFrame = nil,
-	Unloaded = false,
-
-	Creator = nil,
-
-	DialogOpen = false,
-	UseAcrylic = false,
-	Acrylic = false,
-	Transparency = false,
-	MinimizeKeybind = nil,
-	MinimizeKey = Enum.KeyCode.LeftControl,
-}
-
-local function isMotor(value)
-	local motorType = tostring(value):match("^Motor%((.+)%)$")
-
-	if motorType then
-		return true, motorType
-	else
-		return false
-	end
-end
-
-local Connection = {}
-
-Connection.__index = Connection
-
-function Connection.new(signal, handler)
-	return setmetatable({
-		signal = signal,
-		connected = true,
-		_handler = handler,
-	}, Connection)
-end
-
-function Connection:disconnect()
-	if self.connected then
-		self.connected = false
-
-		for index, connection in pairs(self.signal._connections) do
-			if connection == self then
-				table.remove(self.signal._connections, index)
-				return
+			Title = "Refresh list",
+			Callback = function()
+				SaveManager.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
+				SaveManager.Options.SaveManager_ConfigList:SetValue(nil)
 			end
-		end
-	end
-end
+				assert(self.Library, "Must set SaveManager.Library")
 
-local Signal = {}
-Signal.__index = Signal
+				local section = tab:AddSection("Configuration", "settings")
 
-function Signal.new()
-	return setmetatable({
-		_connections = {},
-		_threads = {},
-	}, Signal)
-end
+				section:AddInput("SaveManager_ConfigName", { Title = "Config name" })
+				section:AddDropdown("SaveManager_ConfigList", { Title = "Config list", Values = self:RefreshConfigList(), AllowNull = true })
 
-function Signal:fire(...)
-	for _, connection in pairs(self._connections) do
-		connection._handler(...)
-	end
+				section:AddButton({
+					Title = "Create config",
+					Callback = function()
+						local name = SaveManager.Options.SaveManager_ConfigName.Value
+						if name:gsub(" ", "") == "" then
+							return self.Library:Notify({
+								Title = "Interface",
+								Content = "Config loader",
+								SubContent = "Invalid config name (empty)",
+								Duration = 7
+							})
+						end
 
-	for _, thread in pairs(self._threads) do
-		coroutine.resume(thread, ...)
-	end
+						local success, err = self:Save(name)
+						if not success then
+							return self.Library:Notify({
+								Title = "Interface",
+								Content = "Config loader",
+								SubContent = "Failed to save config: " .. err,
+								Duration = 7
+							})
+						end
 
-	self._threads = {}
-end
+						self.Library:Notify({
+							Title = "Interface",
+							Content = "Config loader",
+							SubContent = string.format("Created config %q", name),
+							Duration = 7
+						})
 
-function Signal:connect(handler)
-	local connection = Connection.new(self, handler)
-	table.insert(self._connections, connection)
-	return connection
-end
+						SaveManager.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
+						SaveManager.Options.SaveManager_ConfigList:SetValue(nil)
+					end
+				})
 
-function Signal:wait()
-	table.insert(self._threads, coroutine.running())
-	return coroutine.yield()
-end
+				section:AddButton({
+					Title = "Load config",
+					Callback = function()
+						local name = SaveManager.Options.SaveManager_ConfigList.Value
+						local success, err = self:Load(name)
+						if not success then
+							return self.Library:Notify({
+								Title = "Interface",
+								Content = "Config loader",
+								SubContent = "Failed to load config: " .. err,
+								Duration = 7
+							})
+						end
 
-local Linear = {}
-Linear.__index = Linear
+						self.Library:Notify({
+							Title = "Interface",
+							Content = "Config loader",
+							SubContent = string.format("Loaded config %q", name),
+							Duration = 7
+						})
+					end
+				})
 
-function Linear.new(targetValue, options)
-	assert(targetValue, "Missing argument #1: targetValue")
+				section:AddButton({
+					Title = "Overwrite config",
+					Callback = function()
+						local name = SaveManager.Options.SaveManager_ConfigList.Value
+						local success, err = self:Save(name)
+						if not success then
+							return self.Library:Notify({
+								Title = "Interface",
+								Content = "Config loader",
+								SubContent = "Failed to overwrite config: " .. err,
+								Duration = 7
+							})
+						end
 
-	options = options or {}
+						self.Library:Notify({
+							Title = "Interface",
+							Content = "Config loader",
+							SubContent = string.format("Overwrote config %q", name),
+							Duration = 7
+						})
+					end
+				})
 
-	return setmetatable({
-		_targetValue = targetValue,
-		_velocity = options.velocity or 1,
-	}, Linear)
-end
+				section:AddButton({
+					Title = "Refresh list",
+					Callback = function()
+						SaveManager.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
+						SaveManager.Options.SaveManager_ConfigList:SetValue(nil)
+					end
+				})
 
-function Linear:step(state, dt)
-	local position = state.value
-	local velocity = self._velocity
-	local goal = self._targetValue
+				local AutoloadButton
+				AutoloadButton = section:AddButton({
+					Title = "Set as autoload",
+					Description = "Current autoload config: none",
+					Callback = function()
+						local name = SaveManager.Options.SaveManager_ConfigList.Value
+						writefile(self.Folder .. "/autoload.txt", name)
+						AutoloadButton:SetDesc("Current autoload config: " .. name)
+						self.Library:Notify({
+							Title = "Interface",
+							Content = "Config loader",
+							SubContent = string.format("Set %q to auto load", name),
+							Duration = 7
+						})
+					end
+				})
 
-	local dPos = dt * velocity
+				if isfile(self.Folder .. "/autoload.txt") then
+					local name = readfile(self.Folder .. "/autoload.txt")
+					AutoloadButton:SetDesc("Current autoload config: " .. name)
+				end
 
-	local complete = dPos >= math.abs(goal - position)
-	position = position + dPos * (goal > position and 1 or -1)
-	if complete then
-		position = self._targetValue
-		velocity = 0
-	end
-
-	return {
-		complete = complete,
-		value = position,
-		velocity = velocity,
-	}
-end
-
-local Instant = {}
-Instant.__index = Instant
-
-function Instant.new(targetValue)
-	return setmetatable({
-		_targetValue = targetValue,
-	}, Instant)
-end
-
-function Instant:step()
-	return {
-		complete = true,
-		value = self._targetValue,
-	}
-end
-
-local VELOCITY_THRESHOLD = 0.001
-local POSITION_THRESHOLD = 0.001
-
-local EPS = 0.0001
-
-local Spring = {}
-Spring.__index = Spring
-
-function Spring.new(targetValue, options)
-	assert(targetValue, "Missing argument #1: targetValue")
-	options = options or {}
-
-	return setmetatable({
-		_targetValue = targetValue,
-		_frequency = options.frequency or 4,
-		_dampingRatio = options.dampingRatio or 1,
-	}, Spring)
-end
-
-function Spring:step(state, dt)
-
-
-	local d = self._dampingRatio
-	local f = self._frequency * 2 * math.pi
-	local g = self._targetValue
-	local p0 = state.value
-	local v0 = state.velocity or 0
-
-	local offset = p0 - g
-	local decay = math.exp(-d * f * dt)
-
-	local p1, v1
-
-	if d == 1 then
-		p1 = (offset * (1 + f * dt) + v0 * dt) * decay + g
-		v1 = (v0 * (1 - f * dt) - offset * (f * f * dt)) * decay
-	elseif d < 1 then
-		local c = math.sqrt(1 - d * d)
-
-		local i = math.cos(f * c * dt)
-		local j = math.sin(f * c * dt)
-
-
-
-		local z
-		if c > EPS then
-			z = j / c
-		else
-			local a = dt * f
-			z = a + ((a * a) * (c * c) * (c * c) / 20 - c * c) * (a * a * a) / 6
-		end
-
-
-
-		local y
-		if f * c > EPS then
-			y = j / (f * c)
-		else
-			local b = f * c
-			y = dt + ((dt * dt) * (b * b) * (b * b) / 20 - b * b) * (dt * dt * dt) / 6
-		end
-
-		p1 = (offset * (i + d * z) + v0 * y) * decay + g
-		v1 = (v0 * (i - z * d) - offset * (z * f)) * decay
-	else
-		local c = math.sqrt(d * d - 1)
-
-		local r1 = -f * (d - c)
-		local r2 = -f * (d + c)
-
-		local co2 = (v0 - offset * r1) / (2 * f * c)
-		local co1 = offset - co2
-
-		local e1 = co1 * math.exp(r1 * dt)
-		local e2 = co2 * math.exp(r2 * dt)
-
-		p1 = e1 + e2 + g
-		v1 = e1 * r1 + e2 * r2
-	end
-
-	local complete = math.abs(v1) < VELOCITY_THRESHOLD and math.abs(p1 - g) < POSITION_THRESHOLD
-
-	return {
-		complete = complete,
-		value = complete and g or p1,
-		velocity = v1,
-	}
-end
-
-local noop = function() end
-
-local BaseMotor = {}
-BaseMotor.__index = BaseMotor
-
-function BaseMotor.new()
-	return setmetatable({
-		_onStep = Signal.new(),
-		_onStart = Signal.new(),
-		_onComplete = Signal.new(),
-	}, BaseMotor)
-end
-
-function BaseMotor:onStep(handler)
-	return self._onStep:connect(handler)
-end
-function BaseMotor:onStart(handler)
-	return self._onStart:connect(handler)
-end
-
-function BaseMotor:onComplete(handler)
-	return self._onComplete:connect(handler)
-end
-
-function BaseMotor:start()
-	if not self._connection then
-		self._connection = RunService.RenderStepped:Connect(function(deltaTime)
-			self:step(deltaTime)
-		end)
-	end
-end
-
-function BaseMotor:stop()
-	if self._connection then
-		self._connection:Disconnect()
+				SaveManager:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName" })
+			end
 		self._connection = nil
 	end
 end
-BaseMotor.destroy = BaseMotor.stop
 
+BaseMotor.destroy = BaseMotor.stop
 BaseMotor.step = noop
 BaseMotor.getValue = noop
 BaseMotor.setGoal = noop
@@ -701,10 +490,11 @@ function Creator.OverrideTag(Object, Properties)
 end
 
 function Creator.GetThemeProperty(Property)
-	if Themes[Library.Theme][Property] then
-		return Themes[Library.Theme][Property]
+	local theme = Themes[Library.Theme] or Themes.Slate
+	if theme[Property] ~= nil then
+		return theme[Property]
 	end
-	return Themes["Dark"][Property]
+	return Themes.Slate[Property]
 end
 
 local MiniMessageColors = {
@@ -739,222 +529,21 @@ local function MiniMessageToRichText(text)
 	if type(text) ~= "string" or text == "" then
 		return text
 	end
-	
+
 	if not text:match("<[^>]+>") then
 		return text
 	end
-	
+
 	local result = text
-	result = result:gsub("<br>", "\n")
-	result = result:gsub("<br/>", "\n")
-	result = result:gsub("<br />", "\n")
+	result = result:gsub("<br%s*/?>", "\n")
 	result = result:gsub("<nl>", "\n")
 	result = result:gsub("<newline>", "\n")
-	
+
 	result = result:gsub("<reset>", "</font></b></i></u></s>")
-	
 	result = result:gsub("<obfuscated>(.-)</obfuscated>", "%1")
 	result = result:gsub("<obfuscated>", "")
 	result = result:gsub("</obfuscated>", "")
-	
-	local function hexToRgb(hex)
-		hex = hex:gsub("#", "")
-		local r = tonumber("0x" .. hex:sub(1, 2))
-		local g = tonumber("0x" .. hex:sub(3, 4))
-		local b = tonumber("0x" .. hex:sub(5, 6))
-		return r, g, b
-	end
-	
-	local function rgbToHex(r, g, b)
-		return string.format("#%02X%02X%02X", math.floor(r), math.floor(g), math.floor(b))
-	end
-	
-	local function interpolateColor(color1Hex, color2Hex, t)
-		local r1, g1, b1 = hexToRgb(color1Hex)
-		local r2, g2, b2 = hexToRgb(color2Hex)
-		local r = r1 + (r2 - r1) * t
-		local g = g1 + (g2 - g1) * t
-		local b = b1 + (b2 - b1) * t
-		return rgbToHex(r, g, b)
-	end
-	
-	for i = 1, 10 do
-		local newResult = result:gsub("<gradient:([^>]+)>(.-)</gradient>", function(colorsStr, content)
-			local colors = {}
-			
-			for colorMatch in colorsStr:gmatch("(#%x%x%x%x%x%x)") do
-				table.insert(colors, colorMatch)
-			end
-			
-			if #colors == 0 then
-				for colorMatch in colorsStr:gmatch("(%x%x%x%x%x%x)") do
-					table.insert(colors, "#" .. colorMatch)
-				end
-			end
-			
-			if #colors < 2 then
-				if #colors == 1 then
-					return '<font color="' .. colors[1] .. '">' .. content .. '</font>'
-				else
-					return content
-				end
-			end
-			
-			local cleanText = content:gsub("<[^>]+>", "")
-			local textLength = #cleanText
-			
-			if textLength == 0 then
-				return content
-			end
-			
-			if textLength == 1 then
-				return '<font color="' .. colors[1] .. '">' .. content .. '</font>'
-			end
-			
-			local parts = {}
-			local pos = 1
-			local charIndex = 0
-			
-			while pos <= #content do
-				if content:sub(pos, pos) == "<" then
-					local tagEnd = content:find(">", pos)
-					if tagEnd then
-						local tag = content:sub(pos, tagEnd)
-						table.insert(parts, {type = "tag", value = tag})
-						pos = tagEnd + 1
-					else
-						table.insert(parts, {type = "char", value = content:sub(pos, pos), index = charIndex})
-						charIndex = charIndex + 1
-						pos = pos + 1
-					end
-				else
-					local char = content:sub(pos, pos)
-					table.insert(parts, {type = "char", value = char, index = charIndex})
-					charIndex = charIndex + 1
-					pos = pos + 1
-				end
-			end
-			
-			local function getGradientColor(t)
-				t = math.max(0, math.min(1, t))
-				
-				if #colors == 2 then
-					return interpolateColor(colors[1], colors[2], t)
-				end
-				
-				local numSegments = #colors - 1
-				local segmentSize = 1 / numSegments
-				
-				local segmentIndex = math.floor(t / segmentSize)
-				if segmentIndex >= numSegments then
-					segmentIndex = numSegments - 1
-					t = 1.0
-				end
-				
-				local segmentStart = segmentIndex * segmentSize
-				local segmentEnd = (segmentIndex + 1) * segmentSize
-				
-				local segmentT = 0
-				if segmentEnd > segmentStart then
-					segmentT = (t - segmentStart) / (segmentEnd - segmentStart)
-				else
-					segmentT = (t >= segmentEnd) and 1.0 or 0.0
-				end
-				
-				segmentT = math.max(0, math.min(1, segmentT))
-				
-				local color1Index = segmentIndex + 1
-				local color2Index = segmentIndex + 2
-				
-				if color1Index < 1 then color1Index = 1 end
-				if color2Index > #colors then color2Index = #colors end
-				if color1Index > #colors then color1Index = #colors end
-				
-				return interpolateColor(colors[color1Index], colors[color2Index], segmentT)
-			end
-			
-			local gradientText = ""
-			local currentSegment = ""
-			local currentColor = nil
-			local segments = {}
-			
-			for _, part in ipairs(parts) do
-				if part.type == "tag" then
-					if currentSegment ~= "" and currentColor ~= nil then
-						table.insert(segments, {text = currentSegment, color = currentColor})
-						currentSegment = ""
-						currentColor = nil
-					end
-					table.insert(segments, {text = part.value, color = nil})
-				else
-					local t = part.index / (textLength - 1)
-					if textLength == 1 then t = 0 end
-					local charColor = getGradientColor(t)
-					
-					if currentColor == charColor then
-						currentSegment = currentSegment .. part.value
-					else
-						if currentSegment ~= "" and currentColor ~= nil then
-							table.insert(segments, {text = currentSegment, color = currentColor})
-						end
-						currentSegment = part.value
-						currentColor = charColor
-					end
-				end
-			end
-			
-			if currentSegment ~= "" and currentColor ~= nil then
-				table.insert(segments, {text = currentSegment, color = currentColor})
-			end
-			
-			local hasTextSegments = false
-			for _, segment in ipairs(segments) do
-				if segment.text and segment.text ~= "" then
-					hasTextSegments = true
-					break
-				end
-			end
-			
-			if not hasTextSegments and textLength > 0 then
-				local fallbackText = ""
-				for i = 1, textLength do
-					local t = (i - 1) / (textLength - 1)
-					if textLength == 1 then t = 0 end
-					local charColor = getGradientColor(t)
-					local char = cleanText:sub(i, i)
-					fallbackText = fallbackText .. '<font color="' .. charColor .. '">' .. char .. '</font>'
-				end
-				return fallbackText
-			end
-			
-			for _, segment in ipairs(segments) do
-				if segment.color and segment.text and segment.text ~= "" then
-					gradientText = gradientText .. '<font color="' .. segment.color .. '">' .. segment.text .. '</font>'
-				elseif segment.text then
-					gradientText = gradientText .. segment.text
-				end
-			end
-			
-			if gradientText == "" or gradientText == nil or not gradientText:match('<font color=') then
-				local fallbackText = ""
-				for i = 1, textLength do
-					local t = (i - 1) / (textLength - 1)
-					if textLength == 1 then t = 0 end
-					local charColor = getGradientColor(t)
-					local char = cleanText:sub(i, i)
-					fallbackText = fallbackText .. '<font color="' .. charColor .. '">' .. char .. '</font>'
-				end
-				return fallbackText
-			end
-			
-			return gradientText
-		end)
-		if newResult == result then
-			break
-		end
-		result = newResult
-	end
-	
+
 	result = result:gsub("<color:(#%x%x%x%x%x%x)>(.-)</color>", '<font color="%1">%2</font>')
 	result = result:gsub("<color:(#%x%x%x%x%x%x)>", '<font color="%1">')
 	result = result:gsub("<color:(%x%x%x%x%x%x)>(.-)</color>", function(hex, content)
@@ -964,54 +553,51 @@ local function MiniMessageToRichText(text)
 		return '<font color="#' .. hex .. '">'
 	end)
 	result = result:gsub("</color>", "</font>")
-	
+
 	result = result:gsub("<(#%x%x%x%x%x%x)>(.-)</#%x%x%x%x%x%x>", '<font color="%1">%2</font>')
 	result = result:gsub("<(#%x%x%x%x%x%x)>", '<font color="%1">')
-	result = result:gsub("</(#%x%x%x%x%x%x)>", "</font>")
-	
+
 	local colorNames = {}
-	for colorName, _ in pairs(MiniMessageColors) do
+	for colorName in pairs(MiniMessageColors) do
 		table.insert(colorNames, colorName)
 	end
-	table.sort(colorNames, function(a, b) return #a > #b end)
-	
+	table.sort(colorNames, function(a, b)
+		return #a > #b
+	end)
+
 	for _, colorName in ipairs(colorNames) do
 		local hexColor = MiniMessageColors[colorName]
 		result = result:gsub("<" .. colorName .. ">(.-)</" .. colorName .. ">", '<font color="' .. hexColor .. '">%1</font>')
 		result = result:gsub("<" .. colorName .. ">", '<font color="' .. hexColor .. '">')
 		result = result:gsub("</" .. colorName .. ">", "</font>")
 	end
-	
+
 	result = result:gsub("<bold>(.-)</bold>", "<b>%1</b>")
 	result = result:gsub("<bold>", "<b>")
 	result = result:gsub("</bold>", "</b>")
-	
 	result = result:gsub("<italic>(.-)</italic>", "<i>%1</i>")
 	result = result:gsub("<italic>", "<i>")
 	result = result:gsub("</italic>", "</i>")
-	
 	result = result:gsub("<underline>(.-)</underline>", "<u>%1</u>")
 	result = result:gsub("<underlined>(.-)</underlined>", "<u>%1</u>")
 	result = result:gsub("<underline>", "<u>")
 	result = result:gsub("<underlined>", "<u>")
 	result = result:gsub("</underline>", "</u>")
 	result = result:gsub("</underlined>", "</u>")
-	
 	result = result:gsub("<strikethrough>(.-)</strikethrough>", "<s>%1</s>")
 	result = result:gsub("<strike>(.-)</strike>", "<s>%1</s>")
 	result = result:gsub("<strikethrough>", "<s>")
 	result = result:gsub("<strike>", "<s>")
 	result = result:gsub("</strikethrough>", "</s>")
 	result = result:gsub("</strike>", "</s>")
-	
+
 	result = result:gsub('<font color="[^"]+"></font>', "")
-	
 	result = result:gsub("</font></font>", "</font>")
 	result = result:gsub("</b></b>", "</b>")
 	result = result:gsub("</i></i>", "</i>")
 	result = result:gsub("</u></u>", "</u>")
 	result = result:gsub("</s></s>", "</s>")
-	
+
 	return result
 end
 
@@ -7770,43 +7356,25 @@ end
 
 local SaveManager = {}
 function SaveManager:WriteFile(path, content)
-    local write_file = GetSafeGlobal("writefile")
-    if write_file then
-        return pcall(write_file, path, content)
-    end
-    return false
+	writefile(path, content)
+	return true
 end
 
 function SaveManager:ReadFile(path)
-    local read_file = GetSafeGlobal("readfile")
-    if read_file then
-        local success, data = pcall(read_file, path)
-        return success and data or nil
-    end
+	return readfile(path)
 end
 
 function SaveManager:IsFile(path)
-    local is_file = GetSafeGlobal("isfile")
-    if is_file then
-        return pcall(is_file, path)
-    end
-    return false
+	return isfile(path)
 end
 
 function SaveManager:IsFolder(path)
-    local is_folder = GetSafeGlobal("isfolder")
-    if is_folder then
-        return pcall(is_folder, path)
-    end
-    return false
+	return isfolder(path)
 end
 
 function SaveManager:MakeFolder(path)
-    local make_folder = GetSafeGlobal("makefolder")
-    if make_folder then
-        return pcall(make_folder, path)
-    end
-    return false
+	makefolder(path)
+	return true
 end
 
 SaveManager.Parser = {
@@ -7912,21 +7480,11 @@ SaveManager.Parser = {
 			return false, "failed to encode data"
 		end
 
-		local write_file = GetSafeGlobal("writefile")
-		if write_file then
-			pcall(write_file, fullPath, encoded)
-		end
+		writefile(fullPath, encoded)
 		return true
 	end
 
 	function SaveManager:Load(name)
-		local readfile = GetSafeGlobal("readfile")
-		local isfile = GetSafeGlobal("isfile")
-
-		if not (readfile and isfile) then
-			return false, "filesystem not supported"
-		end
-
 		if (not name) then
 			return false, "no config file is selected"
 		end
@@ -7960,15 +7518,10 @@ SaveManager.Parser = {
 			self.Folder .. "/"
 		}
 
-		local isfolder = GetSafeGlobal("isfolder")
-		local makefolder = GetSafeGlobal("makefolder")
-
-		if not isfolder or not makefolder then return end
-
 		for i = 1, #paths do
 			local str = paths[i]
 			if not isfolder(str) then
-				pcall(makefolder, str)
+				makefolder(str)
 			end
 		end
 	end
@@ -7978,8 +7531,6 @@ SaveManager.Parser = {
 
 
 	function SaveManager:RefreshConfigList()
-		local listfiles = GetSafeGlobal("listfiles")
-		if not listfiles then return {} end
 		local list = listfiles(self.Folder .. "/")
 
 		local out = {}
@@ -8069,10 +7620,8 @@ SaveManager.Parser = {
 
 
 	function SaveManager:LoadAutoloadConfig()
-		local is_file = GetSafeGlobal("isfile")
-		local read_file = GetSafeGlobal("readfile")
-		if is_file and read_file and is_file(self.Folder .. "/autoload.txt") then
-			local name = read_file(self.Folder .. "/autoload.txt")
+		if isfile(self.Folder .. "/autoload.txt") then
+			local name = readfile(self.Folder .. "/autoload.txt")
 
 			local success, err = self:Load(name)
 			if not success then
@@ -8266,10 +7815,7 @@ SaveManager.Parser = {
 		local AutoloadButton
 		AutoloadButton = section:AddButton({Title = "Set as autoload", Description = "Current autoload config: none", Callback = function()
 			local name = SaveManager.Options.SaveManager_ConfigList.Value
-			local write_file = GetSafeGlobal("writefile")
-			if write_file then
-				pcall(write_file, self.Folder .. "/autoload.txt", name)
-			end
+			writefile(self.Folder .. "/autoload.txt", name)
 			AutoloadButton:SetDesc("Current autoload config: " .. name)
 			self.Library:Notify({
 				Title = "Interface",
@@ -8279,10 +7825,8 @@ SaveManager.Parser = {
 			})
 		end})
 
-		local is_file = GetSafeGlobal("isfile")
-		local read_file = GetSafeGlobal("readfile")
-		if is_file and read_file and is_file(self.Folder .. "/autoload.txt") then
-			local name = read_file(self.Folder .. "/autoload.txt")
+		if isfile(self.Folder .. "/autoload.txt") then
+			local name = readfile(self.Folder .. "/autoload.txt")
 			AutoloadButton:SetDesc("Current autoload config: " .. name)
 		end
 
@@ -8378,8 +7922,6 @@ local InterfaceManager = {} do
 
 	function InterfaceManager:BuildFolderTree()
 		local paths = {}
-		local is_folder = GetSafeGlobal("isfolder")
-		local make_folder = GetSafeGlobal("makefolder")
 
 		local parts = self.Folder:split("/")
 		for idx = 1, #parts do
@@ -8391,8 +7933,8 @@ local InterfaceManager = {} do
 
 		for i = 1, #paths do
 			local str = paths[i]
-			if is_folder and make_folder and not is_folder(str) then
-				pcall(make_folder, str)
+			if not isfolder(str) then
+				makefolder(str)
 			end
 		end
 	end
