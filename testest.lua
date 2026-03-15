@@ -10,16 +10,13 @@ local httpService = game:GetService("HttpService")
 
 local function GetSafeGlobal(name)
     local success, res = pcall(function()
-        local g = (getfenv(0) or getfenv())
-        local getgenv_func = g["get" .. "genv"]
-        local target = (type(getgenv_func) == "function" and getgenv_func()) or _G
-        return target[name]
+        return _G[name]
     end)
-    return success and res or _G[name]
+    return success and res or nil
 end
 
 local CurrentSessionKey = httpService:GenerateGUID(false)
-local target_env = (type(getgenv) == "function" and getgenv()) or _G
+local target_env = _G
 target_env[CurrentSessionKey] = function() end 
 
 
@@ -41,7 +38,7 @@ local function SecureCall(name, ...)
 end
 
 local ProtectGui = function(obj)
-    local p_gui = (getgenv and getgenv().protect_gui) or (syn and syn.protect_gui)
+    local p_gui = _G.protect_gui or (syn and syn.protect_gui)
     if type(p_gui) == "function" then
         return p_gui(obj)
     end
@@ -7906,78 +7903,57 @@ SaveManager.Parser = {
 	end
 
 	function SaveManager:Load(name)
+		local readfile = GetSafeGlobal("readfile")
+		local isfile = GetSafeGlobal("isfile")
 
-
-		function SaveManager:Load(name)
-			local httpService = GetSafeGlobal("HttpService")
-			local readfile = GetSafeGlobal("readfile")
-			local isfile = GetSafeGlobal("isfile")
-
-			if not (httpService and readfile and isfile) then
-				return false, "filesystem not supported"
-			end
-
-			if (not name) then
-				return false, "no config file is selected"
-			end
-
-			local file = self.Folder .. "/" .. name .. ".json"
-			if not isfile(file) then return false, "Create Config Save File" end
-
-			local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
-			if not success then return false, "decode error" end
-
-			for _, option in next, decoded.objects do
-				if self.Parser[option.type] and not self.Ignore[option.idx] then
-					task.spawn(function() self.Parser[option.type].Load(option.idx, option) end)
-				end
-			end
-
-			Fluent.SettingLoaded = true
-
-			return true, decoded
+		if not (readfile and isfile) then
+			return false, "filesystem not supported"
 		end
 
-		function SaveManager:IgnoreThemeSettings()
-			self:SetIgnoreIndexes({ 
-				"InterfaceTheme", "AcrylicToggle", "TransparentToggle", "MenuKeybind"
-		    })
-	    end
+		if (not name) then
+			return false, "no config file is selected"
+		end
+
+		local file = self.Folder .. "/" .. name .. ".json"
+		if not isfile(file) then return false, "Create Config Save File" end
+
+		local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
+		if not success then return false, "decode error" end
+
+		for _, option in next, decoded.objects do
+			if self.Parser[option.type] and not self.Ignore[option.idx] then
+				task.spawn(function() self.Parser[option.type].Load(option.idx, option) end)
+			end
+		end
+
+		Library.SettingLoaded = true
+
+		return true, decoded
+	end
+
+	function SaveManager:IgnoreThemeSettings()
+		self:SetIgnoreIndexes({ 
+			"InterfaceTheme", "AcrylicToggle", "TransparentToggle", "MenuKeybind"
+		})
+	end
 
 	function SaveManager:BuildFolderTree()
 		local paths = {
-
-
 			self.Folder,
-
-
 			self.Folder .. "/"
-
-
 		}
 
+		local isfolder = GetSafeGlobal("isfolder")
+		local makefolder = GetSafeGlobal("makefolder")
 
-
-
+		if not isfolder or not makefolder then return end
 
 		for i = 1, #paths do
-
-
 			local str = paths[i]
-
-
 			if not isfolder(str) then
-
-
-				makefolder(str)
-
-
+				pcall(makefolder, str)
 			end
-
-
 		end
-
-
 	end
 
 
@@ -7985,20 +7961,12 @@ SaveManager.Parser = {
 
 
 	function SaveManager:RefreshConfigList()
-
-
+		local listfiles = GetSafeGlobal("listfiles")
+		if not listfiles then return {} end
 		local list = listfiles(self.Folder .. "/")
 
-
-
-
-
 		local out = {}
-
-
 		for i = 1, #list do
-
-
 			local file = list[i]
 
 
@@ -9203,14 +9171,7 @@ end
 end
 
 
-
-
 _G.Fluent = Library
-getgenv().Fluent = Library
-
-
-
-
 
 local MinimizeButton = New("TextButton", {
     Name = httpService:GenerateGUID(false),
@@ -9737,7 +9698,7 @@ end
 if RunService:IsStudio() then task.wait(0.01) end
 
 
-getgenv()[CurrentSessionKey] = function()
+_G[CurrentSessionKey] = function()
     pcall(function() 
         if Library then Library:Destroy() end 
     end)
@@ -9747,7 +9708,7 @@ getgenv()[CurrentSessionKey] = function()
     pcall(function() 
         if BlurFolder then BlurFolder:Destroy() end 
     end)
-    getgenv()[CurrentSessionKey] = nil
+    _G[CurrentSessionKey] = nil
 end
 
 return Library, SaveManager, InterfaceManager, Mobile
