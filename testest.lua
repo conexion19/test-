@@ -9,14 +9,17 @@ local Mouse = LocalPlayer:GetMouse()
 local httpService = game:GetService("HttpService")
 
 local function GetSafeGlobal(name)
-    local g = (getfenv(0) or getfenv())
-    local target = g["get" .. "genv"] and g["get" .. "genv"]() or _G
-    return target[name]
+    local success, res = pcall(function()
+        local g = (getfenv(0) or getfenv())
+        local getgenv_func = g["get" .. "genv"]
+        local target = (type(getgenv_func) == "function" and getgenv_func()) or _G
+        return target[name]
+    end)
+    return success and res or _G[name]
 end
 
 local CurrentSessionKey = httpService:GenerateGUID(false)
-local g_env = (getfenv(0) or getfenv())
-local target_env = g_env["get" .. "genv"] and g_env["get" .. "genv"]() or _G
+local target_env = (type(getgenv) == "function" and getgenv()) or _G
 target_env[CurrentSessionKey] = function() end 
 
 
@@ -9202,8 +9205,8 @@ end
 
 
 
-
--- _G.Fluent removed for AC bypass
+_G.Fluent = Library
+getgenv().Fluent = Library
 
 
 
