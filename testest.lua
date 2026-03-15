@@ -44,17 +44,20 @@ local RenderStepped = RunService.RenderStepped
 local function SecureCall(name, ...)
     local func = GetSafeGlobal(name)
     if type(func) == "function" then
-        return func(...)
+        local success, result = pcall(func, ...)
+        return success and result or nil
     end
 end
 
 local ProtectGui = function(obj)
-	local p_gui = GetSafeGlobal("protectgui")
-		or GetSafeGlobal("protect_gui")
-		or GetSafeField(GetSafeGlobal("syn"), "protect_gui")
+    if type(obj) ~= "userdata" and type(obj) ~= "table" then return obj end
+    
+    local p_gui = GetSafeGlobal("protectgui")
+        or GetSafeGlobal("protect_gui")
+        or GetSafeField(GetSafeGlobal("syn"), "protect_gui")
 
     if type(p_gui) == "function" then
-        return p_gui(obj)
+        pcall(p_gui, obj)
     end
     return obj
 end
@@ -1186,7 +1189,7 @@ end
 
 local function SecureUI(gui)
     local targetParent = GetParentContainer()
-    if ProtectGui then
+    if type(ProtectGui) == "function" then
         ProtectGui(gui)
     end
     gui.Parent = targetParent
