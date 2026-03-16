@@ -2194,40 +2194,243 @@ local viewportPointToWorld, getOffset = unpack({ viewportPointToWorld, getOffset
 
 local BlurFolder = Instance.new("Folder")
 BlurFolder.Name = "Blur"
+do
+	local ws = game:GetService("Workspace")
+	local function attachToCurrentCamera()
+		local cam = ws.CurrentCamera
+		if cam and BlurFolder.Parent ~= cam then
+			BlurFolder.Parent = cam
+		end
+	end
+	attachToCurrentCamera()
+	ws:GetPropertyChangedSignal("CurrentCamera"):Connect(attachToCurrentCamera)
+end
 
 local function createAcrylic()
-	local Part = Instance.new("Folder")
-	Part.Name = "Body"
+	local Part = Creator.New("Part", {
+		Name = "Body",
+		Color = Color3.new(0, 0, 0),
+		Material = Enum.Material.Glass,
+		Size = Vector3.new(1, 1, 0),
+		Anchored = true,
+		CanCollide = false,
+		Locked = true,
+		CastShadow = false,
+		Transparency = 0.98,
+	}, {
+		Creator.New("SpecialMesh", {
+			Name = "Mesh",
+			MeshType = Enum.MeshType.Brick,
+			Offset = Vector3.new(0, 0, -0.000001),
+		}),
+	})
+
 	return Part
 end
 
 function AcrylicBlur()
+	local function createAcrylicBlur(distance)
+		local cleanups = {}
+
+		distance = distance or 0.001
+		local positions = {
+			topLeft = Vector2.new(),
+			topRight = Vector2.new(),
+			bottomRight = Vector2.new(),
+		}
+		local model = createAcrylic()
+		model.Parent = BlurFolder
+
+		local function updatePositions(size, position)
+			positions.topLeft = position
+			positions.topRight = position + Vector2.new(size.X, 0)
+			positions.bottomRight = position + size
+		end
+
+		local function render()
+			local res = game:GetService("Workspace").CurrentCamera
+			if res then
+				res = res.CFrame
+			end
+			local cond = res
+			if not cond then
+				cond = CFrame.new()
+			end
+
+			local camera = cond
+			local topLeft = positions.topLeft
+			local topRight = positions.topRight
+			local bottomRight = positions.bottomRight
+
+			local topLeft3D = viewportPointToWorld(topLeft, distance)
+			local topRight3D = viewportPointToWorld(topRight, distance)
+			local bottomRight3D = viewportPointToWorld(bottomRight, distance)
+
+			local width = (topRight3D - topLeft3D).Magnitude
+			local height = (topRight3D - bottomRight3D).Magnitude
+
+			model.CFrame = CFrame.fromMatrix((topLeft3D + bottomRight3D) / 2, camera.XVector, camera.YVector, camera.ZVector)
+			model.Mesh.Scale = Vector3.new(width, height, 0)
+		end
+
+		local function onChange(rbx)
+			local offset = getOffset()
+			local size = rbx.AbsoluteSize - Vector2.new(offset, offset)
+			local position = rbx.AbsolutePosition + Vector2.new(offset / 2, offset / 2)
+
+			updatePositions(size, position)
+			task.spawn(render)
+		end
+
+		local function renderOnChange()
+			local camera = game:GetService("Workspace").CurrentCamera
+			if not camera then
+				return
+			end
+			table.insert(cleanups, camera:GetPropertyChangedSignal("CFrame"):Connect(render))
+			table.insert(cleanups, camera:GetPropertyChangedSignal("ViewportSize"):Connect(render))
+			table.insert(cleanups, camera:GetPropertyChangedSignal("FieldOfView"):Connect(render))
+			task.spawn(render)
+		end
+
+		model.Destroying:Connect(function()
+			for _, item in cleanups do
+				pcall(function()
+					item:Disconnect()
+				end)
+			end
+		end)
+
+		renderOnChange()
+
+		return onChange, model
+	end
+
 	return function(distance)
 		local Blur = {}
+		local onChange, model = createAcrylicBlur(distance)
+
 		local comp = Creator.New("Frame", {
 			BackgroundTransparency = 1,
 			Size = UDim2.fromScale(1, 1),
 		})
-		Blur.AddParent = function(Parent) end
-		Blur.SetVisibility = function(Value) end
+
+		Creator.AddSignal(comp:GetPropertyChangedSignal("AbsolutePosition"), function()
+			onChange(comp)
+		end)
+		Creator.AddSignal(comp:GetPropertyChangedSignal("AbsoluteSize"), function()
+			onChange(comp)
+		end)
+		Blur.AddParent = function(Parent)
+			Creator.AddSignal(Parent:GetPropertyChangedSignal("Visible"), function()
+				Blur.SetVisibility(Parent.Visible)
+			end)
+		end
+
+		Blur.SetVisibility = function(Value)
+			model.Transparency = Value and 0.98 or 1
+		end
+
 		Blur.Frame = comp
-		Blur.Model = Instance.new("Folder")
+		Blur.Model = model
+
 		return Blur
 	end
 end
 
 function AcrylicPaint()
 	local New = Creator.New
+	local AcrylicBlur = AcrylicBlur()
+
 	return function(props)
 		local AcrylicPaint = {}
+
 		AcrylicPaint.Frame = New("Frame", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 0.9,
 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BorderSizePixel = 0,
+		}, {
+			New("ImageLabel", {
+				Image = "rbxassetid://8992230677",
+				ScaleType = "Slice",
+				SliceCenter = Rect.new(Vector2.new(99, 99), Vector2.new(99, 99)),
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Size = UDim2.new(1, 120, 1, 116),
+				Position = UDim2.new(0.5, 0, 0.5, 0),
+				BackgroundTransparency = 1,
+				ImageColor3 = Color3.fromRGB(0, 0, 0),
+				ImageTransparency = 0.7,
+			}),
+
+			New("Frame", {
+				BackgroundTransparency = 0.45,
+				Size = UDim2.fromScale(1, 1),
+				Name = "Background",
+				ThemeTag = {
+					BackgroundColor3 = "AcrylicMain",
+				},
+			}),
+
+			New("Frame", {
+				BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+				BackgroundTransparency = 0.4,
+				Size = UDim2.fromScale(1, 1),
+			}, {
+				New("UIGradient", {
+					Rotation = 90,
+					ThemeTag = {
+						Color = "AcrylicGradient",
+					},
+				}),
+			}),
+
+			New("ImageLabel", {
+				Image = "rbxassetid://9968344105",
+				ImageTransparency = 0.98,
+				ScaleType = Enum.ScaleType.Tile,
+				TileSize = UDim2.new(0, 128, 0, 128),
+				Size = UDim2.fromScale(1, 1),
+				BackgroundTransparency = 1,
+			}),
+
+			New("ImageLabel", {
+				Image = "rbxassetid://9968344227",
+				ImageTransparency = 0.9,
+				ScaleType = Enum.ScaleType.Tile,
+				TileSize = UDim2.new(0, 128, 0, 128),
+				Size = UDim2.fromScale(1, 1),
+				BackgroundTransparency = 1,
+				ThemeTag = {
+					ImageTransparency = "AcrylicNoise",
+				},
+			}),
+
+			New("Frame", {
+				BackgroundTransparency = 1,
+				Size = UDim2.fromScale(1, 1),
+				ZIndex = 2,
+			}, {
+				New("UIStroke", {
+					Transparency = 0.5,
+					Thickness = 1,
+					ThemeTag = {
+						Color = "AcrylicBorder",
+					},
+				}),
+			}),
 		})
-		AcrylicPaint.AddParent = function() end
-		AcrylicPaint.SetVisibility = function() end
+
+		local Blur
+
+		if Library.UseAcrylic then
+			Blur = AcrylicBlur()
+			Blur.Frame.Parent = AcrylicPaint.Frame
+			AcrylicPaint.Model = Blur.Model
+			AcrylicPaint.AddParent = Blur.AddParent
+			AcrylicPaint.SetVisibility = Blur.SetVisibility
+		end
+
 		return AcrylicPaint
 	end
 end
@@ -2239,8 +2442,47 @@ local Acrylic = {
 }
 
 function Acrylic.init()
-	function Acrylic.Enable() end
-	function Acrylic.Disable() end
+	local baseEffect = Instance.new("DepthOfFieldEffect")
+	baseEffect.FarIntensity = 0
+	baseEffect.InFocusRadius = 0.1
+	baseEffect.NearIntensity = 1
+
+	local depthOfFieldDefaults = {}
+
+	function Acrylic.Enable()
+		for _, effect in pairs(depthOfFieldDefaults) do
+			effect.Enabled = false
+		end
+		baseEffect.Parent = game:GetService("Lighting")
+	end
+
+	function Acrylic.Disable()
+		for _, effect in pairs(depthOfFieldDefaults) do
+			effect.Enabled = effect.enabled
+		end
+		baseEffect.Parent = nil
+	end
+
+	local function registerDefaults()
+		local function register(object)
+			if object:IsA("DepthOfFieldEffect") then
+				depthOfFieldDefaults[object] = { enabled = object.Enabled }
+			end
+		end
+
+		for _, child in pairs(game:GetService("Lighting"):GetChildren()) do
+			register(child)
+		end
+
+		if game:GetService("Workspace").CurrentCamera then
+			for _, child in pairs(game:GetService("Workspace").CurrentCamera:GetChildren()) do
+				register(child)
+			end
+		end
+	end
+
+	registerDefaults()
+	Acrylic.Enable()
 end
 
 local Components = {
@@ -2998,6 +3240,7 @@ Components.Tab = (function()
 					SubTabContainerAnim.GroupTransparency = Value
 				end
 			end)
+
 			local SubTabMotor, SubTabSetTransparency = Creator.SpringMotor(0.92, SubTabButton, "BackgroundTransparency")
 			local SubTabStroke = SubTabButton:FindFirstChild("UIStroke")
 
@@ -5455,7 +5698,6 @@ ElementsTable.Toggle = (function()
 
 	return Element
 end)()
-
 ElementsTable.Dropdown = (function()
 	local Element = {}
 	Element.__index = Element
@@ -8756,7 +8998,6 @@ local SaveManager = {} do
 
 
 			return true, decoded
-
 		end
 
 
@@ -9757,7 +9998,6 @@ Library.CreateWindow = function(self, Config)
 
 		if Icon == "" or Icon == nil then
 
-
 			Icon = nil
 
 
@@ -9997,6 +10237,7 @@ function Library:CreateMinimizer(Config)
 
 
 				ThemeTag = {
+
 
 					Color = "ElementBorder",
 
@@ -10756,7 +10997,6 @@ local MinimizeButton = New("TextButton", {
 
 local MobileMinimizeButton = New("TextButton", {
 
-
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
 
 
@@ -10995,6 +11235,7 @@ Creator.AddSignal(MobileMinimizeButton.InputBegan, function(Input)
 
 
 				isDragging = false
+
 
 				dragStart = nil
 
