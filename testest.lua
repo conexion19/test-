@@ -108,17 +108,25 @@ end
 function Helios:CreateWindow(Config)
     -- Check if window exists and is valid (not destroyed)
     if Helios.Window and Helios.Window.Root and Helios.Window.Root.Parent then
-        helios.Window.Root:Destroy() -- Force cleanup of old window if exists
+        Helios.Window.Root:Destroy() -- Force cleanup of old window if exists
         Helios.Window = nil
     end
     
     local Window = { Tabs = {} }
     
     -- [Anti-Cheat / Security]
-    -- Secure CoreGui reference via cloneref (Standard modern protection)
-    local ProtectedParent = game:GetService("CoreGui")
-    if cloneref then
-        ProtectedParent = cloneref(ProtectedParent)
+    -- Try to use CoreGui (Secure), fallback to PlayerGui if failed
+    local ProtectedParent = nil
+    pcall(function()
+        ProtectedParent = game:GetService("CoreGui")
+        if cloneref then
+            ProtectedParent = cloneref(ProtectedParent)
+        end
+    end)
+    
+    -- Fallback for environments where CoreGui is restricted
+    if not ProtectedParent then
+        ProtectedParent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     end
     
     -- Randomize the name to avoid detection by name scanning
