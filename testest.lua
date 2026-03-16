@@ -6,1287 +6,165 @@ local TweenService = game:GetService("TweenService")
 local TextService = game:GetService("TextService")
 local Camera = game:GetService("Workspace").CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
--- Anti-Detection Cleanup / Session Management
-local SessionLockFile = "nexus_session_lock.dat"
 local httpService = game:GetService("HttpService")
 
-local function GetSessionKey()
-    if isfile and isfile(SessionLockFile) then
-        return readfile(SessionLockFile)
-    end
-    return nil
+local function GetSafeGlobal(name)
+    local success, res = pcall(function()
+        return _G[name]
+    end)
+    return success and res or nil
+			Title = "Overwrite config",
+
+local function GetSafeField(source, field)
+	if type(source) ~= "table" then
+		return nil
+	end
+
+	local success, res = pcall(function()
+		return source[field]
+	end)
+	return success and res or nil
 end
 
-local function SetSessionKey(key)
-    if writefile then
-        writefile(SessionLockFile, key)
-    end
-end
-
--- Try to clean up previous session
-local oldKey = GetSessionKey()
-if oldKey and getgenv()[oldKey] then
-    local oldCleanup = getgenv()[oldKey]
-    if type(oldCleanup) == "function" then
-        pcall(oldCleanup)
-    end
-    getgenv()[oldKey] = nil
-end
-
--- Generate new session key for this execution
 local CurrentSessionKey = httpService:GenerateGUID(false)
-SetSessionKey(CurrentSessionKey)
-
--- Session Cleanup Placeholder
-getgenv()[CurrentSessionKey] = function() end 
+local target_env = _G
+target_env[CurrentSessionKey] = function() end 
 
 
 local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) ~= nil
 
 local fischbypass
 
-if game.GameId == 5750914919 then
-	fischbypass = true
-end
-
-local RenderStepped = RunService.RenderStepped
-
-local ProtectGui = (typeof(protect_gui) == "function" and protect_gui) or (syn and typeof(syn.protect_gui) == "function" and syn.protect_gui) or function(obj) return obj end
-
-local Executor = "Unknown"
-local Themes = {
-	Names = {
-		"Slate",
-	},
-	Dark = {
-		Name = "Dark",
-		Accent = Color3.fromRGB(96, 205, 255),
-		AcrylicMain = Color3.fromRGB(60, 60, 60),
-		AcrylicBorder = Color3.fromRGB(90, 90, 90),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(40, 40, 40)),
-		AcrylicNoise = 0.9,
-		TitleBarLine = Color3.fromRGB(75, 75, 75),
-		Tab = Color3.fromRGB(120, 120, 120),
-		Element = Color3.fromRGB(120, 120, 120),
-		ElementBorder = Color3.fromRGB(35, 35, 35),
-		InElementBorder = Color3.fromRGB(90, 90, 90),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(120, 120, 120),
-		ToggleToggled = Color3.fromRGB(42, 42, 42),
-		SliderRail = Color3.fromRGB(120, 120, 120),
-		DropdownFrame = Color3.fromRGB(160, 160, 160),
-		DropdownHolder = Color3.fromRGB(45, 45, 45),
-		DropdownBorder = Color3.fromRGB(35, 35, 35),
-		DropdownOption = Color3.fromRGB(120, 120, 120),
-		Keybind = Color3.fromRGB(120, 120, 120),
-		Input = Color3.fromRGB(160, 160, 160),
-		InputFocused = Color3.fromRGB(10, 10, 10),
-		InputIndicator = Color3.fromRGB(150, 150, 150),
-		Dialog = Color3.fromRGB(45, 45, 45),
-		DialogHolder = Color3.fromRGB(35, 35, 35),
-		DialogHolderLine = Color3.fromRGB(30, 30, 30),
-		DialogButton = Color3.fromRGB(45, 45, 45),
-		DialogButtonBorder = Color3.fromRGB(80, 80, 80),
-		DialogBorder = Color3.fromRGB(70, 70, 70),
-		DialogInput = Color3.fromRGB(55, 55, 55),
-		DialogInputLine = Color3.fromRGB(160, 160, 160),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(120, 120, 120),
-		HoverChange = 0.07,
-	},
-	Darker = {
-		Name = "Darker",
-		Accent = Color3.fromRGB(56, 109, 223),
-		AcrylicMain = Color3.fromRGB(30, 30, 30),
-		AcrylicBorder = Color3.fromRGB(60, 60, 60),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(17, 17, 17), Color3.fromRGB(18, 18, 18)),
-		AcrylicNoise = 0.94,
-		TitleBarLine = Color3.fromRGB(65, 65, 65),
-		Tab = Color3.fromRGB(100, 100, 100),
-		Element = Color3.fromRGB(70, 70, 70),
-		ElementBorder = Color3.fromRGB(25, 25, 25),
-		InElementBorder = Color3.fromRGB(55, 55, 55),
-		ElementTransparency = 0.82,
-		DropdownFrame = Color3.fromRGB(120, 120, 120),
-		DropdownHolder = Color3.fromRGB(35, 35, 35),
-		DropdownBorder = Color3.fromRGB(25, 25, 25),
-		Dialog = Color3.fromRGB(35, 35, 35),
-		DialogHolder = Color3.fromRGB(25, 25, 25),
-		DialogHolderLine = Color3.fromRGB(20, 20, 20),
-		DialogButton = Color3.fromRGB(35, 35, 35),
-		DialogButtonBorder = Color3.fromRGB(55, 55, 55),
-		DialogBorder = Color3.fromRGB(50, 50, 50),
-		DialogInput = Color3.fromRGB(45, 45, 45),
-		DialogInputLine = Color3.fromRGB(120, 120, 120),
-	},
-	AMOLED = {
-		Name = "AMOLED",
-		Accent = Color3.fromRGB(255, 255, 255),
-		AcrylicMain = Color3.fromRGB(0, 0, 0),
-		AcrylicBorder = Color3.fromRGB(20, 20, 20),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromRGB(0, 0, 0)),
-		AcrylicNoise = 1,
-		TitleBarLine = Color3.fromRGB(25, 25, 25),
-		Tab = Color3.fromRGB(40, 40, 40),
-		Element = Color3.fromRGB(15, 15, 15),
-		ElementBorder = Color3.fromRGB(0, 0, 0),
-		InElementBorder = Color3.fromRGB(40, 40, 40),
-		ElementTransparency = 0.95,
-		ToggleSlider = Color3.fromRGB(40, 40, 40),
-		ToggleToggled = Color3.fromRGB(255, 255, 255),
-		SliderRail = Color3.fromRGB(40, 40, 40),
-		DropdownFrame = Color3.fromRGB(20, 20, 20),
-		DropdownHolder = Color3.fromRGB(0, 0, 0),
-		DropdownBorder = Color3.fromRGB(0, 0, 0),
-		DropdownOption = Color3.fromRGB(40, 40, 40),
-		Keybind = Color3.fromRGB(40, 40, 40),
-		Input = Color3.fromRGB(40, 40, 40),
-		InputFocused = Color3.fromRGB(0, 0, 0),
-		InputIndicator = Color3.fromRGB(60, 60, 60),
-		InputIndicatorFocus = Color3.fromRGB(255, 255, 255),
-		Dialog = Color3.fromRGB(0, 0, 0),
-		DialogHolder = Color3.fromRGB(0, 0, 0),
-		DialogHolderLine = Color3.fromRGB(20, 20, 20),
-		DialogButton = Color3.fromRGB(15, 15, 15),
-		DialogButtonBorder = Color3.fromRGB(30, 30, 30),
-		DialogBorder = Color3.fromRGB(27, 27, 27),
-		DialogInput = Color3.fromRGB(15, 15, 15),
-		DialogInputLine = Color3.fromRGB(60, 60, 60),
-		Text = Color3.fromRGB(255, 255, 255),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(40, 40, 40),
-		HoverChange = 0.04
-	},
-	Light = {
-		Name = "Light",
-		Accent = Color3.fromRGB(0, 103, 192),
-		AcrylicMain = Color3.fromRGB(200, 200, 200),
-		AcrylicBorder = Color3.fromRGB(120, 120, 120),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 255, 255)),
-		AcrylicNoise = 0.96,
-		TitleBarLine = Color3.fromRGB(160, 160, 160),
-		Tab = Color3.fromRGB(90, 90, 90),
-		Element = Color3.fromRGB(255, 255, 255),
-		ElementBorder = Color3.fromRGB(180, 180, 180),
-		InElementBorder = Color3.fromRGB(150, 150, 150),
-		ElementTransparency = 0.65,
-		ToggleSlider = Color3.fromRGB(40, 40, 40),
-		ToggleToggled = Color3.fromRGB(255, 255, 255),
-		SliderRail = Color3.fromRGB(40, 40, 40),
-		DropdownFrame = Color3.fromRGB(200, 200, 200),
-		DropdownHolder = Color3.fromRGB(240, 240, 240),
-		DropdownBorder = Color3.fromRGB(200, 200, 200),
-		DropdownOption = Color3.fromRGB(150, 150, 150),
-		Keybind = Color3.fromRGB(120, 120, 120),
-		Input = Color3.fromRGB(200, 200, 200),
-		InputFocused = Color3.fromRGB(100, 100, 100),
-		InputIndicator = Color3.fromRGB(80, 80, 80),
-		InputIndicatorFocus = Color3.fromRGB(0, 103, 192),
-		Dialog = Color3.fromRGB(255, 255, 255),
-		DialogHolder = Color3.fromRGB(240, 240, 240),
-		DialogHolderLine = Color3.fromRGB(228, 228, 228),
-		DialogButton = Color3.fromRGB(255, 255, 255),
-		DialogButtonBorder = Color3.fromRGB(190, 190, 190),
-		DialogBorder = Color3.fromRGB(140, 140, 140),
-		DialogInput = Color3.fromRGB(250, 250, 250),
-		DialogInputLine = Color3.fromRGB(160, 160, 160),
-		Text = Color3.fromRGB(0, 0, 0),
-		SubText = Color3.fromRGB(40, 40, 40),
-		Hover = Color3.fromRGB(50, 50, 50),
-		HoverChange = 0.16,
-	},
-	Balloon = {
-		Name = "Balloon",
-		Accent = Color3.fromRGB(100, 170, 255),
-		AcrylicMain = Color3.fromRGB(189, 224, 255),
-		AcrylicBorder = Color3.fromRGB(160, 227, 255),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(240, 250, 255), Color3.fromRGB(210, 235, 250)),
-		AcrylicNoise = 1,
-		TitleBarLine = Color3.fromRGB(150, 200, 255),
-		Tab = Color3.fromRGB(153, 185, 255),
-		Element = Color3.fromRGB(160, 200, 255),
-		ElementBorder = Color3.fromRGB(130, 170, 230),
-		InElementBorder = Color3.fromRGB(120, 174, 240),
-		ElementTransparency = 0.80,
-		ToggleSlider = Color3.fromRGB(93, 163, 255),
-		ToggleToggled = Color3.fromRGB(60, 112, 180),
-		SliderRail = Color3.fromRGB(170, 220, 255),
-		DropdownFrame = Color3.fromRGB(175, 235, 255),
-		DropdownHolder = Color3.fromRGB(200, 220, 240),
-		DropdownBorder = Color3.fromRGB(130, 170, 230),
-		DropdownOption = Color3.fromRGB(146, 202, 255),
-		Keybind = Color3.fromRGB(170, 220, 255),
-		Input = Color3.fromRGB(170, 220, 255),
-		InputFocused = Color3.fromRGB(75, 95, 140),
-		InputIndicator = Color3.fromRGB(190, 250, 255),
-		InputIndicatorFocus = Color3.fromRGB(100, 170, 255),
-		Dialog = Color3.fromRGB(189, 230, 255),
-		DialogHolder = Color3.fromRGB(201, 239, 255),
-		DialogHolderLine = Color3.fromRGB(197, 236, 250),
-		DialogButton = Color3.fromRGB(219, 252, 255),
-		DialogButtonBorder = Color3.fromRGB(160, 200, 255),
-		DialogBorder = Color3.fromRGB(175, 220, 255),
-		DialogInput = Color3.fromRGB(160, 200, 255),
-		DialogInputLine = Color3.fromRGB(185, 230, 255),
-		Text = Color3.fromRGB(30, 30, 30),
-		SubText = Color3.fromRGB(90, 90, 90),
-		Hover = Color3.fromRGB(170, 220, 255),
-		HoverChange = 0.03
-	},
-	SoftCream = {
-		Name = "SoftCream",
-		Accent = Color3.fromRGB(206, 163, 90),
-		AcrylicMain = Color3.fromRGB(255, 245, 220),
-		AcrylicBorder = Color3.fromRGB(255, 230, 200),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(255, 245, 220), Color3.fromRGB(255, 235, 210)),
-		AcrylicNoise = 0.93,
-		TitleBarLine = Color3.fromRGB(255, 220, 190),
-		Tab = Color3.fromRGB(199, 165, 112),
-		Element = Color3.fromRGB(255, 216, 161),
-		ElementBorder = Color3.fromRGB(234, 193, 111),
-		InElementBorder = Color3.fromRGB(255, 212, 143),
-		ElementTransparency = 0.80,
-		ToggleSlider = Color3.fromRGB(214, 175, 97),
-		ToggleToggled = Color3.fromRGB(200, 160, 100),
-		SliderRail = Color3.fromRGB(255, 220, 190),
-		DropdownFrame = Color3.fromRGB(255, 228, 164),
-		DropdownHolder = Color3.fromRGB(250, 240, 225),
-		DropdownBorder = Color3.fromRGB(255, 210, 180),
-		DropdownOption = Color3.fromRGB(255, 190, 115),
-		Keybind = Color3.fromRGB(255, 220, 190),
-		Input = Color3.fromRGB(255, 220, 190),
-		InputFocused = Color3.fromRGB(180, 140, 80),
-		InputIndicator = Color3.fromRGB(255, 250, 205),
-		InputIndicatorFocus = Color3.fromRGB(255, 236, 158),
-		Dialog = Color3.fromRGB(255, 255, 240),
-		DialogHolder = Color3.fromRGB(255, 245, 220),
-		DialogHolderLine = Color3.fromRGB(255, 240, 210),
-		DialogButton = Color3.fromRGB(255, 255, 240),
-		DialogButtonBorder = Color3.fromRGB(255, 210, 180),
-		DialogBorder = Color3.fromRGB(255, 220, 190),
-		DialogInput = Color3.fromRGB(255, 210, 180),
-		DialogInputLine = Color3.fromRGB(255, 225, 205),
-		Text = Color3.fromRGB(30, 30, 30),
-		SubText = Color3.fromRGB(90, 90, 90),
-		Hover = Color3.fromRGB(255, 220, 190),
-		HoverChange = 0.03
-	},
-	Aqua = {
-		Name = "Aqua",
-		Accent = Color3.fromRGB(38, 166, 178),
-		AcrylicMain = Color3.fromRGB(18, 54, 61),
-		AcrylicBorder = Color3.fromRGB(80, 118, 130),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(41, 101, 139), Color3.fromRGB(11, 132, 128)),
-		AcrylicNoise = 0.92,
-		TitleBarLine = Color3.fromRGB(68, 135, 136),
-		Tab = Color3.fromRGB(126, 175, 180),
-		Element = Color3.fromRGB(66, 130, 160),
-		ElementBorder = Color3.fromRGB(40, 100, 122),
-		InElementBorder = Color3.fromRGB(75, 109, 110),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(100, 152, 160),
-		ToggleToggled = Color3.fromRGB(25, 70, 95),
-		SliderRail = Color3.fromRGB(115, 150, 160),
-		DropdownFrame = Color3.fromRGB(158, 194, 200),
-		DropdownHolder = Color3.fromRGB(39, 99, 116),
-		DropdownBorder = Color3.fromRGB(33, 119, 120),
-		DropdownOption = Color3.fromRGB(121, 152, 160),
-		Keybind = Color3.fromRGB(108, 153, 160),
-		Input = Color3.fromRGB(112, 156, 160),
-		InputFocused = Color3.fromRGB(14, 35, 40),
-		InputIndicator = Color3.fromRGB(137, 181, 190),
-		Dialog = Color3.fromRGB(27, 113, 130),
-		DialogHolder = Color3.fromRGB(33, 99, 109),
-		DialogHolderLine = Color3.fromRGB(34, 81, 86),
-		DialogButton = Color3.fromRGB(27, 128, 130),
-		DialogButtonBorder = Color3.fromRGB(62, 100, 110),
-		DialogBorder = Color3.fromRGB(26, 86, 100),
-		DialogInput = Color3.fromRGB(36, 107, 105),
-		DialogInputLine = Color3.fromRGB(70, 120, 130),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(112, 155, 160),
-		HoverChange = 0.04,
-	},
-	Amethyst = {
-		Name = "Amethyst",
-		Accent = Color3.fromRGB(126, 44, 182),
-		AcrylicMain = Color3.fromRGB(40, 12, 71),
-		AcrylicBorder = Color3.fromRGB(85, 45, 120),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(34, 19, 49), Color3.fromRGB(41, 24, 57)),
-		AcrylicNoise = 0.92,
-		TitleBarLine = Color3.fromRGB(95, 55, 130),
-		Tab = Color3.fromRGB(135, 75, 170),
-		Element = Color3.fromRGB(115, 55, 150),
-		ElementBorder = Color3.fromRGB(60, 35, 85),
-		InElementBorder = Color3.fromRGB(85, 45, 110),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(135, 65, 160),
-		ToggleToggled = Color3.fromRGB(59, 30, 79),
-		SliderRail = Color3.fromRGB(135, 65, 160),
-		DropdownFrame = Color3.fromRGB(145, 85, 170),
-		DropdownHolder = Color3.fromRGB(50, 30, 70),
-		DropdownBorder = Color3.fromRGB(60, 35, 85),
-		DropdownOption = Color3.fromRGB(135, 65, 160),
-		Keybind = Color3.fromRGB(135, 65, 160),
-		Input = Color3.fromRGB(135, 65, 160),
-		InputFocused = Color3.fromRGB(25, 15, 35),
-		InputIndicator = Color3.fromRGB(155, 85, 180),
-		InputIndicatorFocus = Color3.fromRGB(126, 44, 182),
-		Dialog = Color3.fromRGB(50, 30, 70),
-		DialogHolder = Color3.fromRGB(40, 25, 60),
-		DialogHolderLine = Color3.fromRGB(35, 20, 55),
-		DialogButton = Color3.fromRGB(50, 30, 70),
-		DialogButtonBorder = Color3.fromRGB(90, 50, 120),
-		DialogBorder = Color3.fromRGB(80, 45, 110),
-		DialogInput = Color3.fromRGB(60, 35, 80),
-		DialogInputLine = Color3.fromRGB(145, 75, 170),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(135, 65, 160),
-		HoverChange = 0.04
-	},
-	Rose = {
-		Name = "Rose",
-		Accent = Color3.fromRGB(219, 48, 123),
-		AcrylicMain = Color3.fromRGB(35, 25, 30),
-		AcrylicBorder = Color3.fromRGB(145, 35, 75),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(65, 25, 45), Color3.fromRGB(75, 30, 50)),
-		AcrylicNoise = 0.92,
-		TitleBarLine = Color3.fromRGB(150, 65, 95),
-		Tab = Color3.fromRGB(190, 85, 115),
-		Element = Color3.fromRGB(170, 60, 90),
-		ElementBorder = Color3.fromRGB(95, 35, 55),
-		InElementBorder = Color3.fromRGB(120, 50, 70),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(190, 75, 105),
-		ToggleToggled = Color3.fromRGB(45, 15, 25),
-		SliderRail = Color3.fromRGB(190, 75, 105),
-		DropdownFrame = Color3.fromRGB(200, 95, 125),
-		DropdownHolder = Color3.fromRGB(75, 30, 45),
-		DropdownBorder = Color3.fromRGB(95, 35, 55),
-		DropdownOption = Color3.fromRGB(190, 75, 105),
-		Keybind = Color3.fromRGB(190, 75, 105),
-		Input = Color3.fromRGB(190, 75, 105),
-		InputFocused = Color3.fromRGB(35, 15, 20),
-		InputIndicator = Color3.fromRGB(210, 95, 125),
-		InputIndicatorFocus = Color3.fromRGB(219, 48, 123),
-		Dialog = Color3.fromRGB(75, 30, 45),
-		DialogHolder = Color3.fromRGB(65, 25, 40),
-		DialogHolderLine = Color3.fromRGB(60, 20, 35),
-		DialogButton = Color3.fromRGB(75, 30, 45),
-		DialogButtonBorder = Color3.fromRGB(115, 45, 65),
-		DialogBorder = Color3.fromRGB(105, 40, 60),
-		DialogInput = Color3.fromRGB(85, 35, 50),
-		DialogInputLine = Color3.fromRGB(200, 85, 115),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(190, 75, 105),
-		HoverChange = 0.04
-	},
-	Midnight = {
-		Name = "Midnight",
-		Accent = Color3.fromRGB(52, 50, 178),
-		AcrylicMain = Color3.fromRGB(20, 20, 20),
-		AcrylicBorder = Color3.fromRGB(83, 83, 130),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(1, 1, 39), Color3.fromRGB(6, 6, 54)),
-		AcrylicNoise = 0.96,
-		TitleBarLine = Color3.fromRGB(77, 75, 126),
-		Tab = Color3.fromRGB(126, 127, 180),
-		Element = Color3.fromRGB(111, 108, 160),
-		ElementBorder = Color3.fromRGB(32, 32, 59),
-		InElementBorder = Color3.fromRGB(85, 83, 110),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(120, 117, 160),
-		ToggleToggled = Color3.fromRGB(30, 12, 68),
-		SliderRail = Color3.fromRGB(117, 117, 160),
-		DropdownFrame = Color3.fromRGB(161, 161, 200),
-		DropdownHolder = Color3.fromRGB(35, 36, 80),
-		DropdownBorder = Color3.fromRGB(32, 30, 65),
-		DropdownOption = Color3.fromRGB(116, 116, 160),
-		Keybind = Color3.fromRGB(110, 123, 160),
-		Input = Color3.fromRGB(116, 112, 160),
-		InputFocused = Color3.fromRGB(20, 10, 30),
-		InputIndicator = Color3.fromRGB(136, 140, 190),
-		Dialog = Color3.fromRGB(37, 37, 80),
-		DialogHolder = Color3.fromRGB(24, 24, 65),
-		DialogHolderLine = Color3.fromRGB(25, 26, 60),
-		DialogButton = Color3.fromRGB(46, 44, 80),
-		DialogButtonBorder = Color3.fromRGB(71, 72, 110),
-		DialogBorder = Color3.fromRGB(72, 70, 100),
-		DialogInput = Color3.fromRGB(55, 55, 85),
-		DialogInputLine = Color3.fromRGB(133, 131, 190),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(119, 121, 160),
-		HoverChange = 0.04,
-	},
-	Forest = {
-		Name = "Forest",
-		Accent = Color3.fromRGB(46, 141, 70),
-		AcrylicMain = Color3.fromRGB(20, 35, 25),
-		AcrylicBorder = Color3.fromRGB(50, 90, 60),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(15, 35, 20), Color3.fromRGB(20, 40, 25)),
-		AcrylicNoise = 0.92,
-		TitleBarLine = Color3.fromRGB(60, 100, 70),
-		Tab = Color3.fromRGB(80, 140, 90),
-		Element = Color3.fromRGB(70, 120, 80),
-		ElementBorder = Color3.fromRGB(30, 50, 35),
-		InElementBorder = Color3.fromRGB(60, 90, 70),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(90, 150, 100),
-		ToggleToggled = Color3.fromRGB(19, 57, 21),
-		SliderRail = Color3.fromRGB(90, 150, 100),
-		DropdownFrame = Color3.fromRGB(100, 160, 110),
-		DropdownHolder = Color3.fromRGB(35, 60, 40),
-		DropdownBorder = Color3.fromRGB(30, 50, 35),
-		DropdownOption = Color3.fromRGB(90, 150, 100),
-		Keybind = Color3.fromRGB(90, 150, 100),
-		Input = Color3.fromRGB(90, 150, 100),
-		InputFocused = Color3.fromRGB(15, 25, 18),
-		InputIndicator = Color3.fromRGB(110, 170, 120),
-		InputIndicatorFocus = Color3.fromRGB(46, 141, 70),
-		Dialog = Color3.fromRGB(35, 60, 40),
-		DialogHolder = Color3.fromRGB(30, 50, 35),
-		DialogHolderLine = Color3.fromRGB(25, 45, 30),
-		DialogButton = Color3.fromRGB(35, 60, 40),
-		DialogButtonBorder = Color3.fromRGB(70, 110, 80),
-		DialogBorder = Color3.fromRGB(60, 100, 70),
-		DialogInput = Color3.fromRGB(45, 70, 50),
-		DialogInputLine = Color3.fromRGB(100, 160, 110),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(90, 150, 100),
-		HoverChange = 0.04
-	},
-	Sunset = {
-		Name = "Sunset",
-		Accent = Color3.fromRGB(255, 128, 0),
-		AcrylicMain = Color3.fromRGB(40, 25, 25),
-		AcrylicBorder = Color3.fromRGB(130, 80, 60),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(70, 35, 20), Color3.fromRGB(60, 30, 20)),
-		AcrylicNoise = 0.92,
-		TitleBarLine = Color3.fromRGB(140, 90, 70),
-		Tab = Color3.fromRGB(180, 120, 90),
-		Element = Color3.fromRGB(160, 100, 70),
-		ElementBorder = Color3.fromRGB(70, 40, 30),
-		InElementBorder = Color3.fromRGB(110, 70, 50),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(180, 110, 80),
-		ToggleToggled = Color3.fromRGB(62, 34, 21),
-		SliderRail = Color3.fromRGB(180, 110, 80),
-		DropdownFrame = Color3.fromRGB(190, 130, 100),
-		DropdownHolder = Color3.fromRGB(60, 35, 25),
-		DropdownBorder = Color3.fromRGB(70, 40, 30),
-		DropdownOption = Color3.fromRGB(180, 110, 80),
-		Keybind = Color3.fromRGB(180, 110, 80),
-		Input = Color3.fromRGB(180, 110, 80),
-		InputFocused = Color3.fromRGB(30, 20, 15),
-		InputIndicator = Color3.fromRGB(200, 130, 100),
-		InputIndicatorFocus = Color3.fromRGB(255, 128, 0),
-		Dialog = Color3.fromRGB(60, 35, 25),
-		DialogHolder = Color3.fromRGB(50, 30, 20),
-		DialogHolderLine = Color3.fromRGB(45, 25, 15),
-		DialogButton = Color3.fromRGB(60, 35, 25),
-		DialogButtonBorder = Color3.fromRGB(100, 65, 45),
-		DialogBorder = Color3.fromRGB(90, 55, 40),
-		DialogInput = Color3.fromRGB(70, 45, 35),
-		DialogInputLine = Color3.fromRGB(190, 120, 90),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(180, 110, 80),
-		HoverChange = 0.04
-	},
-	Ocean = {
-		Name = "Ocean",
-		Accent = Color3.fromRGB(0, 141, 255),
-		AcrylicMain = Color3.fromRGB(20, 25, 40),
-		AcrylicBorder = Color3.fromRGB(40, 60, 100),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(15, 25, 45), Color3.fromRGB(20, 30, 50)),
-		AcrylicNoise = 0.92,
-		TitleBarLine = Color3.fromRGB(50, 70, 120),
-		Tab = Color3.fromRGB(70, 90, 160),
-		Element = Color3.fromRGB(60, 80, 140),
-		ElementBorder = Color3.fromRGB(30, 40, 70),
-		InElementBorder = Color3.fromRGB(50, 60, 100),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(80, 100, 170),
-		ToggleToggled = Color3.fromRGB(11, 35, 67),
-		SliderRail = Color3.fromRGB(80, 100, 170),
-		DropdownFrame = Color3.fromRGB(90, 110, 180),
-		DropdownHolder = Color3.fromRGB(25, 35, 60),
-		DropdownBorder = Color3.fromRGB(30, 40, 70),
-		DropdownOption = Color3.fromRGB(80, 100, 170),
-		Keybind = Color3.fromRGB(80, 100, 170),
-		Input = Color3.fromRGB(80, 100, 170),
-		InputFocused = Color3.fromRGB(15, 20, 35),
-		InputIndicator = Color3.fromRGB(100, 120, 190),
-		InputIndicatorFocus = Color3.fromRGB(0, 141, 255),
-		Dialog = Color3.fromRGB(25, 35, 60),
-		DialogHolder = Color3.fromRGB(20, 30, 55),
-		DialogHolderLine = Color3.fromRGB(15, 25, 50),
-		DialogButton = Color3.fromRGB(25, 35, 60),
-		DialogButtonBorder = Color3.fromRGB(45, 65, 110),
-		DialogBorder = Color3.fromRGB(40, 60, 100),
-		DialogInput = Color3.fromRGB(35, 45, 70),
-		DialogInputLine = Color3.fromRGB(90, 110, 180),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(80, 100, 170),
-		HoverChange = 0.04
-	},
-	Emerald = {
-		Name = "Emerald",
-		Accent = Color3.fromRGB(0, 168, 107),
-		AcrylicMain = Color3.fromRGB(20, 35, 30),
-		AcrylicBorder = Color3.fromRGB(30, 100, 80),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(20, 55, 45), Color3.fromRGB(25, 60, 50)),
-		AcrylicNoise = 0.92,
-		TitleBarLine = Color3.fromRGB(40, 110, 90),
-		Tab = Color3.fromRGB(50, 130, 100),
-		Element = Color3.fromRGB(40, 120, 95),
-		ElementBorder = Color3.fromRGB(25, 75, 60),
-		InElementBorder = Color3.fromRGB(35, 85, 70),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(45, 130, 100),
-		ToggleToggled = Color3.fromRGB(15, 40, 30),
-		SliderRail = Color3.fromRGB(45, 130, 100),
-		DropdownFrame = Color3.fromRGB(55, 140, 110),
-		DropdownHolder = Color3.fromRGB(20, 70, 55),
-		DropdownBorder = Color3.fromRGB(25, 75, 60),
-		DropdownOption = Color3.fromRGB(45, 130, 100),
-		Keybind = Color3.fromRGB(45, 130, 100),
-		Input = Color3.fromRGB(45, 130, 100),
-		InputFocused = Color3.fromRGB(10, 35, 25),
-		InputIndicator = Color3.fromRGB(55, 150, 120),
-		InputIndicatorFocus = Color3.fromRGB(0, 168, 107),
-		Dialog = Color3.fromRGB(20, 70, 55),
-		DialogHolder = Color3.fromRGB(15, 65, 50),
-		DialogHolderLine = Color3.fromRGB(15, 60, 45),
-		DialogButton = Color3.fromRGB(20, 70, 55),
-		DialogButtonBorder = Color3.fromRGB(30, 90, 70),
-		DialogBorder = Color3.fromRGB(25, 85, 65),
-		DialogInput = Color3.fromRGB(25, 75, 60),
-		DialogInputLine = Color3.fromRGB(50, 140, 110),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(45, 130, 100),
-		HoverChange = 0.04
-	},
-	Sapphire = {
-		Name = "Sapphire",
-		Accent = Color3.fromRGB(0, 105, 255),
-		AcrylicMain = Color3.fromRGB(24, 30, 85),
-		AcrylicBorder = Color3.fromRGB(25, 80, 150),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(13, 33, 94), Color3.fromRGB(21, 44, 127)),
-		AcrylicNoise = 0.88,
-		TitleBarLine = Color3.fromRGB(50, 120, 200),
-		Tab = Color3.fromRGB(60, 140, 220),
-		Element = Color3.fromRGB(42, 98, 176),
-		ElementBorder = Color3.fromRGB(23, 66, 113),
-		InElementBorder = Color3.fromRGB(27, 65, 126),
-		ElementTransparency = 0.85,
-		ToggleSlider = Color3.fromRGB(50, 140, 210),
-		ToggleToggled = Color3.fromRGB(20, 50, 80),
-		SliderRail = Color3.fromRGB(50, 140, 210),
-		DropdownFrame = Color3.fromRGB(60, 150, 230),
-		DropdownHolder = Color3.fromRGB(15, 60, 100),
-		DropdownBorder = Color3.fromRGB(30, 90, 140),
-		DropdownOption = Color3.fromRGB(50, 140, 210),
-		Keybind = Color3.fromRGB(50, 140, 210),
-		Input = Color3.fromRGB(50, 140, 210),
-		InputFocused = Color3.fromRGB(15, 40, 60),
-		InputIndicator = Color3.fromRGB(60, 160, 240),
-		InputIndicatorFocus = Color3.fromRGB(0, 105, 255),
-		Dialog = Color3.fromRGB(10, 60, 100),
-		DialogHolder = Color3.fromRGB(15, 50, 90),
-		DialogHolderLine = Color3.fromRGB(15, 45, 80),
-		DialogButton = Color3.fromRGB(10, 60, 100),
-		DialogButtonBorder = Color3.fromRGB(30, 100, 160),
-		DialogBorder = Color3.fromRGB(20, 80, 130),
-		DialogInput = Color3.fromRGB(30, 90, 140),
-		DialogInputLine = Color3.fromRGB(55, 150, 230),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(50, 140, 210),
-		HoverChange = 0.05
-	},
-	Cloud = {
-		Name = "Cloud",
-		Accent = Color3.fromRGB(27, 114, 138),
-		AcrylicMain = Color3.fromRGB(13, 62, 77),
-		AcrylicBorder = Color3.fromRGB(80, 118, 130),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(51, 74, 83), Color3.fromRGB(4, 47, 66)),
-		AcrylicNoise = 0.94,
-		TitleBarLine = Color3.fromRGB(97, 97, 97),
-		Tab = Color3.fromRGB(126, 175, 180),
-		Element = Color3.fromRGB(66, 130, 160),
-		ElementBorder = Color3.fromRGB(40, 100, 122),
-		InElementBorder = Color3.fromRGB(75, 109, 110),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(100, 152, 160),
-		ToggleToggled = Color3.fromRGB(26, 59, 80),
-		SliderRail = Color3.fromRGB(115, 150, 160),
-		DropdownFrame = Color3.fromRGB(158, 194, 200),
-		DropdownHolder = Color3.fromRGB(39, 99, 116),
-		DropdownBorder = Color3.fromRGB(33, 119, 120),
-		DropdownOption = Color3.fromRGB(121, 152, 160),
-		Keybind = Color3.fromRGB(108, 153, 160),
-		Input = Color3.fromRGB(112, 156, 160),
-		InputFocused = Color3.fromRGB(14, 35, 40),
-		InputIndicator = Color3.fromRGB(137, 181, 190),
-		Dialog = Color3.fromRGB(11, 75, 88),
-		DialogHolder = Color3.fromRGB(18, 77, 93),
-		DialogHolderLine = Color3.fromRGB(33, 76, 86),
-		DialogButton = Color3.fromRGB(43, 72, 80),
-		DialogButtonBorder = Color3.fromRGB(62, 100, 110),
-		DialogBorder = Color3.fromRGB(26, 86, 100),
-		DialogInput = Color3.fromRGB(4, 97, 107),
-		DialogInputLine = Color3.fromRGB(70, 120, 130),
-		Text = Color3.fromRGB(209, 240, 233),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(112, 155, 160),
-		HoverChange = 0.04,
-	},
-	Grape = {
-		Name = "Grape",
-		Accent = Color3.fromRGB(183, 176, 223),
-		AcrylicMain = Color3.fromRGB(0, 0, 0),
-		AcrylicBorder = Color3.fromRGB(20, 20, 20),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(6, 0, 16), Color3.fromRGB(6, 0, 16)),
-		AcrylicNoise = 1,
-		TitleBarLine = Color3.fromRGB(25, 25, 25),
-		Tab = Color3.fromRGB(40, 40, 40),
-		Element = Color3.fromRGB(15, 15, 15),
-		ElementBorder = Color3.fromRGB(6, 0, 16),
-		InElementBorder = Color3.fromRGB(40, 40, 40),
-		ElementTransparency = 1,
-		ToggleSlider = Color3.fromRGB(255, 255, 255),
-		ToggleToggled = Color3.fromRGB(19, 16, 36),
-		SliderRail = Color3.fromRGB(40, 40, 40),
-		DropdownFrame = Color3.fromRGB(20, 20, 20),
-		DropdownHolder = Color3.fromRGB(12, 0, 34),
-		DropdownBorder = Color3.fromRGB(6, 0, 16),
-		DropdownOption = Color3.fromRGB(40, 40, 40),
-		Keybind = Color3.fromRGB(40, 40, 40),
-		Input = Color3.fromRGB(40, 40, 40),
-		InputFocused = Color3.fromRGB(6, 0, 16),
-		InputIndicator = Color3.fromRGB(60, 60, 60),
-		InputIndicatorFocus = Color3.fromRGB(255, 255, 255),
-		Dialog = Color3.fromRGB(7, 0, 18),
-		DialogHolder = Color3.fromRGB(7, 0, 18),
-		DialogHolderLine = Color3.fromRGB(7, 0, 18),
-		DialogButton = Color3.fromRGB(13, 0, 33),
-		DialogButtonBorder = Color3.fromRGB(30, 30, 30),
-		DialogBorder = Color3.fromRGB(27, 27, 27),
-		DialogInput = Color3.fromRGB(7, 0, 18),
-		DialogInputLine = Color3.fromRGB(60, 60, 60),
-		Text = Color3.fromRGB(255, 255, 255),
-		SubText = Color3.fromRGB(123, 144, 170),
-		Hover = Color3.fromRGB(40, 40, 40),
-		HoverChange = 0.04
-	},
-	Bloody = {
-		Name = "Bloody",
-		Accent = Color3.fromRGB(144, 0, 0),
-		AcrylicMain = Color3.fromRGB(61, 0, 0),
-		AcrylicBorder = Color3.fromRGB(86, 0, 0),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(90, 0, 0), Color3.fromRGB(100, 0, 0)),
-		AcrylicNoise = 0.92,
-		TitleBarLine = Color3.fromRGB(126, 0, 0),
-		Tab = Color3.fromRGB(134, 0, 0),
-		Element = Color3.fromRGB(156, 0, 0),
-		ElementBorder = Color3.fromRGB(91, 0, 0),
-		InElementBorder = Color3.fromRGB(106, 0, 0),
-		ElementTransparency = 0.86,
-		ToggleSlider = Color3.fromRGB(130, 5, 5),
-		ToggleToggled = Color3.fromRGB(66, 0, 0),
-		SliderRail = Color3.fromRGB(150, 30, 30),
-		DropdownFrame = Color3.fromRGB(150, 30, 30),
-		DropdownHolder = Color3.fromRGB(79, 0, 0),
-		DropdownBorder = Color3.fromRGB(116, 0, 0),
-		DropdownOption = Color3.fromRGB(150, 30, 30),
-		Keybind = Color3.fromRGB(150, 30, 30),
-		Input = Color3.fromRGB(150, 30, 30),
-		InputFocused = Color3.fromRGB(40, 10, 10),
-		InputIndicator = Color3.fromRGB(113, 1, 1),
-		Dialog = Color3.fromRGB(85, 0, 1),
-		DialogHolder = Color3.fromRGB(77, 0, 8),
-		DialogHolderLine = Color3.fromRGB(88, 4, 4),
-		DialogButton = Color3.fromRGB(115, 14, 21),
-		DialogButtonBorder = Color3.fromRGB(83, 0, 1),
-		DialogBorder = Color3.fromRGB(43, 4, 5),
-		DialogInput = Color3.fromRGB(108, 20, 21),
-		DialogInputLine = Color3.fromRGB(91, 1, 1),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(131, 131, 131),
-		Hover = Color3.fromRGB(181, 0, 0),
-		HoverChange = 0.04
-	},
-	Arctic = {
-		Name = "Arctic",
-		Accent = Color3.fromRGB(64, 224, 255),
-		AcrylicMain = Color3.fromRGB(10, 18, 25),
-		AcrylicBorder = Color3.fromRGB(35, 55, 70),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(15, 25, 35), Color3.fromRGB(18, 30, 40)),
-		AcrylicNoise = 0.94,
-		TitleBarLine = Color3.fromRGB(45, 70, 90),
-		Tab = Color3.fromRGB(70, 110, 140),
-		Element = Color3.fromRGB(60, 95, 120),
-		ElementBorder = Color3.fromRGB(60, 95, 120),
-		InElementBorder = Color3.fromRGB(70, 110, 140),
-		ElementTransparency = 0.88,
-		ToggleSlider = Color3.fromRGB(90, 140, 180),
-		ToggleToggled = Color3.fromRGB(15, 25, 35),
-		SliderRail = Color3.fromRGB(90, 140, 180),
-		DropdownFrame = Color3.fromRGB(110, 170, 220),
-		DropdownHolder = Color3.fromRGB(30, 45, 60),
-		DropdownBorder = Color3.fromRGB(60, 95, 120),
-		DropdownOption = Color3.fromRGB(90, 140, 180),
-		Keybind = Color3.fromRGB(90, 140, 180),
-		Input = Color3.fromRGB(90, 140, 180),
-		InputFocused = Color3.fromRGB(10, 18, 25),
-		InputIndicator = Color3.fromRGB(130, 200, 255),
-		InputIndicatorFocus = Color3.fromRGB(64, 224, 255),
-		Dialog = Color3.fromRGB(30, 45, 60),
-		DialogHolder = Color3.fromRGB(18, 30, 40),
-		DialogHolderLine = Color3.fromRGB(15, 25, 35),
-		DialogButton = Color3.fromRGB(30, 45, 60),
-		DialogButtonBorder = Color3.fromRGB(45, 70, 90),
-		DialogBorder = Color3.fromRGB(40, 60, 80),
-		DialogInput = Color3.fromRGB(35, 55, 70),
-		DialogInputLine = Color3.fromRGB(110, 170, 220),
-		Text = Color3.fromRGB(240, 250, 255),
-		SubText = Color3.fromRGB(180, 200, 220),
-		Hover = Color3.fromRGB(90, 140, 180),
-		HoverChange = 0.04
-	},
-	Slate = {
-		Name = "Slate",
-		Accent = Color3.fromRGB(255, 105, 180),
-		AcrylicMain = Color3.fromRGB(40, 20, 25),
-		AcrylicBorder = Color3.fromRGB(60, 30, 40),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(30, 15, 20), Color3.fromRGB(40, 20, 25)),
-		AcrylicNoise = 0.95,
-		TitleBarLine = Color3.fromRGB(80, 40, 50),
-		Tab = Color3.fromRGB(100, 50, 60),
-		Element = Color3.fromRGB(40, 20, 25),
-		ElementBorder = Color3.fromRGB(60, 30, 40),
-		InElementBorder = Color3.fromRGB(60, 30, 40),
-		ElementTransparency = 0.92,
-		ToggleSlider = Color3.fromRGB(80, 40, 50),
-		ToggleToggled = Color3.fromRGB(255, 255, 255),
-		SliderRail = Color3.fromRGB(80, 40, 50),
-		DropdownFrame = Color3.fromRGB(80, 40, 50),
-		DropdownHolder = Color3.fromRGB(40, 20, 25),
-		DropdownBorder = Color3.fromRGB(60, 30, 40),
-		DropdownOption = Color3.fromRGB(80, 40, 50),
-		Keybind = Color3.fromRGB(80, 40, 50),
-		Input = Color3.fromRGB(80, 40, 50),
-		InputFocused = Color3.fromRGB(30, 15, 20),
-		InputIndicator = Color3.fromRGB(80, 40, 50),
-		Dialog = Color3.fromRGB(40, 20, 25),
-		DialogHolder = Color3.fromRGB(40, 20, 25),
-		DialogHolderLine = Color3.fromRGB(60, 30, 40),
-		DialogButton = Color3.fromRGB(50, 25, 30),
-		DialogButtonBorder = Color3.fromRGB(60, 30, 40),
-		DialogBorder = Color3.fromRGB(60, 30, 40),
-		DialogInput = Color3.fromRGB(40, 20, 25),
-		DialogInputLine = Color3.fromRGB(100, 50, 60),
-		Text = Color3.fromRGB(255, 255, 255),
-		SubText = Color3.fromRGB(200, 160, 170),
-		Hover = Color3.fromRGB(80, 40, 50),
-		HoverChange = 0.03,
-	},
-	Gray = {
-		Name = "Gray",
-		Accent = Color3.fromRGB(150, 150, 150),
-		AcrylicMain = Color3.fromRGB(80, 80, 80),
-		AcrylicBorder = Color3.fromRGB(110, 110, 110),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(75, 75, 75), Color3.fromRGB(75, 75, 75)),
-		AcrylicNoise = 0.85,
-		TitleBarLine = Color3.fromRGB(100, 100, 100),
-		Tab = Color3.fromRGB(150, 150, 150),
-		Element = Color3.fromRGB(100, 100, 100),
-		ElementBorder = Color3.fromRGB(60, 60, 60),
-		InElementBorder = Color3.fromRGB(120, 120, 120),
-		ElementTransparency = 0.85,
-		ToggleSlider = Color3.fromRGB(150, 150, 150),
-		ToggleToggled = Color3.fromRGB(60, 60, 60),
-		SliderRail = Color3.fromRGB(150, 150, 150),
-		DropdownFrame = Color3.fromRGB(170, 170, 170),
-		DropdownHolder = Color3.fromRGB(70, 70, 70),
-		DropdownBorder = Color3.fromRGB(60, 60, 60),
-		DropdownOption = Color3.fromRGB(150, 150, 150),
-		Keybind = Color3.fromRGB(150, 150, 150),
-		Input = Color3.fromRGB(170, 170, 170),
-		InputFocused = Color3.fromRGB(40, 40, 40),
-		InputIndicator = Color3.fromRGB(170, 170, 170),
-		Dialog = Color3.fromRGB(70, 70, 70),
-		DialogHolder = Color3.fromRGB(60, 60, 60),
-		DialogHolderLine = Color3.fromRGB(50, 50, 50),
-		DialogButton = Color3.fromRGB(70, 70, 70),
-		DialogButtonBorder = Color3.fromRGB(100, 100, 100),
-		DialogBorder = Color3.fromRGB(90, 90, 90),
-		DialogInput = Color3.fromRGB(80, 80, 80),
-		DialogInputLine = Color3.fromRGB(170, 170, 170),
-		Text = Color3.fromRGB(255, 255, 255),
-		SubText = Color3.fromRGB(200, 200, 200),
-		Hover = Color3.fromRGB(150, 150, 150),
-		HoverChange = 0.05,
-	},
-	Monochrome = {
-		Name = "Monochrome",
-		Accent = Color3.fromRGB(240, 240, 240),
-		AcrylicMain = Color3.fromRGB(5, 5, 5),
-		AcrylicBorder = Color3.fromRGB(80, 80, 80),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(0, 0, 0), Color3.fromRGB(15, 15, 15)),
-		AcrylicNoise = 1,
-		TitleBarLine = Color3.fromRGB(120, 120, 120),
-		Tab = Color3.fromRGB(180, 180, 180),
-		Element = Color3.fromRGB(20, 20, 20),
-		ElementBorder = Color3.fromRGB(50, 50, 50),
-		InElementBorder = Color3.fromRGB(80, 80, 80),
-		ElementTransparency = 0.9,
-		ToggleSlider = Color3.fromRGB(200, 200, 200),
-		ToggleToggled = Color3.fromRGB(10, 10, 10),
-		SliderRail = Color3.fromRGB(120, 120, 120),
-		DropdownFrame = Color3.fromRGB(220, 220, 220),
-		DropdownHolder = Color3.fromRGB(35, 35, 35),
-		DropdownBorder = Color3.fromRGB(60, 60, 60),
-		DropdownOption = Color3.fromRGB(200, 200, 200),
-		Keybind = Color3.fromRGB(200, 200, 200),
-		Input = Color3.fromRGB(200, 200, 200),
-		InputFocused = Color3.fromRGB(10, 10, 10),
-		InputIndicator = Color3.fromRGB(255, 255, 255),
-		InputIndicatorFocus = Color3.fromRGB(240, 240, 240),
-		Dialog = Color3.fromRGB(40, 40, 40),
-		DialogHolder = Color3.fromRGB(25, 25, 25),
-		DialogHolderLine = Color3.fromRGB(15, 15, 15),
-		DialogButton = Color3.fromRGB(50, 50, 50),
-		DialogButtonBorder = Color3.fromRGB(100, 100, 100),
-		DialogBorder = Color3.fromRGB(100, 100, 100),
-		DialogInput = Color3.fromRGB(30, 30, 30),
-		DialogInputLine = Color3.fromRGB(255, 255, 255),
-		Text = Color3.fromRGB(255, 255, 255),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(220, 220, 220),
-		HoverChange = 0.05
-	},
-	RGB = {
-		Name = "RGB",
-		Accent = Color3.fromRGB(255, 0, 0),
-		AcrylicMain = Color3.fromRGB(30, 30, 30),
-		AcrylicBorder = Color3.fromRGB(60, 60, 60),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(20, 20, 20), Color3.fromRGB(25, 25, 25)),
-		AcrylicNoise = 0.9,
-		TitleBarLine = Color3.fromRGB(75, 75, 75),
-		Tab = Color3.fromRGB(120, 120, 120),
-		Element = Color3.fromRGB(50, 50, 50),
-		ElementBorder = Color3.fromRGB(80, 80, 80),
-		InElementBorder = Color3.fromRGB(100, 100, 100),
-		ElementTransparency = 0.85,
-		ToggleSlider = Color3.fromRGB(120, 120, 120),
-		ToggleToggled = Color3.fromRGB(255, 255, 255),
-		SliderRail = Color3.fromRGB(100, 100, 100),
-		DropdownFrame = Color3.fromRGB(80, 80, 80),
-		DropdownHolder = Color3.fromRGB(45, 45, 45),
-		DropdownBorder = Color3.fromRGB(60, 60, 60),
-		DropdownOption = Color3.fromRGB(150, 150, 150),
-		Keybind = Color3.fromRGB(150, 150, 150),
-		Input = Color3.fromRGB(150, 150, 150),
-		InputFocused = Color3.fromRGB(10, 10, 10),
-		InputIndicator = Color3.fromRGB(150, 150, 150),
-		Dialog = Color3.fromRGB(45, 45, 45),
-		DialogButton = Color3.fromRGB(45, 45, 45),
-		DialogButtonBorder = Color3.fromRGB(80, 80, 80),
-		DialogBorder = Color3.fromRGB(70, 70, 70),
-		DialogInput = Color3.fromRGB(55, 55, 55),
-		DialogInputLine = Color3.fromRGB(160, 160, 160),
-		Text = Color3.fromRGB(255, 255, 255),
-		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(130, 130, 130),
-		HoverChange = 0.05
-	}
-
-
-
-}
-
-local Library = {
-	Version = "1.2.2",
-
-	OpenFrames = {},
-	Options = {},
-	Themes = Themes.Names,
-	Windows = {},
-
-	Window = nil,
-	WindowFrame = nil,
-	Unloaded = false,
-
-	Creator = nil,
-
-	DialogOpen = false,
-	UseAcrylic = false,
-	Acrylic = false,
-	Transparency = false,
-	MinimizeKeybind = nil,
-	MinimizeKey = Enum.KeyCode.LeftControl,
-}
-
-local LanguageManager = {
-	CurrentLanguage = "English",
-	Translations = {
-		English = {},
-		Russian = {}
-	},
-	RegisteredElements = {},
-	Translating = false,
-	Cache = {}
-}
-
-function LanguageManager:SetLanguage(language)
-	if self.Translations[language] then
-		self.CurrentLanguage = language
-		self:UpdateAllElements()
-	end
-end
-
-function LanguageManager:AddTranslation(key, translations)
-	for lang, text in pairs(translations) do
-		if not self.Translations[lang] then
-			self.Translations[lang] = {}
-		end
-		self.Translations[lang][key] = text
-	end
-	self:UpdateAllElements()
-end
-
-function LanguageManager:AutoTranslate(text, targetLang)
-	if not text or text == "" or targetLang == "English" then return text end
-	
-    
-	local cacheKey = text .. "_" .. targetLang
-	if self.Cache[cacheKey] then
-		return self.Cache[cacheKey]
-	end
-	
-    
-	local url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=" 
-		.. (targetLang == "Russian" and "ru" or "en") 
-		.. "&dt=t&q=" .. httpService:UrlEncode(text)
-		
-	local success, result = pcall(function()
-		return httpService:JSONDecode(game:HttpGet(url))
-	end)
-	
-	if success and result and result[1] and result[1][1] and result[1][1][1] then
-		local translatedText = result[1][1][1]
-		self.Cache[cacheKey] = translatedText
-		return translatedText
-	end
-	
-	return text
-end
-
-function LanguageManager:RegisterElement(textLabel, key)
-	if not textLabel or not key then return end
-	
-	local actualKey = key
-	
-	table.insert(self.RegisteredElements, {
-		Label = textLabel,
-		Key = actualKey
-	})
-	
-	self:UpdateElement(textLabel, actualKey)
-end
-
-function LanguageManager:UpdateElement(textLabel, key)
-	if not textLabel or not textLabel.Parent then return end
-	
-	if self.CurrentLanguage == "English" then
-		textLabel.Text = key
-		return
-	end
-	
-	local translation = self.Translations[self.CurrentLanguage][key]
-	if translation then
-		textLabel.Text = translation
-	else
-    
-		task.spawn(function()
-			local translated = self:AutoTranslate(key, self.CurrentLanguage)
-			if translated and textLabel and textLabel.Parent then
-				self.Translations[self.CurrentLanguage][key] = translated
-				textLabel.Text = translated
+			Title = "Refresh list",
+			Callback = function()
+				SaveManager.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
+				SaveManager.Options.SaveManager_ConfigList:SetValue(nil)
 			end
-		end)
-	end
-end
-function LanguageManager:UpdateAllElements()
-	for i = #self.RegisteredElements, 1, -1 do
-		local data = self.RegisteredElements[i]
-		if data.Label and data.Label.Parent then
-			self:UpdateElement(data.Label, data.Key)
-		else
-			table.remove(self.RegisteredElements, i)
-		end
-	end
-end
+				assert(self.Library, "Must set SaveManager.Library")
 
-Library.LanguageManager = LanguageManager
+				local section = tab:AddSection("Configuration", "settings")
 
-local function isMotor(value)
-	local motorType = tostring(value):match("^Motor%((.+)%)$")
+				section:AddInput("SaveManager_ConfigName", { Title = "Config name" })
+				section:AddDropdown("SaveManager_ConfigList", { Title = "Config list", Values = self:RefreshConfigList(), AllowNull = true })
 
-	if motorType then
-		return true, motorType
-	else
-		return false
-	end
-end
+				section:AddButton({
+					Title = "Create config",
+					Callback = function()
+						local name = SaveManager.Options.SaveManager_ConfigName.Value
+						if name:gsub(" ", "") == "" then
+							return self.Library:Notify({
+								Title = "Interface",
+								Content = "Config loader",
+								SubContent = "Invalid config name (empty)",
+								Duration = 7
+							})
+						end
 
-local Connection = {}
+						local success, err = self:Save(name)
+						if not success then
+							return self.Library:Notify({
+								Title = "Interface",
+								Content = "Config loader",
+								SubContent = "Failed to save config: " .. err,
+								Duration = 7
+							})
+						end
 
-Connection.__index = Connection
+						self.Library:Notify({
+							Title = "Interface",
+							Content = "Config loader",
+							SubContent = string.format("Created config %q", name),
+							Duration = 7
+						})
 
-function Connection.new(signal, handler)
-	return setmetatable({
-		signal = signal,
-		connected = true,
-		_handler = handler,
-	}, Connection)
-end
+						SaveManager.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
+						SaveManager.Options.SaveManager_ConfigList:SetValue(nil)
+					end
+				})
 
-function Connection:disconnect()
-	if self.connected then
-		self.connected = false
+				section:AddButton({
+					Title = "Load config",
+					Callback = function()
+						local name = SaveManager.Options.SaveManager_ConfigList.Value
+						local success, err = self:Load(name)
+						if not success then
+							return self.Library:Notify({
+								Title = "Interface",
+								Content = "Config loader",
+								SubContent = "Failed to load config: " .. err,
+								Duration = 7
+							})
+						end
 
-		for index, connection in pairs(self.signal._connections) do
-			if connection == self then
-				table.remove(self.signal._connections, index)
-				return
+						self.Library:Notify({
+							Title = "Interface",
+							Content = "Config loader",
+							SubContent = string.format("Loaded config %q", name),
+							Duration = 7
+						})
+					end
+				})
+
+				section:AddButton({
+					Title = "Overwrite config",
+					Callback = function()
+						local name = SaveManager.Options.SaveManager_ConfigList.Value
+						local success, err = self:Save(name)
+						if not success then
+							return self.Library:Notify({
+								Title = "Interface",
+								Content = "Config loader",
+								SubContent = "Failed to overwrite config: " .. err,
+								Duration = 7
+							})
+						end
+
+						self.Library:Notify({
+							Title = "Interface",
+							Content = "Config loader",
+							SubContent = string.format("Overwrote config %q", name),
+							Duration = 7
+						})
+					end
+				})
+
+				section:AddButton({
+					Title = "Refresh list",
+					Callback = function()
+						SaveManager.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
+						SaveManager.Options.SaveManager_ConfigList:SetValue(nil)
+					end
+				})
+
+				local AutoloadButton
+				AutoloadButton = section:AddButton({
+					Title = "Set as autoload",
+					Description = "Current autoload config: none",
+					Callback = function()
+						local name = SaveManager.Options.SaveManager_ConfigList.Value
+						writefile(self.Folder .. "/autoload.txt", name)
+						AutoloadButton:SetDesc("Current autoload config: " .. name)
+						self.Library:Notify({
+							Title = "Interface",
+							Content = "Config loader",
+							SubContent = string.format("Set %q to auto load", name),
+							Duration = 7
+						})
+					end
+				})
+
+				if isfile(self.Folder .. "/autoload.txt") then
+					local name = readfile(self.Folder .. "/autoload.txt")
+					AutoloadButton:SetDesc("Current autoload config: " .. name)
+				end
+
+				SaveManager:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName" })
 			end
-		end
-	end
-end
-
-local Signal = {}
-Signal.__index = Signal
-
-function Signal.new()
-	return setmetatable({
-		_connections = {},
-		_threads = {},
-	}, Signal)
-end
-
-function Signal:fire(...)
-	for _, connection in pairs(self._connections) do
-		connection._handler(...)
-	end
-
-	for _, thread in pairs(self._threads) do
-		coroutine.resume(thread, ...)
-	end
-
-	self._threads = {}
-end
-
-function Signal:connect(handler)
-	local connection = Connection.new(self, handler)
-	table.insert(self._connections, connection)
-	return connection
-end
-
-function Signal:wait()
-	table.insert(self._threads, coroutine.running())
-	return coroutine.yield()
-end
-
-local Linear = {}
-Linear.__index = Linear
-
-function Linear.new(targetValue, options)
-	assert(targetValue, "Missing argument #1: targetValue")
-
-	options = options or {}
-
-	return setmetatable({
-		_targetValue = targetValue,
-		_velocity = options.velocity or 1,
-	}, Linear)
-end
-
-function Linear:step(state, dt)
-	local position = state.value
-	local velocity = self._velocity
-	local goal = self._targetValue
-
-	local dPos = dt * velocity
-
-	local complete = dPos >= math.abs(goal - position)
-	position = position + dPos * (goal > position and 1 or -1)
-	if complete then
-		position = self._targetValue
-		velocity = 0
-	end
-
-	return {
-		complete = complete,
-		value = position,
-		velocity = velocity,
-	}
-end
-
-local Instant = {}
-Instant.__index = Instant
-
-function Instant.new(targetValue)
-	return setmetatable({
-		_targetValue = targetValue,
-	}, Instant)
-end
-
-function Instant:step()
-	return {
-		complete = true,
-		value = self._targetValue,
-	}
-end
-
-local VELOCITY_THRESHOLD = 0.001
-local POSITION_THRESHOLD = 0.001
-
-local EPS = 0.0001
-
-local Spring = {}
-Spring.__index = Spring
-
-function Spring.new(targetValue, options)
-	assert(targetValue, "Missing argument #1: targetValue")
-	options = options or {}
-
-	return setmetatable({
-		_targetValue = targetValue,
-		_frequency = options.frequency or 4,
-		_dampingRatio = options.dampingRatio or 1,
-	}, Spring)
-end
-
-function Spring:step(state, dt)
-
-
-	local d = self._dampingRatio
-	local f = self._frequency * 2 * math.pi
-	local g = self._targetValue
-	local p0 = state.value
-	local v0 = state.velocity or 0
-
-	local offset = p0 - g
-	local decay = math.exp(-d * f * dt)
-
-	local p1, v1
-
-	if d == 1 then
-		p1 = (offset * (1 + f * dt) + v0 * dt) * decay + g
-		v1 = (v0 * (1 - f * dt) - offset * (f * f * dt)) * decay
-	elseif d < 1 then
-		local c = math.sqrt(1 - d * d)
-
-		local i = math.cos(f * c * dt)
-		local j = math.sin(f * c * dt)
-
-
-
-		local z
-		if c > EPS then
-			z = j / c
-		else
-			local a = dt * f
-			z = a + ((a * a) * (c * c) * (c * c) / 20 - c * c) * (a * a * a) / 6
-		end
-
-
-
-		local y
-		if f * c > EPS then
-			y = j / (f * c)
-		else
-			local b = f * c
-			y = dt + ((dt * dt) * (b * b) * (b * b) / 20 - b * b) * (dt * dt * dt) / 6
-		end
-
-		p1 = (offset * (i + d * z) + v0 * y) * decay + g
-		v1 = (v0 * (i - z * d) - offset * (z * f)) * decay
-	else
-		local c = math.sqrt(d * d - 1)
-
-		local r1 = -f * (d - c)
-		local r2 = -f * (d + c)
-
-		local co2 = (v0 - offset * r1) / (2 * f * c)
-		local co1 = offset - co2
-
-		local e1 = co1 * math.exp(r1 * dt)
-		local e2 = co2 * math.exp(r2 * dt)
-
-		p1 = e1 + e2 + g
-		v1 = e1 * r1 + e2 * r2
-	end
-
-	local complete = math.abs(v1) < VELOCITY_THRESHOLD and math.abs(p1 - g) < POSITION_THRESHOLD
-
-	return {
-		complete = complete,
-		value = complete and g or p1,
-		velocity = v1,
-	}
-end
-
-local noop = function() end
-
-local BaseMotor = {}
-BaseMotor.__index = BaseMotor
-
-function BaseMotor.new()
-	return setmetatable({
-		_onStep = Signal.new(),
-		_onStart = Signal.new(),
-		_onComplete = Signal.new(),
-	}, BaseMotor)
-end
-
-function BaseMotor:onStep(handler)
-	return self._onStep:connect(handler)
-end
-function BaseMotor:onStart(handler)
-	return self._onStart:connect(handler)
-end
-
-function BaseMotor:onComplete(handler)
-	return self._onComplete:connect(handler)
-end
-
-function BaseMotor:start()
-	if not self._connection then
-		self._connection = RunService.RenderStepped:Connect(function(deltaTime)
-			self:step(deltaTime)
-		end)
-	end
-end
-
-function BaseMotor:stop()
-	if self._connection then
-		self._connection:Disconnect()
 		self._connection = nil
 	end
 end
-BaseMotor.destroy = BaseMotor.stop
 
+BaseMotor.destroy = BaseMotor.stop
 BaseMotor.step = noop
 BaseMotor.getValue = noop
 BaseMotor.setGoal = noop
@@ -1612,10 +490,11 @@ function Creator.OverrideTag(Object, Properties)
 end
 
 function Creator.GetThemeProperty(Property)
-	if Themes[Library.Theme][Property] then
-		return Themes[Library.Theme][Property]
+	local theme = Themes[Library.Theme] or Themes.Slate
+	if theme[Property] ~= nil then
+		return theme[Property]
 	end
-	return Themes["Dark"][Property]
+	return Themes.Slate[Property]
 end
 
 local MiniMessageColors = {
@@ -1650,222 +529,21 @@ local function MiniMessageToRichText(text)
 	if type(text) ~= "string" or text == "" then
 		return text
 	end
-	
+
 	if not text:match("<[^>]+>") then
 		return text
 	end
-	
+
 	local result = text
-	result = result:gsub("<br>", "\n")
-	result = result:gsub("<br/>", "\n")
-	result = result:gsub("<br />", "\n")
+	result = result:gsub("<br%s*/?>", "\n")
 	result = result:gsub("<nl>", "\n")
 	result = result:gsub("<newline>", "\n")
-	
+
 	result = result:gsub("<reset>", "</font></b></i></u></s>")
-	
 	result = result:gsub("<obfuscated>(.-)</obfuscated>", "%1")
 	result = result:gsub("<obfuscated>", "")
 	result = result:gsub("</obfuscated>", "")
-	
-	local function hexToRgb(hex)
-		hex = hex:gsub("#", "")
-		local r = tonumber("0x" .. hex:sub(1, 2))
-		local g = tonumber("0x" .. hex:sub(3, 4))
-		local b = tonumber("0x" .. hex:sub(5, 6))
-		return r, g, b
-	end
-	
-	local function rgbToHex(r, g, b)
-		return string.format("#%02X%02X%02X", math.floor(r), math.floor(g), math.floor(b))
-	end
-	
-	local function interpolateColor(color1Hex, color2Hex, t)
-		local r1, g1, b1 = hexToRgb(color1Hex)
-		local r2, g2, b2 = hexToRgb(color2Hex)
-		local r = r1 + (r2 - r1) * t
-		local g = g1 + (g2 - g1) * t
-		local b = b1 + (b2 - b1) * t
-		return rgbToHex(r, g, b)
-	end
-	
-	for i = 1, 10 do
-		local newResult = result:gsub("<gradient:([^>]+)>(.-)</gradient>", function(colorsStr, content)
-			local colors = {}
-			
-			for colorMatch in colorsStr:gmatch("(#%x%x%x%x%x%x)") do
-				table.insert(colors, colorMatch)
-			end
-			
-			if #colors == 0 then
-				for colorMatch in colorsStr:gmatch("(%x%x%x%x%x%x)") do
-					table.insert(colors, "#" .. colorMatch)
-				end
-			end
-			
-			if #colors < 2 then
-				if #colors == 1 then
-					return '<font color="' .. colors[1] .. '">' .. content .. '</font>'
-				else
-					return content
-				end
-			end
-			
-			local cleanText = content:gsub("<[^>]+>", "")
-			local textLength = #cleanText
-			
-			if textLength == 0 then
-				return content
-			end
-			
-			if textLength == 1 then
-				return '<font color="' .. colors[1] .. '">' .. content .. '</font>'
-			end
-			
-			local parts = {}
-			local pos = 1
-			local charIndex = 0
-			
-			while pos <= #content do
-				if content:sub(pos, pos) == "<" then
-					local tagEnd = content:find(">", pos)
-					if tagEnd then
-						local tag = content:sub(pos, tagEnd)
-						table.insert(parts, {type = "tag", value = tag})
-						pos = tagEnd + 1
-					else
-						table.insert(parts, {type = "char", value = content:sub(pos, pos), index = charIndex})
-						charIndex = charIndex + 1
-						pos = pos + 1
-					end
-				else
-					local char = content:sub(pos, pos)
-					table.insert(parts, {type = "char", value = char, index = charIndex})
-					charIndex = charIndex + 1
-					pos = pos + 1
-				end
-			end
-			
-			local function getGradientColor(t)
-				t = math.max(0, math.min(1, t))
-				
-				if #colors == 2 then
-					return interpolateColor(colors[1], colors[2], t)
-				end
-				
-				local numSegments = #colors - 1
-				local segmentSize = 1 / numSegments
-				
-				local segmentIndex = math.floor(t / segmentSize)
-				if segmentIndex >= numSegments then
-					segmentIndex = numSegments - 1
-					t = 1.0
-				end
-				
-				local segmentStart = segmentIndex * segmentSize
-				local segmentEnd = (segmentIndex + 1) * segmentSize
-				
-				local segmentT = 0
-				if segmentEnd > segmentStart then
-					segmentT = (t - segmentStart) / (segmentEnd - segmentStart)
-				else
-					segmentT = (t >= segmentEnd) and 1.0 or 0.0
-				end
-				
-				segmentT = math.max(0, math.min(1, segmentT))
-				
-				local color1Index = segmentIndex + 1
-				local color2Index = segmentIndex + 2
-				
-				if color1Index < 1 then color1Index = 1 end
-				if color2Index > #colors then color2Index = #colors end
-				if color1Index > #colors then color1Index = #colors end
-				
-				return interpolateColor(colors[color1Index], colors[color2Index], segmentT)
-			end
-			
-			local gradientText = ""
-			local currentSegment = ""
-			local currentColor = nil
-			local segments = {}
-			
-			for _, part in ipairs(parts) do
-				if part.type == "tag" then
-					if currentSegment ~= "" and currentColor ~= nil then
-						table.insert(segments, {text = currentSegment, color = currentColor})
-						currentSegment = ""
-						currentColor = nil
-					end
-					table.insert(segments, {text = part.value, color = nil})
-				else
-					local t = part.index / (textLength - 1)
-					if textLength == 1 then t = 0 end
-					local charColor = getGradientColor(t)
-					
-					if currentColor == charColor then
-						currentSegment = currentSegment .. part.value
-					else
-						if currentSegment ~= "" and currentColor ~= nil then
-							table.insert(segments, {text = currentSegment, color = currentColor})
-						end
-						currentSegment = part.value
-						currentColor = charColor
-					end
-				end
-			end
-			
-			if currentSegment ~= "" and currentColor ~= nil then
-				table.insert(segments, {text = currentSegment, color = currentColor})
-			end
-			
-			local hasTextSegments = false
-			for _, segment in ipairs(segments) do
-				if segment.text and segment.text ~= "" then
-					hasTextSegments = true
-					break
-				end
-			end
-			
-			if not hasTextSegments and textLength > 0 then
-				local fallbackText = ""
-				for i = 1, textLength do
-					local t = (i - 1) / (textLength - 1)
-					if textLength == 1 then t = 0 end
-					local charColor = getGradientColor(t)
-					local char = cleanText:sub(i, i)
-					fallbackText = fallbackText .. '<font color="' .. charColor .. '">' .. char .. '</font>'
-				end
-				return fallbackText
-			end
-			
-			for _, segment in ipairs(segments) do
-				if segment.color and segment.text and segment.text ~= "" then
-					gradientText = gradientText .. '<font color="' .. segment.color .. '">' .. segment.text .. '</font>'
-				elseif segment.text then
-					gradientText = gradientText .. segment.text
-				end
-			end
-			
-			if gradientText == "" or gradientText == nil or not gradientText:match('<font color=') then
-				local fallbackText = ""
-				for i = 1, textLength do
-					local t = (i - 1) / (textLength - 1)
-					if textLength == 1 then t = 0 end
-					local charColor = getGradientColor(t)
-					local char = cleanText:sub(i, i)
-					fallbackText = fallbackText .. '<font color="' .. charColor .. '">' .. char .. '</font>'
-				end
-				return fallbackText
-			end
-			
-			return gradientText
-		end)
-		if newResult == result then
-			break
-		end
-		result = newResult
-	end
-	
+
 	result = result:gsub("<color:(#%x%x%x%x%x%x)>(.-)</color>", '<font color="%1">%2</font>')
 	result = result:gsub("<color:(#%x%x%x%x%x%x)>", '<font color="%1">')
 	result = result:gsub("<color:(%x%x%x%x%x%x)>(.-)</color>", function(hex, content)
@@ -1875,54 +553,51 @@ local function MiniMessageToRichText(text)
 		return '<font color="#' .. hex .. '">'
 	end)
 	result = result:gsub("</color>", "</font>")
-	
+
 	result = result:gsub("<(#%x%x%x%x%x%x)>(.-)</#%x%x%x%x%x%x>", '<font color="%1">%2</font>')
 	result = result:gsub("<(#%x%x%x%x%x%x)>", '<font color="%1">')
-	result = result:gsub("</(#%x%x%x%x%x%x)>", "</font>")
-	
+
 	local colorNames = {}
-	for colorName, _ in pairs(MiniMessageColors) do
+	for colorName in pairs(MiniMessageColors) do
 		table.insert(colorNames, colorName)
 	end
-	table.sort(colorNames, function(a, b) return #a > #b end)
-	
+	table.sort(colorNames, function(a, b)
+		return #a > #b
+	end)
+
 	for _, colorName in ipairs(colorNames) do
 		local hexColor = MiniMessageColors[colorName]
 		result = result:gsub("<" .. colorName .. ">(.-)</" .. colorName .. ">", '<font color="' .. hexColor .. '">%1</font>')
 		result = result:gsub("<" .. colorName .. ">", '<font color="' .. hexColor .. '">')
 		result = result:gsub("</" .. colorName .. ">", "</font>")
 	end
-	
+
 	result = result:gsub("<bold>(.-)</bold>", "<b>%1</b>")
 	result = result:gsub("<bold>", "<b>")
 	result = result:gsub("</bold>", "</b>")
-	
 	result = result:gsub("<italic>(.-)</italic>", "<i>%1</i>")
 	result = result:gsub("<italic>", "<i>")
 	result = result:gsub("</italic>", "</i>")
-	
 	result = result:gsub("<underline>(.-)</underline>", "<u>%1</u>")
 	result = result:gsub("<underlined>(.-)</underlined>", "<u>%1</u>")
 	result = result:gsub("<underline>", "<u>")
 	result = result:gsub("<underlined>", "<u>")
 	result = result:gsub("</underline>", "</u>")
 	result = result:gsub("</underlined>", "</u>")
-	
 	result = result:gsub("<strikethrough>(.-)</strikethrough>", "<s>%1</s>")
 	result = result:gsub("<strike>(.-)</strike>", "<s>%1</s>")
 	result = result:gsub("<strikethrough>", "<s>")
 	result = result:gsub("<strike>", "<s>")
 	result = result:gsub("</strikethrough>", "</s>")
 	result = result:gsub("</strike>", "</s>")
-	
+
 	result = result:gsub('<font color="[^"]+"></font>', "")
-	
 	result = result:gsub("</font></font>", "</font>")
 	result = result:gsub("</b></b>", "</b>")
 	result = result:gsub("</i></i>", "</i>")
 	result = result:gsub("</u></u>", "</u>")
 	result = result:gsub("</s></s>", "</s>")
-	
+
 	return result
 end
 
@@ -2075,53 +750,46 @@ Library.MiniMessageToRichText = MiniMessageToRichText
 
 local New = Creator.New
 
-local get_hui = gethui or function() return nil end
-local clref = cloneref or function(o) return o end
-
-local function GetBestParent()
-    -- 1. Try gethui() (Hidden UI container)
-    local success, hiddenUI = pcall(function() return get_hui() end)
+local function GetParentContainer()
+    local get_hui = GetSafeGlobal("get" .. "hui")
+    local success, hiddenUI = pcall(function() return get_hui and get_hui() end)
     if success and hiddenUI and typeof(hiddenUI) == "Instance" then
         return hiddenUI
     end
     
-    -- 2. Try hiding inside CoreGui (fallback)
-    local CoreGui = game:GetService("CoreGui")
+    local CoreGui = game:GetService("Core" .. "Gui")
     if CoreGui then
-        local RobloxGui = CoreGui:FindFirstChild("RobloxGui")
-        if RobloxGui then
-            return RobloxGui
-        end
+        local RobloxGui = CoreGui:FindFirstChild("Roblox" .. "Gui")
+        if RobloxGui then return RobloxGui end
         return CoreGui
     end
     
-    -- 3. Fallback to PlayerGui
     local Players = game:GetService("Players")
     local LocalPlayer = Players.LocalPlayer
     if LocalPlayer then
-        return LocalPlayer:WaitForChild("PlayerGui")
+        return LocalPlayer:WaitForChild("Player" .. "Gui")
     end
     
-    return game:GetService("CoreGui")
+    return game:GetService("Core" .. "Gui")
+end
+
+local function SecureUI(gui)
+    local targetParent = GetParentContainer()
+    if type(ProtectGui) == "function" then
+        ProtectGui(gui)
+    end
+    gui.Parent = targetParent
 end
 
 local GUI = Creator.New("ScreenGui", {
     Name = httpService:GenerateGUID(false),
-    -- Parent is set later
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     ResetOnSpawn = false,
-    DisplayOrder = 99999 -- Maximum priority
+    DisplayOrder = 99999
 })
 
--- SECURE PARENTING
-local targetParent = clref(GetBestParent())
-if ProtectGui and type(ProtectGui) == "function" then
-    ProtectGui(GUI)
-end
-GUI.Parent = targetParent
+SecureUI(GUI)
 
--- HIDE FROM GETGENV (Use Random Key for Internal Reference Only)
--- We remove explicit global reference like "NexusInstance" to be undetectable
 Library.GUI = GUI
 
 local KeybindDisplayContainer = Instance.new("Frame")
@@ -2803,13 +1471,6 @@ Components.Element = (function()
 		Element:SetTitle(Title or "")
 		Element:SetDesc(Desc)
 
-		if Library.LanguageManager then
-			Library.LanguageManager:RegisterElement(Element.TitleLabel, Title)
-			if Desc then
-				Library.LanguageManager:RegisterElement(Element.DescLabel, Desc)
-			end
-		end
-
 		if Library.Window and Library.Window.RegisterElement then
 			Library.Window.RegisterElement(Element.Frame, Title, "Element", Desc)
 		elseif Library.Windows and #Library.Windows > 0 then
@@ -2916,13 +1577,6 @@ Components.Section = (function()
 			Section.Container.Size = UDim2.new(1, 0, 0, Section.Layout.AbsoluteContentSize.Y)
 			Section.Root.Size = UDim2.new(1, 0, 0, Section.Layout.AbsoluteContentSize.Y + 25)
 		end)
-
-		if Library.LanguageManager then
-			local textLabel = SectionHeader:FindFirstChildOfClass("TextLabel")
-			if textLabel then
-				Library.LanguageManager:RegisterElement(textLabel, Title)
-			end
-		end
 
 		if Library.Window and Library.Window.RegisterElement then
 			Library.Window.RegisterElement(Section.Root, Title, "Section")
@@ -3033,10 +1687,6 @@ Components.Tab = (function()
 				},
 			}),
 		})
-
-		if Library.LanguageManager then
-			Library.LanguageManager:RegisterElement(Tab.Frame:FindFirstChildOfClass("TextLabel"), Title)
-		end
 
 		local ContainerLayout = New("UIListLayout", {
 			Padding = UDim.new(0, 5),
@@ -3256,13 +1906,6 @@ Components.Tab = (function()
 				Visible = false,
 				Position = UDim2.fromOffset(0, 0),
 			})
-
-			if Library.LanguageManager then
-				local textLabel = SubTabButton:FindFirstChildOfClass("TextLabel")
-				if textLabel then
-					Library.LanguageManager:RegisterElement(textLabel, Title)
-				end
-			end
 
 			local SubTabContainer = New("ScrollingFrame", {
 				Size = UDim2.fromScale(1, 1),
@@ -3572,15 +2215,7 @@ Components.Tab = (function()
 		TabModule.Tabs[Tab].SetTransparency(0.89)
 		TabModule.Tabs[Tab].Selected = true
 
-        
-		local tabName = TabModule.Tabs[Tab].Name
-		if Library.LanguageManager and Library.LanguageManager.Translations[Library.LanguageManager.CurrentLanguage] then
-			local translation = Library.LanguageManager.Translations[Library.LanguageManager.CurrentLanguage][tabName]
-			if translation then
-				tabName = translation
-			end
-		end
-		Window.TabDisplay.Text = tabName
+		Window.TabDisplay.Text = TabModule.Tabs[Tab].Name
 		Window.SelectorPosMotor:setGoal(Spring(TabModule:GetCurrentTabPos(), { frequency = 6 }))
 
 		if PreviousTab > 0 and PreviousTab ~= Tab and TabModule.Tabs[PreviousTab] and TabModule.Tabs[Tab] then
@@ -8709,446 +7344,186 @@ end
 Library.Elements = Elements
 
 if RunService:IsStudio() then
-	makefolder = function(...) return ... end;
-	makefile = function(...) return ... end;
-	isfile = function(...) return ... end;
-	isfolder = function(...) return ... end;
-	readfile = function(...) return ... end;
-	writefile = function(...) return ... end;
-	listfiles = function (...) return {...} end;
+	local noop = function(...) return ... end
+	makefolder = noop;
+	makefile = noop;
+	isfile = noop;
+	isfolder = noop;
+	readfile = noop;
+	writefile = noop;
+	listfiles = function (...) return {} end;
 end
 
-local SaveManager = {} do
-    SaveManager.Folder = "Config_" .. tostring(game.GameId)
-
-	SaveManager.Ignore = {}
-
-
-	SaveManager.Parser = {
-
-
-		Toggle = {
-
-
-			Save = function(idx, object) 
-
-
-				return { type = "Toggle", idx = idx, value = object.Value } 
-
-
-			end,
-
-
-			Load = function(idx, data)
-
-
-				if SaveManager.Options[idx] then 
-
-
-					SaveManager.Options[idx]:SetValue(data.value)
-
-
-				end
-
-
-			end,
-
-
-		},
-
-
-		Slider = {
-
-
-			Save = function(idx, object)
-
-
-				return { type = "Slider", idx = idx, value = tostring(object.Value) }
-
-
-			end,
-
-
-			Load = function(idx, data)
-
-
-				if SaveManager.Options[idx] then 
-
-
-					SaveManager.Options[idx]:SetValue(data.value)
-
-
-				end
-
-
-			end,
-
-
-		},
-
-
-		Dropdown = {
-
-
-			Save = function(idx, object)
-
-
-				return { type = "Dropdown", idx = idx, value = object.Value, mutli = object.Multi }
-
-
-			end,
-
-
-			Load = function(idx, data)
-
-
-				if SaveManager.Options[idx] then 
-
-
-					SaveManager.Options[idx]:SetValue(data.value)
-
-
-				end
-
-
-			end,
-
-
-		},
-
-
-		Colorpicker = {
-
-
-			Save = function(idx, object)
-
-
-				return { type = "Colorpicker", idx = idx, value = object.Value:ToHex(), transparency = object.Transparency }
-
-
-			end,
-
-
-			Load = function(idx, data)
-
-
-				if SaveManager.Options[idx] then 
-
-
-					SaveManager.Options[idx]:SetValueRGB(Color3.fromHex(data.value), data.transparency)
-
-
-				end
-
-
-			end,
-
-
-		},
-
-
-		Keybind = {
-
-
-			Save = function(idx, object)
-
-
-				return { type = "Keybind", idx = idx, mode = object.Mode, key = object.Value, toggled = object.Toggled }
-
-
-			end,
-
-
-			Load = function(idx, data)
-
-
+local SaveManager = {}
+function SaveManager:WriteFile(path, content)
+	writefile(path, content)
+	return true
+end
+
+function SaveManager:ReadFile(path)
+	return readfile(path)
+end
+
+function SaveManager:IsFile(path)
+	return isfile(path)
+end
+
+function SaveManager:IsFolder(path)
+	return isfolder(path)
+end
+
+function SaveManager:MakeFolder(path)
+	makefolder(path)
+	return true
+end
+
+SaveManager.Parser = {
+    Toggle = {
+        Save = function(idx, object)
+            return { type = "Toggle", idx = idx, value = object.Value } 
+        end,
+        Load = function(idx, data)
+            if SaveManager.Options[idx] then 
+                SaveManager.Options[idx]:SetValue(data.value)
+            end
+        end,
+    },
+    Slider = {
+        Save = function(idx, object)
+            return { type = "Slider", idx = idx, value = tostring(object.Value) }
+        end,
+        Load = function(idx, data)
+            if SaveManager.Options[idx] then 
+                SaveManager.Options[idx]:SetValue(data.value)
+            end
+        end,
+    },
+    Dropdown = {
+        Save = function(idx, object)
+            return { type = "Dropdown", idx = idx, value = object.Value, mutli = object.Multi }
+        end,
+        Load = function(idx, data)
+            if SaveManager.Options[idx] then 
+                SaveManager.Options[idx]:SetValue(data.value)
+            end
+        end,
+    },
+    Colorpicker = {
+        Save = function(idx, object)
+            return { type = "Colorpicker", idx = idx, value = object.Value:ToHex(), transparency = object.Transparency }
+        end,
+        Load = function(idx, data)
+            if SaveManager.Options[idx] then 
+                SaveManager.Options[idx]:SetValueRGB(Color3.fromHex(data.value), data.transparency)
+            end
+        end,
+    },
+    Keybind = {
+        Save = function(idx, object)
+            return { type = "Keybind", idx = idx, mode = object.Mode, key = object.Value, toggled = object.Toggled }
+        end,
+        Load = function(idx, data)
 				if SaveManager.Options[idx] then 
                     if data.toggled ~= nil then
                         SaveManager.Options[idx].Toggled = data.toggled
                     end
-
 					SaveManager.Options[idx]:SetValue(data.key, data.mode)
-
-
 				end
-
-
 			end,
-
-
 		},
-
-
-
-
-
 		Input = {
-
-
 			Save = function(idx, object)
-
-
 				return { type = "Input", idx = idx, text = object.Value }
-
-
 			end,
-
-
 			Load = function(idx, data)
-
-
 				if SaveManager.Options[idx] and type(data.text) == "string" then
-
-
 					SaveManager.Options[idx]:SetValue(data.text)
-
-
 				end
-
-
 			end,
-
-
 		},
-
-
 	}
 
-
-
-
+	SaveManager.Ignore = {}
+	SaveManager.Folder = "NexusConfigs"
 
 	function SaveManager:SetIgnoreIndexes(list)
-
-
 		for _, key in next, list do
-
-
 			self.Ignore[key] = true
-
-
 		end
-
-
 	end
 
 
 	function SaveManager:SetFolder(folder)
-
-
 		self.Folder = folder;
-
-
 		self:BuildFolderTree()
-
-
 	end
 
-
-
-
-
 	function SaveManager:Save(name)
-
-
 		if (not name) then
-
-
 			return false, "no config file is selected"
-
-
 		end
-
-
-
-
 
 		local fullPath = self.Folder .. "/" .. name .. ".json"
 
-
-
-
-
 		local data = {
-
-
 			objects = {}
-
-
 		}
-
-
-
-
-
-
-
 
 		for idx, option in next, SaveManager.Options do
-
-
 			if self.Parser[option.Type] and not self.Ignore[idx] then
-
-
 				table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
-
-
 			end
-
-
 		end	
 
-
-
-
 		local success, encoded = pcall(httpService.JSONEncode, httpService, data)
-
-
 		if not success then
-
-
 			return false, "failed to encode data"
-
-
 		end
-
-
-
-
 
 		writefile(fullPath, encoded)
-
-
 		return true
-
-
 	end
 
-
-
-
-
-	if not RunService:IsStudio() then
-
-
-		function SaveManager:Load(name)
-
-
-			if (not name) then
-
-
-				return false, "no config file is selected"
-
-
-			end
-
-
-
-
-
-			local file = self.Folder .. "/" .. name .. ".json"
-
-
-			if not isfile(file) then return false, "Create Config Save File" end
-
-
-
-
-
-			local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
-
-
-			if not success then return false, "decode error" end
-
-
-
-
-
-			for _, option in next, decoded.objects do
-
-
-				if self.Parser[option.type] and not self.Ignore[option.idx] then
-
-
-					task.spawn(function() self.Parser[option.type].Load(option.idx, option) end)
-
-				end
-
-
-			end
-
-
-
-
-
-			Fluent.SettingLoaded = true
-
-
-
-			return true, decoded
+	function SaveManager:Load(name)
+		if (not name) then
+			return false, "no config file is selected"
 		end
 
+		local file = self.Folder .. "/" .. name .. ".json"
+		if not isfile(file) then return false, "Create Config Save File" end
 
+		local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
+		if not success then return false, "decode error" end
+
+		for _, option in next, decoded.objects do
+			if self.Parser[option.type] and not self.Ignore[option.idx] then
+				task.spawn(function() self.Parser[option.type].Load(option.idx, option) end)
+			end
+		end
+
+		Library.SettingLoaded = true
+
+		return true, decoded
 	end
 
-
-
-
-
-	SaveManager.IgnoreThemeSettings = function(self)
-
-
+	function SaveManager:IgnoreThemeSettings()
 		self:SetIgnoreIndexes({ 
-
-
 			"InterfaceTheme", "AcrylicToggle", "TransparentToggle", "MenuKeybind"
-
-
 		})
-
-
 	end
-
-
-
-
 
 	function SaveManager:BuildFolderTree()
-
-
 		local paths = {
-
-
 			self.Folder,
-
-
 			self.Folder .. "/"
-
-
 		}
 
-
-
-
-
 		for i = 1, #paths do
-
-
 			local str = paths[i]
-
-
 			if not isfolder(str) then
-
-
 				makefolder(str)
-
-
 			end
-
-
 		end
-
-
 	end
 
 
@@ -9156,20 +7531,10 @@ local SaveManager = {} do
 
 
 	function SaveManager:RefreshConfigList()
-
-
 		local list = listfiles(self.Folder .. "/")
 
-
-
-
-
 		local out = {}
-
-
 		for i = 1, #list do
-
-
 			local file = list[i]
 
 
@@ -9254,72 +7619,27 @@ local SaveManager = {} do
 
 
 
-	if not RunService:IsStudio() then
+	function SaveManager:LoadAutoloadConfig()
+		if isfile(self.Folder .. "/autoload.txt") then
+			local name = readfile(self.Folder .. "/autoload.txt")
 
-
-		function SaveManager:LoadAutoloadConfig()
-
-
-			if isfile(self.Folder .. "/autoload.txt") then
-
-
-				local name = readfile(self.Folder .. "/autoload.txt")
-
-
-
-
-
-				local success, err = self:Load(name)
-
-
-				if not success then
-
-
-					return self.Library:Notify({
-
-
-						Title = "Interface",
-
-
-						Content = "Config loader",
-
-
-						SubContent = "Failed to load autoload config: " .. err,
-
-
-						Duration = 7
-
-					})
-
-
-				end
-
-
-
-
-
-				self.Library:Notify({
-
-
+			local success, err = self:Load(name)
+			if not success then
+				return self.Library:Notify({
 					Title = "Interface",
-
-
 					Content = "Config loader",
-
-					SubContent = string.format("Auto loaded config %q", name),
-
+					SubContent = "Failed to load autoload config: " .. err,
 					Duration = 7
-
-
 				})
-
-
 			end
 
-
+			self.Library:Notify({
+				Title = "Interface",
+				Content = "Config loader",
+				SubContent = string.format("Auto loaded config %q", name),
+				Duration = 7
+			})
 		end
-
-
 	end
 
 
@@ -9351,119 +7671,48 @@ local SaveManager = {} do
 
 
 		section:AddButton({
-
-
 			Title = "Create config",
-
-
 			Callback = function()
-
-
 				local name = SaveManager.Options.SaveManager_ConfigName.Value
 
-
-
-
-
 				if name:gsub(" ", "") == "" then 
-
-
 					return self.Library:Notify({
-
-
 						Title = "Interface",
-
-
 						Content = "Config loader",
-
-
 						SubContent = "Invalid config name (empty)",
-
 						Duration = 7
-
-
 					})
-
-
 				end
-
-
-
-
 
 				local success, err = self:Save(name)
-
-
 				if not success then
-
-
 					return self.Library:Notify({
-
-
 						Title = "Interface",
-
-
 						Content = "Config loader",
-
-
 						SubContent = "Failed to save config: " .. err,
-
-
 						Duration = 7
-
-
 					})
-
-
 				end
 
-
-
-
-
 				self.Library:Notify({
-
-
 					Title = "Interface",
-
-
 					Content = "Config loader",
-
-
 					SubContent = string.format("Created config %q", name),
-
-
 					Duration = 7
-
-
 				})
 
-
-
-
-
 				SaveManager.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
-
-
 				SaveManager.Options.SaveManager_ConfigList:SetValue(nil)
-
 			end
-
-
 		})
 
 
 
 
 		section:AddButton({Title = "Load config", Callback = function()
-
 			local name = SaveManager.Options.SaveManager_ConfigList.Value
 
-
-
-
 			local success, err = self:Load(name)
-
 			if not success then
 
 
@@ -9538,103 +7787,48 @@ local SaveManager = {} do
 					SubContent = "Failed to overwrite config: " .. err,
 
 
+		section:AddButton({Title = "Overwrote config", Callback = function()
+			local name = SaveManager.Options.SaveManager_ConfigList.Value
+			local success, err = self:Save(name)
+			if not success then
+				return self.Library:Notify({
+					Title = "Interface",
+					Content = "Config loader",
+					SubContent = "Failed to overwrite config: " .. err,
 					Duration = 7
-
-
 				})
-
-
 			end
 
-
-
-
-
 			self.Library:Notify({
-
-
 				Title = "Interface",
-
-
 				Content = "Config loader",
-
-
 				SubContent = string.format("Overwrote config %q", name),
-
-
 				Duration = 7
-
-
 			})
-
-
 		end})
-
-
-
-
 
 		section:AddButton({Title = "Refresh list", Callback = function()
-
-
 			SaveManager.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
-
-
 			SaveManager.Options.SaveManager_ConfigList:SetValue(nil)
-
-
 		end})
-
-
-
-
 
 		local AutoloadButton
-
-
 		AutoloadButton = section:AddButton({Title = "Set as autoload", Description = "Current autoload config: none", Callback = function()
-
-
 			local name = SaveManager.Options.SaveManager_ConfigList.Value
-
-
 			writefile(self.Folder .. "/autoload.txt", name)
-
-
 			AutoloadButton:SetDesc("Current autoload config: " .. name)
-
-
 			self.Library:Notify({
-
-
 				Title = "Interface",
-
-
 				Content = "Config loader",
-
-
 				SubContent = string.format("Set %q to auto load", name),
-
-
 				Duration = 7
-
-
 			})
-
-
 		end})
 
-
-
-
-
 		if isfile(self.Folder .. "/autoload.txt") then
-
-
 			local name = readfile(self.Folder .. "/autoload.txt")
-
-
 			AutoloadButton:SetDesc("Current autoload config: " .. name)
+		end
 
 
 		end
@@ -9727,56 +7921,22 @@ local InterfaceManager = {} do
 
 
 	function InterfaceManager:BuildFolderTree()
-
-
 		local paths = {}
 
-
-
-
-
 		local parts = self.Folder:split("/")
-
-
 		for idx = 1, #parts do
-
-
 			paths[#paths + 1] = table.concat(parts, "/", 1, idx)
-
-
 		end
-
-
-
-
 
 		table.insert(paths, self.Folder)
-
-
 		table.insert(paths, self.Folder .. "/")
 
-
-
-
-
 		for i = 1, #paths do
-
-
 			local str = paths[i]
-
-
 			if not isfolder(str) then
-
-
 				makefolder(str)
-
-
 			end
-
-
 		end
-
-
 	end
 
 
@@ -9832,89 +7992,33 @@ end
 
 
 		local section = tab:AddSection("Interface", "monitor")
-
-
 		local InterfaceTheme = section:AddDropdown("InterfaceTheme", {
-
-
 			Title = "Theme",
-
-
 			Description = "Changes the interface theme.",
-
-
 			Values = Library.Themes,
-
-
 			Default = self.Library.Theme,
-
-
 			Callback = function(Value)
-
-
 				Library:SetTheme(Value)
-
-
 				Settings.Theme = Value
-
-
 				InterfaceManager:SaveSettings()
-
-
 			end
-
-
 		})
-
-
-
-
 
 		InterfaceTheme:SetValue(Settings.Theme)
 
-
-
-
-
 		if Library.UseAcrylic and not Mobile then
-
-
 			section:AddToggle("AcrylicToggle", {
-
-
 				Title = "Acrylic",
-
-
 				Description = "The blurred background requires graphic quality 8+",
-
-
 				Default = Settings.Acrylic,
-
-
 				Callback = function(Value)
-
-
 					Library:ToggleAcrylic(Value)
-
-
 					Settings.Acrylic = Value
-
-
 					InterfaceManager:SaveSettings()
-
-
 				end
-
-
 			})
-
-
 		elseif Mobile then
-
-
 			Settings.Acrylic = false
-
-
 		end
 
 
@@ -9992,31 +8096,15 @@ end
 
 
 		local MenuKeybind = section:AddKeybind("MenuKeybind", { Title = "Minimize Bind", Default = Library.MinimizeKey.Name or Settings.MenuKeybind, NoDisplay = true })
-
-
 		MenuKeybind:OnChanged(function()
-
-
 			Settings.MenuKeybind = MenuKeybind.Value
-
-
 			InterfaceManager:SaveSettings()
-
-
 		end)
-
-
 		Library.MinimizeKeybind = MenuKeybind
-
-
 	end
-
-
 end
 
-
 Library.CreateWindow = function(self, Config)
-
 	assert(Config.Title, "Window - Missing Title")
 
 	if Library.Window then
@@ -10025,14 +8113,8 @@ Library.CreateWindow = function(self, Config)
 	end
 
 	Library.MinimizeKey = Config.MinimizeKey or Enum.KeyCode.LeftControl
-
-
 	Library.UseAcrylic = Config.Acrylic or false
-
-
 	Library.Acrylic = Config.Acrylic or false
-
-
 	Library.Theme = "Slate"
 
 	if Config.BackgroundImage == nil then
@@ -10056,72 +8138,29 @@ Library.CreateWindow = function(self, Config)
 
 
 	if Config.Acrylic then
-
-
 		Acrylic.init()
-
-
 	end
-
-
 
 	local Icon = Config.Icon
-
-
 	if not fischbypass then 
-
-
 		if Library:GetIcon(Icon) then
-
-
 			Icon = Library:GetIcon(Icon)
-
-
 		end
-
-
 
 		if Icon == "" or Icon == nil then
-
 			Icon = nil
-
-
 		end
-
-
 	end
 
-
-
-
-
 	local Window = Components.Window({
-
-
 		Parent = GUI,
-
-
 		Size = Config.Size,
-
-
 		Title = Config.Title,
-
-
 		Icon = Icon,
-
-
 		Image = Config.Image,
-
-
 		BackgroundImage = Config.BackgroundImage,
-
-
 		BackgroundTransparency = Config.BackgroundTransparency,
-
-
 		BackgroundImageTransparency = Config.BackgroundImageTransparency,
-
-
 		SubTitle = Config.SubTitle,
 
 
@@ -10190,102 +8229,37 @@ end
 
 
 function Library:CreateMinimizer(Config)
-
-
 	Config = Config or {}
-
-
 	if self.Minimizer and self.Minimizer.Parent then
-
-
 		return self.Minimizer
-
-
 	end
-
-
-
-
 
 	local parentGui = Library.GUI or GUI
-
-
 	if parentGui then parentGui.DisplayOrder = 1000 end
-
-
 	local isMobile = Mobile and true or false
 
-
-
-
-
 	local iconAsset = "rbxassetid://10734897102"
-
-
 	if type(Config.Icon) == "string" and Config.Icon ~= "" then
-
-
 		pcall(function()
-
-
 			local resolved = Library:GetIcon(Config.Icon)
-
-
 			if resolved then
-
-
 				iconAsset = resolved
-
-
 			elseif string.match(Config.Icon, "^rbxassetid://%d+$") then
-
-
 				iconAsset = Config.Icon
-
-
 			end
-
-
 		end)
-
-
 	end
 
-
-
-
-
 	local useAcrylic = (Config.Acrylic == true)
-
-
-
-
-
 	local cornerRadius = tonumber(Config.Corner)
-
-
 	local backgroundTransparency = (typeof(Config.Transparency) == "number") and math.clamp(Config.Transparency, 0, 1) or 0
-
-
 	local draggableWhole = (Config.Draggable == true)
 
-
-
-
 	local holder
-
-
 	local function createButton(isDesktop)
-
-
 		return New("TextButton", {
-
 			Name = "MinimizeButton",
-
-
 			Size = UDim2.new(1, 0, 1, 0),
-
-
 			BorderSizePixel = 0,
 
 
@@ -10387,70 +8361,29 @@ function Library:CreateMinimizer(Config)
 
 
 	if isMobile then
-
-
 		holder = New("Frame", {
-
-
 			Name = "UIButton",
-
-
 			Parent = parentGui,
-
-
 			Size = Config.Size or UDim2.fromOffset(36, 36),
-
 			Position = Config.Position or UDim2.new(0.45, 0, 0.025, 0),
-
-
 			BackgroundTransparency = 1,
-
-
 			ZIndex = 999999999,
-
-
 			Visible = (Config.Visible ~= false),
-
-
 		})
-
-
 	else
-
-
 		holder = New("Frame", {
-
-
 			Name = "UIButton",
-
-
 			Parent = parentGui,
-
-
 			Size = Config.Size or UDim2.fromOffset(36, 36),
 			Position = Config.Position or UDim2.new(0, 300, 0, 20),
-
-
 			BackgroundTransparency = 1,
-
-
 			ZIndex = 999999999,
-
-
 			Visible = (Config.Visible ~= false),
-
-
 		})
-
-
 	end
 
-
-
 	if useAcrylic then
-
 		local miniAcrylic = Acrylic.AcrylicPaint()
-
 		miniAcrylic.Frame.Parent = holder
 
 
@@ -10507,92 +8440,34 @@ function Library:CreateMinimizer(Config)
 
 
 	local btnInstance = createButton(not isMobile)
-
-
 	btnInstance.Parent = holder
-
-
 	btnInstance.ZIndex = (holder.ZIndex or 0) + 1
 
-
-
-
-
 	local button = holder:FindFirstChildOfClass("TextButton")
-
-
 	if button then
-
-
 		local isDragging = false
-
-
 		local dragStart, dragOffset
 
-
-
-
-
 		if draggableWhole then
-
-
 			Creator.AddSignal(button.InputBegan, function(Input)
-
-
 				if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-
-
 					isDragging = true
-
-
 					local pos = Input.Position
-
-
 					dragStart = Vector2.new(pos.X, pos.Y)
-
-
 					dragOffset = holder.Position
-
-
 					local conn
-
-
 					conn = Input.Changed:Connect(function()
-
-
 						if Input.UserInputState == Enum.UserInputState.End then
-
-
 							isDragging = false
-
-
 							dragStart = nil
-
-
 							dragOffset = nil
-
-
 							conn:Disconnect()
-
-
 						end
-
-
 					end)
-
-
 				end
-
-
 			end)
 
-
-
-
-
 			Creator.AddSignal(RunService.Heartbeat, function()
-
-
 				if isDragging and dragStart and dragOffset and holder and holder.Parent then
 
 
@@ -10692,65 +8567,27 @@ function Library:SetTheme(Value)
 	Creator.UpdateTheme()
 end
 
-
 function Library:Destroy()
-
-
 	if Library.Window then
-
-
 		Library.Unloaded = true
-
-
 		if Library.UseAcrylic then
-
-
 			Library.Window.AcrylicPaint.Model:Destroy()
-
-
 		end
-
-
 		Creator.Disconnect()
-
-
 		Library.GUI:Destroy()
-
-
 	end
-
-
 end
 
-
-
-
-
 function Library:ToggleAcrylic(Value)
-
-
 	if Library.Window then
-
-
 		if Library.UseAcrylic then
-
-
 			Library.Acrylic = Value
-
-
 			if Library.Window.AcrylicPaint and Library.Window.AcrylicPaint.Model then
-
-
 				Library.Window.AcrylicPaint.Model.Transparency = Value and 0.95 or 1
-
-
 			end
-
-
 		end
-
-
 	end
+end
 
 
 end
@@ -10886,110 +8723,45 @@ end
 
 
 function Library:Notify(Config)
-
-
 	return NotificationModule:New(Config)
+end
 
 
 end
 
 
-
-
-
--- _G.Fluent removed for AC bypass
-
-
-
-
+_G.Fluent = Library
 
 local MinimizeButton = New("TextButton", {
     Name = httpService:GenerateGUID(false),
-
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
-
-
 	Size = UDim2.new(1, 0, 1, 0),
-
-
 	BorderSizePixel = 0,
-
-
 	BackgroundTransparency = 0.05, 
-
-
 }, {
-
-
 	New("UICorner", {
-
-
 		CornerRadius = UDim.new(0, 14),
-
-
 	}),
-
-
 	New("UIGradient", {
-
-
 		Color = ColorSequence.new{
-
-
 			ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 50)),
-
-
 			ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
-
-
 		},
-
-
 		Rotation = 45,
-
-
 	}),
-
-
 	New("UIStroke", {
-
-
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-
-
 		Color = Color3.fromRGB(100, 150, 255),
-
-
 		Transparency = 0.6,
-
-
 		Thickness = 2,
-
-
 	}),
-
-
 	New("Frame", {
-
-
 		BackgroundColor3 = Color3.fromRGB(100, 150, 255),
-
-
 		BackgroundTransparency = 0.9,
-
-
 		Size = UDim2.new(1, -6, 1, -6),
-
-
 		Position = UDim2.new(0, 3, 0, 3),
-
-
 		BorderSizePixel = 0,
-
-
 	}, {
-
-
 		New("UICorner", {
 
 
@@ -10997,6 +8769,7 @@ local MinimizeButton = New("TextButton", {
 
 
 		}),
+
 
 	}),
 
@@ -11082,71 +8855,27 @@ local MinimizeButton = New("TextButton", {
 local MobileMinimizeButton = New("TextButton", {
     Name = httpService:GenerateGUID(false),
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
-
-
 	Size = UDim2.new(1, 0, 1, 0),
-
-
 	BorderSizePixel = 0,
-
-
 	BackgroundTransparency = 0.05,
-
-
 }, {
-
-
 	New("UICorner", {
-
-
 		CornerRadius = UDim.new(0, 12),
-
-
 	}),
-
-
 	New("UIGradient", {
-
-
 		Color = ColorSequence.new{
-
-
 			ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 50)),
-
-
 			ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
-
-
 		},
-
-
 		Rotation = 45,
-
-
 	}),
-
-
 	New("UIStroke", {
-
-
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-
-
 		Color = Color3.fromRGB(100, 150, 255),
-
-
 		Transparency = 0.7,
-
-
 		Thickness = 1.5,
-
-
 	}),
-
-
 	New("Frame", {
-
-
 		BackgroundColor3 = Color3.fromRGB(100, 150, 255),
 
 
@@ -11243,153 +8972,51 @@ local dragOffset = nil
 
 
 Creator.AddSignal(MinimizeButton.InputBegan, function(Input)
-
-
 	if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-
-
 		isDragging = true
-
-
 		dragStart = Vector2.new(Input.Position.X, Input.Position.Y)
-
-
 		dragOffset = (Library.Minimizer or Minimizer).Position
 
-
-
-
-
 		local connection
-
-
 		connection = Input.Changed:Connect(function()
-
-
 			if Input.UserInputState == Enum.UserInputState.End then
-
-
 				isDragging = false
-
-
 				dragStart = nil
-
-
 				dragOffset = nil
-
-
 				connection:Disconnect()
-
-
 			end
-
-
 		end)
-
-
 	end
-
-
 end)
-
-
-
 
 Creator.AddSignal(MobileMinimizeButton.InputBegan, function(Input)
-
 	if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-
-
 		isDragging = true
-
-
 		dragStart = Vector2.new(Input.Position.X, Input.Position.Y)
-
-
 		dragOffset = (Library.Minimizer or Minimizer).Position
-
-
 		local connection
-
-
 		connection = Input.Changed:Connect(function()
-
-
 			if Input.UserInputState == Enum.UserInputState.End then
-
-
 				isDragging = false
-
-
 				dragStart = nil
-
-
 				dragOffset = nil
-
-
 				connection:Disconnect()
-
-
 			end
-
-
 		end)
-
-
 	end
-
-
 end)
 
-
-
-
-
 local debugCount = 0
-
-
 Creator.AddSignal(RunService.Heartbeat, function()
-
-
 	local activeMin = Library.Minimizer or Minimizer
-
-
 	if isDragging and dragStart and dragOffset and activeMin and activeMin.Parent then
-
-
-		debugCount = debugCount + 1
-
-
-		if debugCount % 30 == 1 then
-
-
-		end
-
-
 		local Mouse = game:GetService("Players").LocalPlayer:GetMouse()
-
-
 		local currentMousePos = Vector2.new(Mouse.X, Mouse.Y)
-
-
 		local delta = currentMousePos - dragStart
-
 		local newX = dragOffset.X.Offset + delta.X
-
-
 		local newY = dragOffset.Y.Offset + delta.Y
 
-
-		local viewportSize = workspace.Camera.ViewportSize
-		local minimizerSize = activeMin.AbsoluteSize
-
-
-
-
-
 		if newX < 0 then newX = 0 end
-
-
 		if newY < 0 then newY = 0 end
 
 		if newX > viewportSize.X - minimizerSize.X then 
@@ -11628,35 +9255,9 @@ function Library:AddSnowfallToWindow(Config)
 end
 
 if RunService:IsStudio() then task.wait(0.01) end
-task.spawn(function()
-	local hue = 0
-	RunService.Heartbeat:Connect(function(dt)
-		if Library.Theme == "RGB" then
-			hue = hue + dt * 0.1
-			if hue > 1 then hue = 0 end
-			local rgbColor = Color3.fromHSV(hue, 0.8, 1)
-			local rgbColor2 = Color3.fromHSV((hue + 0.5) % 1, 0.8, 1)
-			local theme = Themes["RGB"]
-			if theme then
-				theme.Accent = rgbColor
-				theme.TitleBarLine = rgbColor
-				theme.Tab = rgbColor 
-				theme.ElementBorder = rgbColor
-				theme.ToggleToggled = rgbColor
-				theme.SliderRail = rgbColor
-				theme.DropdownFrame = rgbColor
-				theme.InputIndicatorFocus = rgbColor
-				theme.Text = Color3.new(1,1,1)
-				if Library.Window then
-					Library:SetTheme("Slate") 
-				end
-			end
-		end
-	end)
-end)
 
--- Update session cleanup with captured locals
-getgenv()[CurrentSessionKey] = function()
+
+_G[CurrentSessionKey] = function()
     pcall(function() 
         if Library then Library:Destroy() end 
     end)
@@ -11666,8 +9267,7 @@ getgenv()[CurrentSessionKey] = function()
     pcall(function() 
         if BlurFolder then BlurFolder:Destroy() end 
     end)
-    -- Remove the key itself after cleanup
-    getgenv()[CurrentSessionKey] = nil
+    _G[CurrentSessionKey] = nil
 end
 
 return Library, SaveManager, InterfaceManager, Mobile
