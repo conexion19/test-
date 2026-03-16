@@ -6,7 +6,40 @@ local TweenService = game:GetService("TweenService")
 local TextService = game:GetService("TextService")
 local Camera = game:GetService("Workspace").CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
+-- Anti-Detection Cleanup / Session Management
+local SessionLockFile = "nexus_session_lock.dat"
 local httpService = game:GetService("HttpService")
+
+local function GetSessionKey()
+    if isfile and isfile(SessionLockFile) then
+        return readfile(SessionLockFile)
+    end
+    return nil
+end
+
+local function SetSessionKey(key)
+    if writefile then
+        writefile(SessionLockFile, key)
+    end
+end
+
+-- Try to clean up previous session
+local oldKey = GetSessionKey()
+if oldKey and getgenv()[oldKey] then
+    local oldCleanup = getgenv()[oldKey]
+    if type(oldCleanup) == "function" then
+        pcall(oldCleanup)
+    end
+    getgenv()[oldKey] = nil
+end
+
+-- Generate new session key for this execution
+local CurrentSessionKey = httpService:GenerateGUID(false)
+SetSessionKey(CurrentSessionKey)
+
+-- Session Cleanup Placeholder
+getgenv()[CurrentSessionKey] = function() end 
+
 
 local Mobile = not RunService:IsStudio() and table.find({Enum.Platform.IOS, Enum.Platform.Android}, UserInputService:GetPlatform()) ~= nil
 
@@ -731,39 +764,39 @@ local Themes = {
 	},
 	Slate = {
 		Name = "Slate",
-		Accent = Color3.fromRGB(255, 255, 255),
-		AcrylicMain = Color3.fromRGB(25, 25, 28),
-		AcrylicBorder = Color3.fromRGB(25, 25, 28),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(20, 20, 23), Color3.fromRGB(25, 25, 28)),
+		Accent = Color3.fromRGB(255, 105, 180),
+		AcrylicMain = Color3.fromRGB(40, 20, 25),
+		AcrylicBorder = Color3.fromRGB(60, 30, 40),
+		AcrylicGradient = ColorSequence.new(Color3.fromRGB(30, 15, 20), Color3.fromRGB(40, 20, 25)),
 		AcrylicNoise = 0.95,
-		TitleBarLine = Color3.fromRGB(35, 35, 35),
-		Tab = Color3.fromRGB(60, 60, 60),
-		Element = Color3.fromRGB(25, 25, 28),
-		ElementBorder = Color3.fromRGB(35, 35, 35),
-		InElementBorder = Color3.fromRGB(35, 35, 35),
+		TitleBarLine = Color3.fromRGB(80, 40, 50),
+		Tab = Color3.fromRGB(100, 50, 60),
+		Element = Color3.fromRGB(40, 20, 25),
+		ElementBorder = Color3.fromRGB(60, 30, 40),
+		InElementBorder = Color3.fromRGB(60, 30, 40),
 		ElementTransparency = 0.92,
-		ToggleSlider = Color3.fromRGB(45, 45, 45),
+		ToggleSlider = Color3.fromRGB(80, 40, 50),
 		ToggleToggled = Color3.fromRGB(255, 255, 255),
-		SliderRail = Color3.fromRGB(45, 45, 45),
-		DropdownFrame = Color3.fromRGB(45, 45, 45),
-		DropdownHolder = Color3.fromRGB(25, 25, 28),
-		DropdownBorder = Color3.fromRGB(35, 35, 35),
-		DropdownOption = Color3.fromRGB(45, 45, 45),
-		Keybind = Color3.fromRGB(45, 45, 45),
-		Input = Color3.fromRGB(45, 45, 45),
-		InputFocused = Color3.fromRGB(20, 20, 23),
-		InputIndicator = Color3.fromRGB(45, 45, 45),
-		Dialog = Color3.fromRGB(25, 25, 28),
-		DialogHolder = Color3.fromRGB(25, 25, 28),
-		DialogHolderLine = Color3.fromRGB(35, 35, 35),
-		DialogButton = Color3.fromRGB(30, 30, 33),
-		DialogButtonBorder = Color3.fromRGB(35, 35, 35),
-		DialogBorder = Color3.fromRGB(35, 35, 35),
-		DialogInput = Color3.fromRGB(25, 25, 28),
-		DialogInputLine = Color3.fromRGB(60, 60, 60),
-		Text = Color3.fromRGB(240, 240, 240),
-		SubText = Color3.fromRGB(160, 160, 160),
-		Hover = Color3.fromRGB(45, 45, 48),
+		SliderRail = Color3.fromRGB(80, 40, 50),
+		DropdownFrame = Color3.fromRGB(80, 40, 50),
+		DropdownHolder = Color3.fromRGB(40, 20, 25),
+		DropdownBorder = Color3.fromRGB(60, 30, 40),
+		DropdownOption = Color3.fromRGB(80, 40, 50),
+		Keybind = Color3.fromRGB(80, 40, 50),
+		Input = Color3.fromRGB(80, 40, 50),
+		InputFocused = Color3.fromRGB(30, 15, 20),
+		InputIndicator = Color3.fromRGB(80, 40, 50),
+		Dialog = Color3.fromRGB(40, 20, 25),
+		DialogHolder = Color3.fromRGB(40, 20, 25),
+		DialogHolderLine = Color3.fromRGB(60, 30, 40),
+		DialogButton = Color3.fromRGB(50, 25, 30),
+		DialogButtonBorder = Color3.fromRGB(60, 30, 40),
+		DialogBorder = Color3.fromRGB(60, 30, 40),
+		DialogInput = Color3.fromRGB(40, 20, 25),
+		DialogInputLine = Color3.fromRGB(100, 50, 60),
+		Text = Color3.fromRGB(255, 255, 255),
+		SubText = Color3.fromRGB(200, 160, 170),
+		Hover = Color3.fromRGB(80, 40, 50),
 		HoverChange = 0.03,
 	},
 	Gray = {
@@ -2042,20 +2075,57 @@ Library.MiniMessageToRichText = MiniMessageToRichText
 
 local New = Creator.New
 
-local get_hui = gethui or function() return game:GetService("CoreGui") end
+local get_hui = gethui or function() return nil end
+local clref = cloneref or function(o) return o end
+
+local function GetBestParent()
+    -- 1. Try gethui() (Hidden UI container)
+    local success, hiddenUI = pcall(function() return get_hui() end)
+    if success and hiddenUI and typeof(hiddenUI) == "Instance" then
+        return hiddenUI
+    end
+    
+    -- 2. Try hiding inside CoreGui (fallback)
+    local CoreGui = game:GetService("CoreGui")
+    if CoreGui then
+        local RobloxGui = CoreGui:FindFirstChild("RobloxGui")
+        if RobloxGui then
+            return RobloxGui
+        end
+        return CoreGui
+    end
+    
+    -- 3. Fallback to PlayerGui
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    if LocalPlayer then
+        return LocalPlayer:WaitForChild("PlayerGui")
+    end
+    
+    return game:GetService("CoreGui")
+end
 
 local GUI = Creator.New("ScreenGui", {
-    Parent = get_hui(), 
+    Name = httpService:GenerateGUID(false),
+    -- Parent is set later
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     ResetOnSpawn = false,
-    DisplayOrder = 999
+    DisplayOrder = 99999 -- Maximum priority
 })
 
+-- SECURE PARENTING
+local targetParent = clref(GetBestParent())
+if ProtectGui and type(ProtectGui) == "function" then
+    ProtectGui(GUI)
+end
+GUI.Parent = targetParent
+
+-- HIDE FROM GETGENV (Use Random Key for Internal Reference Only)
+-- We remove explicit global reference like "NexusInstance" to be undetectable
 Library.GUI = GUI
-ProtectGui(GUI)
 
 local KeybindDisplayContainer = Instance.new("Frame")
-KeybindDisplayContainer.Name = "UIFrame"
+KeybindDisplayContainer.Name = httpService:GenerateGUID(false)
 KeybindDisplayContainer.BackgroundTransparency = 1
 KeybindDisplayContainer.Size = UDim2.new(0, 250, 1, 0)
 KeybindDisplayContainer.Position = UDim2.new(1, -260, 0, 0)
@@ -2193,7 +2263,8 @@ end
 local viewportPointToWorld, getOffset = unpack({ viewportPointToWorld, getOffset })
 
 local BlurFolder = Instance.new("Folder")
-BlurFolder.Name = "Blur"
+BlurFolder.Name = httpService:GenerateGUID(false)
+-- getgenv().NexusBlur assignment removed for security
 do
 	local ws = game:GetService("Workspace")
 	local function attachToCurrentCamera()
@@ -2208,7 +2279,7 @@ end
 
 local function createAcrylic()
 	local Part = Creator.New("Part", {
-		Name = "Body",
+		Name = httpService:GenerateGUID(false),
 		Color = Color3.new(0, 0, 0),
 		Material = Enum.Material.Glass,
 		Size = Vector3.new(1, 1, 0),
@@ -2219,7 +2290,7 @@ local function createAcrylic()
 		Transparency = 0.98,
 	}, {
 		Creator.New("SpecialMesh", {
-			Name = "Mesh",
+			Name = httpService:GenerateGUID(false),
 			MeshType = Enum.MeshType.Brick,
 			Offset = Vector3.new(0, 0, -0.000001),
 		}),
@@ -3859,6 +3930,7 @@ Components.Notification = (function()
 		Library.ActiveNotifications = Library.ActiveNotifications or {}
 
 		Notification.Holder = New("Frame", {
+            Name = httpService:GenerateGUID(false),
 			Position = UDim2.new(1, -30, 1, -30),
 			Size = UDim2.new(0, 310, 1, -30),
 			AnchorPoint = Vector2.new(1, 1),
@@ -5019,6 +5091,7 @@ Window.ContainerCanvas = New("Frame", {
 		table.insert(rootChildren, ResizeStartFrame)
 
 Window.Root = New("Frame", {
+    Name = httpService:GenerateGUID(false),
     BackgroundTransparency = 1,
     Size = Window.Size,
     Position = Window.Position,
@@ -5121,14 +5194,26 @@ Window.Root = New("Frame", {
 		end
 
 		local SizeMotor = Flipper.GroupMotor.new({
-			X = Window.Size.X.Offset,
-			Y = Window.Size.Y.Offset,
+			X = 0,
+			Y = 0,
 		})
 
 		local PosMotor = Flipper.GroupMotor.new({
 			X = Window.Position.X.Offset,
-			Y = Window.Position.Y.Offset,
+			Y = Window.Position.Y.Offset + 50,
 		})
+
+		-- Appear Animation
+		task.spawn(function()
+			SizeMotor:setGoal({
+				X = Flipper.Spring.new(Window.Size.X.Offset, {frequency = 4, dampingRatio = 0.7}),
+				Y = Flipper.Spring.new(Window.Size.Y.Offset, {frequency = 4, dampingRatio = 0.7}),
+			})
+			PosMotor:setGoal({
+				X = Flipper.Spring.new(Window.Position.X.Offset, {frequency = 4, dampingRatio = 0.7}),
+				Y = Flipper.Spring.new(Window.Position.Y.Offset, {frequency = 4, dampingRatio = 0.7}),
+			})
+		end)
 
 		Library.__cd = 0
 		Window.SelectorPosMotor = Flipper.SingleMotor.new(17)
@@ -5272,8 +5357,8 @@ Window.Root = New("Frame", {
 				local Delta = Input.Position - MousePos
 				Window.Position = UDim2.fromOffset(StartPos.X.Offset + Delta.X, StartPos.Y.Offset + Delta.Y)
 				PosMotor:setGoal({
-					X = Instant(Window.Position.X.Offset),
-					Y = Instant(Window.Position.Y.Offset),
+					X = Flipper.Instant.new(Window.Position.X.Offset),
+					Y = Flipper.Instant.new(Window.Position.Y.Offset),
 				})
 			end
 
@@ -5627,12 +5712,13 @@ ElementsTable.Toggle = (function()
 
 		local ToggleCircle = New("ImageLabel", {
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Size = UDim2.fromOffset(0, 0),
+			Size = UDim2.fromOffset(14, 14),
 			Position = UDim2.new(0.5, 0, 0.5, 0),
-			Image = "",
+			Image = "rbxassetid://10709790644",
 			ImageTransparency = 1,
+			BackgroundTransparency = 1,
 			ThemeTag = {
-				ImageColor3 = "ToggleSlider",
+				ImageColor3 = "ToggleToggled",
 			},
 		})
 
@@ -5670,11 +5756,18 @@ ElementsTable.Toggle = (function()
 			Toggle.Value = Value
 
 			Creator.OverrideTag(ToggleBorder, { Color = Toggle.Value and "Accent" or "ToggleSlider" })
+            Creator.OverrideTag(ToggleCircle, { ImageColor3 = Toggle.Value and "Text" or "ToggleSlider" })
 			
 			TweenService:Create(
 				ToggleSlider,
 				TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
 				{ BackgroundTransparency = Toggle.Value and 0 or 1 }
+			):Play()
+            
+            TweenService:Create(
+				ToggleCircle,
+				TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				{ ImageTransparency = Toggle.Value and 0 or 1, Size = Toggle.Value and UDim2.fromOffset(14, 14) or UDim2.fromOffset(0, 0) }
 			):Play()
 
 			Library:SafeCallback(Toggle.Callback, Toggle.Value)
@@ -8626,11 +8719,7 @@ if RunService:IsStudio() then
 end
 
 local SaveManager = {} do
-
-
-
-	SaveManager.Folder = "FluentSettings"
-
+    SaveManager.Folder = "Config_" .. tostring(game.GameId)
 
 	SaveManager.Ignore = {}
 
@@ -8908,7 +8997,6 @@ local SaveManager = {} do
 
 
 		end	
-
 
 
 
@@ -9580,10 +9668,7 @@ end
 
 
 local InterfaceManager = {} do
-
-
-	InterfaceManager.Folder = "FluentSettings"
-
+    InterfaceManager.Folder = "Config_" .. tostring(game.GameId) .. "_UI"
 
 	InterfaceManager.Settings = {
 
@@ -10819,7 +10904,7 @@ end
 
 
 local MinimizeButton = New("TextButton", {
-
+    Name = httpService:GenerateGUID(false),
 
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
 
@@ -10913,7 +10998,6 @@ local MinimizeButton = New("TextButton", {
 
 		}),
 
-
 	}),
 
 
@@ -10996,7 +11080,7 @@ local MinimizeButton = New("TextButton", {
 
 
 local MobileMinimizeButton = New("TextButton", {
-
+    Name = httpService:GenerateGUID(false),
 	BackgroundColor3 = Color3.fromRGB(25, 25, 30),
 
 
@@ -11383,7 +11467,7 @@ function Library:AddSnowfallToWindow(Config)
     
     function SnowModule:Init(Parent, Config)
         local innerContainer = Instance.new("Frame")
-        innerContainer.Name = "Effect"
+        innerContainer.Name = httpService:GenerateGUID(false)
         innerContainer.Size = UDim2.new(1, 0, 1, 0)
         innerContainer.BackgroundTransparency = 1
         innerContainer.ClipsDescendants = true
@@ -11399,7 +11483,7 @@ function Library:AddSnowfallToWindow(Config)
 
         for i = 1, snowflakeCount do
             local snowflake = Instance.new("ImageLabel")
-            snowflake.Name = "Part"..i
+            snowflake.Name = httpService:GenerateGUID(false)
             snowflake.BackgroundTransparency = 1
             snowflake.BorderSizePixel = 0
             snowflake.Image = "rbxassetid://124338537670236"
@@ -11570,4 +11654,20 @@ task.spawn(function()
 		end
 	end)
 end)
+
+-- Update session cleanup with captured locals
+getgenv()[CurrentSessionKey] = function()
+    pcall(function() 
+        if Library then Library:Destroy() end 
+    end)
+    pcall(function() 
+        if GUI then GUI:Destroy() end 
+    end)
+    pcall(function() 
+        if BlurFolder then BlurFolder:Destroy() end 
+    end)
+    -- Remove the key itself after cleanup
+    getgenv()[CurrentSessionKey] = nil
+end
+
 return Library, SaveManager, InterfaceManager, Mobile
