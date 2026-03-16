@@ -229,6 +229,14 @@ function Helios:CreateWindow(Config)
     
     Window.Root = Root
     
+    function Window:SelectTab(TabInfo)
+        if type(TabInfo) == "number" and Window.Tabs[TabInfo] then
+            Window.Tabs[TabInfo]:Select()
+        elseif type(TabInfo) == "table" and TabInfo.Select then
+            TabInfo:Select()
+        end
+    end
+
     function Window:AddTab(Config)
         local TabTitle = Config.Title or "Tab"
         local IconID = Icons[Config.Icon] or Icons.default
@@ -295,6 +303,9 @@ function Helios:CreateWindow(Config)
         end
         
         local Tab = { Container = Container, Button = TabButton }
+        function Tab:Select()
+            Select()
+        end
         table.insert(Window.Tabs, Tab)
 
         -- [Element Creator Helper]
