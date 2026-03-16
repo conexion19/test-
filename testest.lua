@@ -1,26 +1,18 @@
+local Helios = {
+	Version = "1.1.0",
+}
+
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
 local CoreGui = game:GetService("CoreGui")
 
-local Helios = {
-	Version = "1.1.0",
-	OpenFrames = {},
-	Options = {},
-	Themes = {},
-	Window = nil,
-	WindowFrame = nil,
-	Unloaded = false,
-	Theme = "Slate",
-	UseAcrylic = false,
-	Acrylic = false,
-	Transparency = false,
-	MinimizeKey = Enum.KeyCode.LeftControl,
-	Loaded = false,
-}
+local OpenFrames = {}
+local Options = {}
+Helios.Options = Options
+Helios.Theme = "Slate"
 
 local Themes = {
 	Slate = {
@@ -28,146 +20,48 @@ local Themes = {
 		Accent = Color3.fromRGB(0, 85, 255),
 		AcrylicMain = Color3.fromRGB(40, 20, 25),
 		AcrylicBorder = Color3.fromRGB(60, 30, 40),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(30, 15, 20), Color3.fromRGB(40, 20, 25)),
-		AcrylicNoise = 0.95,
 		TitleBarLine = Color3.fromRGB(80, 40, 50),
 		Tab = Color3.fromRGB(100, 50, 60),
 		Element = Color3.fromRGB(40, 20, 25),
 		ElementBorder = Color3.fromRGB(60, 30, 40),
-		InElementBorder = Color3.fromRGB(60, 30, 40),
-		ElementTransparency = 0.92,
-		ToggleSlider = Color3.fromRGB(80, 40, 50),
 		ToggleToggled = Color3.fromRGB(255, 255, 255),
 		SliderRail = Color3.fromRGB(80, 40, 50),
-		DropdownFrame = Color3.fromRGB(80, 40, 50),
-		DropdownHolder = Color3.fromRGB(40, 20, 25),
-		DropdownBorder = Color3.fromRGB(60, 30, 40),
 		DropdownOption = Color3.fromRGB(80, 40, 50),
-		Keybind = Color3.fromRGB(80, 40, 50),
-		Input = Color3.fromRGB(80, 40, 50),
-		InputFocused = Color3.fromRGB(30, 15, 20),
-		InputIndicator = Color3.fromRGB(80, 40, 50),
-		Dialog = Color3.fromRGB(40, 20, 25),
-		DialogHolder = Color3.fromRGB(40, 20, 25),
-		DialogHolderLine = Color3.fromRGB(60, 30, 40),
-		DialogButton = Color3.fromRGB(50, 25, 30),
-		DialogButtonBorder = Color3.fromRGB(60, 30, 40),
-		DialogBorder = Color3.fromRGB(60, 30, 40),
-		DialogInput = Color3.fromRGB(40, 20, 25),
-		DialogInputLine = Color3.fromRGB(100, 50, 60),
 		Text = Color3.fromRGB(255, 255, 255),
 		SubText = Color3.fromRGB(200, 160, 170),
-		Hover = Color3.fromRGB(80, 40, 50),
-		HoverChange = 0.03,
 	},
 	Dark = {
 		Name = "Dark",
 		Accent = Color3.fromRGB(96, 205, 255),
-		AcrylicMain = Color3.fromRGB(60, 60, 60),
-		AcrylicBorder = Color3.fromRGB(90, 90, 90),
-		AcrylicGradient = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(40, 40, 40)),
-		AcrylicNoise = 0.9,
+		AcrylicMain = Color3.fromRGB(30, 30, 30),
+		AcrylicBorder = Color3.fromRGB(60, 60, 60),
 		TitleBarLine = Color3.fromRGB(75, 75, 75),
-		Tab = Color3.fromRGB(120, 120, 120),
-		Element = Color3.fromRGB(120, 120, 120),
+		Tab = Color3.fromRGB(45, 45, 45),
+		Element = Color3.fromRGB(45, 45, 45),
 		ElementBorder = Color3.fromRGB(35, 35, 35),
-		InElementBorder = Color3.fromRGB(90, 90, 90),
-		ElementTransparency = 0.87,
-		ToggleSlider = Color3.fromRGB(120, 120, 120),
 		ToggleToggled = Color3.fromRGB(42, 42, 42),
 		SliderRail = Color3.fromRGB(120, 120, 120),
-		DropdownFrame = Color3.fromRGB(160, 160, 160),
-		DropdownHolder = Color3.fromRGB(45, 45, 45),
-		DropdownBorder = Color3.fromRGB(35, 35, 35),
-		DropdownOption = Color3.fromRGB(120, 120, 120),
-		Keybind = Color3.fromRGB(120, 120, 120),
-		Input = Color3.fromRGB(160, 160, 160),
-		InputFocused = Color3.fromRGB(10, 10, 10),
-		InputIndicator = Color3.fromRGB(150, 150, 150),
-		Dialog = Color3.fromRGB(45, 45, 45),
-		DialogHolder = Color3.fromRGB(35, 35, 35),
-		DialogHolderLine = Color3.fromRGB(30, 30, 30),
-		DialogButton = Color3.fromRGB(45, 45, 45),
-		DialogButtonBorder = Color3.fromRGB(80, 80, 80),
-		DialogBorder = Color3.fromRGB(70, 70, 70),
-		DialogInput = Color3.fromRGB(55, 55, 55),
-		DialogInputLine = Color3.fromRGB(160, 160, 160),
+		DropdownOption = Color3.fromRGB(60, 60, 60),
 		Text = Color3.fromRGB(240, 240, 240),
 		SubText = Color3.fromRGB(170, 170, 170),
-		Hover = Color3.fromRGB(120, 120, 120),
-		HoverChange = 0.07,
 	},
 }
 
-Helios.Themes = {}
-for k, v in pairs(Themes) do table.insert(Helios.Themes, k) end
+Helios.Themes = Themes
 
 local Creator = {
 	Registry = {},
 	Signals = {},
-	TransparencyMotors = {},
 	DefaultProperties = {
-		ScreenGui = {
-			ResetOnSpawn = false,
-			ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-		},
-		Frame = {
-			BackgroundColor3 = Color3.new(1, 1, 1),
-			BorderColor3 = Color3.new(0, 0, 0),
-			BorderSizePixel = 0,
-		},
-		ScrollingFrame = {
-			BackgroundColor3 = Color3.new(1, 1, 1),
-			BorderColor3 = Color3.new(0, 0, 0),
-			ScrollBarImageColor3 = Color3.new(0, 0, 0),
-		},
-		TextLabel = {
-			BackgroundColor3 = Color3.new(1, 1, 1),
-			BorderColor3 = Color3.new(0, 0, 0),
-			Font = Enum.Font.SourceSans,
-			Text = "",
-			TextColor3 = Color3.new(0, 0, 0),
-			BackgroundTransparency = 1,
-			TextSize = 14,
-		},
-		TextButton = {
-			BackgroundColor3 = Color3.new(1, 1, 1),
-			BorderColor3 = Color3.new(0, 0, 0),
-			AutoButtonColor = false,
-			Font = Enum.Font.SourceSans,
-			Text = "",
-			TextColor3 = Color3.new(0, 0, 0),
-			TextSize = 14,
-		},
-		TextBox = {
-			BackgroundColor3 = Color3.new(1, 1, 1),
-			BorderColor3 = Color3.new(0, 0, 0),
-			ClearTextOnFocus = false,
-			Font = Enum.Font.SourceSans,
-			Text = "",
-			TextColor3 = Color3.new(0, 0, 0),
-			TextSize = 14,
-		},
-		ImageLabel = {
-			BackgroundTransparency = 1,
-			BackgroundColor3 = Color3.new(1, 1, 1),
-			BorderColor3 = Color3.new(0, 0, 0),
-			BorderSizePixel = 0,
-		},
-		ImageButton = {
-			BackgroundColor3 = Color3.new(1, 1, 1),
-			BorderColor3 = Color3.new(0, 0, 0),
-			AutoButtonColor = false,
-		},
-		CanvasGroup = {
-			BackgroundColor3 = Color3.new(1, 1, 1),
-			BorderColor3 = Color3.new(0, 0, 0),
-			BorderSizePixel = 0,
-		},
+		ScreenGui = { ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling },
+		Frame = { BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0 },
+		ScrollingFrame = { BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0, ScrollBarThickness = 4 },
+		TextLabel = { BackgroundTransparency = 1, Font = Enum.Font.Gotham, TextSize = 14, TextColor3 = Color3.new(1, 1, 1) },
+		TextButton = { AutoButtonColor = false, Font = Enum.Font.Gotham, TextSize = 14, TextColor3 = Color3.new(1, 1, 1) },
+		TextBox = { ClearTextOnFocus = false, Font = Enum.Font.Gotham, TextSize = 14, TextColor3 = Color3.new(1, 1, 1) },
 	},
 }
 
--- [Flipper Implementation - Compact]
 local Flipper = {}
 do 
     local Linear = {}
@@ -245,7 +139,7 @@ do
     Flipper.Instant = Instant
 end
 
--- [Creator Implementation - Compact]
+-- [Creator Implementation]
 function Creator.New(Name, Properties, Children)
     local Object = Instance.new(Name)
     local Default = Creator.DefaultProperties[Name] or {}
@@ -268,7 +162,7 @@ function Creator.AddThemeObject(Object, Properties)
 end
 
 function Creator.UpdateTheme()
-    local Theme = Themes[Helios.Theme] or Themes.Slate
+    local Theme = Themes[Helios.Theme] or Themes.Dark
     for Object, Props in pairs(Creator.Registry) do
         for Prop, ThemeKey in pairs(Props) do
             if Theme[ThemeKey] then Object[Prop] = Theme[ThemeKey] end
@@ -276,13 +170,6 @@ function Creator.UpdateTheme()
     end
 end
 
-function Creator.SpringMotor(Initial, Instance, Prop)
-    local Motor = Flipper.SingleMotor.new(Initial)
-    Motor:onStep(function(value) Instance[Prop] = value end)
-    return Motor, function(v) Motor:setGoal(Flipper.Spring.new(v, {frequency = 8})) end
-end
-
--- [Library Signals]
 local function Connect(Signal, Function)
     local Conn = Signal:Connect(Function)
     table.insert(Creator.Signals, Conn)
@@ -294,18 +181,12 @@ local ScreenGui = Creator.New("ScreenGui", {
     Name = "HeliosUI",
     Parent = RunService:IsStudio() and game.Players.LocalPlayer:WaitForChild("PlayerGui") or CoreGui,
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-    ResetOnSpawn = false,
 })
-Helios.GUI = ScreenGui
 
--- [Window Component]
 function Helios:CreateWindow(Config)
     if Helios.Window then return Helios.Window end
     
-    local Window = {
-        Tabs = {},
-    }
-    
+    local Window = { Tabs = {} }
     local Title = Config.Title or "Helios"
     local Size = Config.Size or UDim2.fromOffset(580, 460)
     
@@ -328,16 +209,11 @@ function Helios:CreateWindow(Config)
             Dragging = true
             DragStart = Input.Position
             StartPos = Root.Position
-            
-            Input.Changed:Connect(function()
-                if Input.UserInputState == Enum.UserInputState.End then Dragging = false end
-            end)
+            Input.Changed:Connect(function() if Input.UserInputState == Enum.UserInputState.End then Dragging = false end end)
         end
     end)
     Connect(Root.InputChanged, function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseMovement then
-            DragInput = Input
-        end
+        if Input.UserInputType == Enum.UserInputType.MouseMovement then DragInput = Input end
     end)
     Connect(UserInputService.InputChanged, function(Input)
         if Input == DragInput and Dragging then
@@ -346,7 +222,6 @@ function Helios:CreateWindow(Config)
         end
     end)
     
-    -- Structure
     local TabHolder = Creator.New("Frame", {
         Name = "TabHolder",
         Size = UDim2.new(0, 150, 1, 0),
@@ -366,28 +241,22 @@ function Helios:CreateWindow(Config)
     })
     
     Window.Root = Root
-    Window.TabHolder = TabHolder
-    Window.ContainerHolder = ContainerHolder
     
     function Window:AddTab(Config)
-        local Title = Config.Title or "Tab"
-        local Icon = Config.Icon or ""
+        local TabTitle = Config.Title or "Tab"
         
         local TabButton = Creator.New("TextButton", {
-            Text = Title,
+            Text = TabTitle,
             Size = UDim2.new(1, -10, 0, 30),
             Parent = TabHolder,
             ThemeTag = { BackgroundColor3 = "Tab", TextColor3 = "Text" }
-        }, {
-            Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) })
-        })
+        }, { Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }) })
         
         local Container = Creator.New("ScrollingFrame", {
             Size = UDim2.fromScale(1, 1),
             BackgroundTransparency = 1,
             Parent = ContainerHolder,
             Visible = false,
-            ScrollBarThickness = 2,
         }, {
             Creator.New("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }),
             Creator.New("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingLeft = UDim.new(0, 5) })
@@ -402,43 +271,25 @@ function Helios:CreateWindow(Config)
         
         local Tab = { Container = Container, Button = TabButton }
         table.insert(Window.Tabs, Tab)
-        
-        function Tab:AddSection(Title)
-            local Section = Creator.New("Frame", {
-                Size = UDim2.new(1, -10, 0, 30),
-                AutomaticSize = Enum.AutomaticSize.Y,
-                BackgroundTransparency = 1,
-                Parent = Container,
-            }, {
-                 Creator.New("TextLabel", {
-                    Text = Title,
-                    Size = UDim2.new(1, 0, 0, 20),
-                    BackgroundTransparency = 1,
-                    ThemeTag = { TextColor3 = "Text" },
-                    Font = Enum.Font.GothamBold,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                 }),
-                 Creator.New("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }),
-            })
-            
-            local Items = {}
-            
-            function Items:AddButton(Config)
-                local Btn = Creator.New("TextButton", {
-                    Text = Config.Title or "Button",
+
+        -- [Element Creator Helper]
+        local function CreateElement(Parent, Type, EConfig, Key)
+            if Type == "Button" then
+                 local Btn = Creator.New("TextButton", {
+                    Text = EConfig.Title or "Button",
                     Size = UDim2.new(1, 0, 0, 30),
-                    Parent = Section,
+                    Parent = Parent,
                     ThemeTag = { BackgroundColor3 = "Element", TextColor3 = "Text" }
                 }, { Creator.New("UICorner", { CornerRadius = UDim.new(0, 4) }) })
-                Connect(Btn.MouseButton1Click, Config.Callback or function() end)
-            end
-            
-            function Items:AddToggle(Key, Config)
-                local Toggled = Config.Default or false
+                Connect(Btn.MouseButton1Click, EConfig.Callback or function() end)
+                return Btn
+
+            elseif Type == "Toggle" then
+                local Toggled = EConfig.Default or false
                 local Btn = Creator.New("TextButton", {
-                    Text = (Config.Title or Key),
+                    Text = (EConfig.Title or Key),
                     Size = UDim2.new(1, 0, 0, 30),
-                    Parent = Section,
+                    Parent = Parent,
                     ThemeTag = { BackgroundColor3 = "Element", TextColor3 = "Text" },
                     TextXAlignment = Enum.TextXAlignment.Left,
                 }, { 
@@ -455,7 +306,7 @@ function Helios:CreateWindow(Config)
                 
                 local function Update()
                     Status.BackgroundColor3 = Toggled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-                    if Config.Callback then Config.Callback(Toggled) end
+                    if EConfig.Callback then EConfig.Callback(Toggled) end
                 end
                 
                 Connect(Btn.MouseButton1Click, function()
@@ -465,30 +316,26 @@ function Helios:CreateWindow(Config)
                 
                 local Toggle = { 
                     Value = Toggled, 
-                    SetValue = function(self, v) 
-                        Toggled = v; 
-                        Update() 
-                    end,
+                    SetValue = function(self, v) Toggled = v; Update() end,
                     Type = "Toggle"
                 }
                 Helios.Options[Key] = Toggle
                 return Toggle
-            end
 
-            function Items:AddSlider(Key, Config)
-                 local Min, Max = Config.Min or 0, Config.Max or 100
-                 local Default = Config.Default or Min
+            elseif Type == "Slider" then
+                 local Min, Max = EConfig.Min or 0, EConfig.Max or 100
+                 local Default = EConfig.Default or Min
                  local Value = Default
-                 local Rounding = Config.Rounding or 0
-
+                 local Rounding = EConfig.Rounding or 0
+                 
                  local Frame = Creator.New("Frame", {
                      Size = UDim2.new(1, 0, 0, 40),
-                     Parent = Section,
+                     Parent = Parent,
                      ThemeTag = { BackgroundColor3 = "Element" }
                  }, {
                      Creator.New("UICorner", { CornerRadius = UDim.new(0, 4) }),
                      Creator.New("TextLabel", {
-                         Text = (Config.Title or Key) .. ": " .. Value,
+                         Text = (EConfig.Title or Key) .. ": " .. Value,
                          Size = UDim2.new(1, -10, 0, 20),
                          Position = UDim2.fromOffset(5, 0),
                          BackgroundTransparency = 1,
@@ -514,55 +361,45 @@ function Helios:CreateWindow(Config)
                  local function Update(Input)
                      local Scale = math.clamp((Input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
                      local NewValue = Min + ((Max - Min) * Scale)
-                     if Rounding == 0 then
-                        NewValue = math.floor(NewValue + 0.5)
-                     else
-                        NewValue = math.floor(NewValue * (10^Rounding) + 0.5) / (10^Rounding)
-                     end
+                     if Rounding == 0 then NewValue = math.floor(NewValue + 0.5)
+                     else NewValue = math.floor(NewValue * (10^Rounding) + 0.5) / (10^Rounding) end
                      Value = NewValue
                      Fill.Size = UDim2.fromScale(Scale, 1)
-                     Frame.TextLabel.Text = (Config.Title or Key) .. ": " .. Value
-                     if Config.Callback then Config.Callback(Value) end
+                     Frame.TextLabel.Text = (EConfig.Title or Key) .. ": " .. Value
+                     if EConfig.Callback then EConfig.Callback(Value) end
                  end
                  
                  local Dragging = false
                  Connect(SliderBar.InputBegan, function(Input)
                      if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-                         Dragging = true
-                         Update(Input)
+                         Dragging = true; Update(Input)
                      end
                  end)
-                 Connect(UserInputService.InputEnded, function(Input)
-                     if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging = false end
-                 end)
-                 Connect(UserInputService.InputChanged, function(Input)
-                     if Dragging and Input.UserInputType == Enum.UserInputType.MouseMovement then Update(Input) end
-                 end)
+                 Connect(UserInputService.InputEnded, function(Input) if Input.UserInputType == Enum.UserInputType.MouseButton1 then Dragging = false end end)
+                 Connect(UserInputService.InputChanged, function(Input) if Dragging and Input.UserInputType == Enum.UserInputType.MouseMovement then Update(Input) end end)
 
                  local SliderObj = { 
                      Value = Value, 
                      SetValue = function(self, v) 
-                        Value = v
-                        Fill.Size = UDim2.fromScale(math.clamp((Value - Min)/(Max - Min), 0, 1), 1)
-                        Frame.TextLabel.Text = (Config.Title or Key) .. ": " .. Value
-                        if Config.Callback then Config.Callback(Value) end
+                        Value = v; Fill.Size = UDim2.fromScale(math.clamp((Value - Min)/(Max - Min), 0, 1), 1)
+                        Frame.TextLabel.Text = (EConfig.Title or Key) .. ": " .. Value
+                        if EConfig.Callback then EConfig.Callback(Value) end
                      end,
                      Type = "Slider"
                  }
                  Helios.Options[Key] = SliderObj
                  return SliderObj
-            end
-            
-            function Items:AddDropdown(Key, Config)
-                local Values = Config.Values or {}
-                local Default = Config.Default
-                local Multi = Config.Multi or false
+
+            elseif Type == "Dropdown" then
+                local Values = EConfig.Values or {}
+                local Default = EConfig.Default
+                local Multi = EConfig.Multi or false
                 local Value = Default or (Multi and {} or Values[1])
                 local Expanded = false
 
                 local Frame = Creator.New("Frame", {
                     Size = UDim2.new(1, 0, 0, 35),
-                    Parent = Section,
+                    Parent = Parent,
                     ThemeTag = { BackgroundColor3 = "Element" },
                     ClipsDescendants = true
                 }, { Creator.New("UICorner", { CornerRadius = UDim.new(0,4)}) })
@@ -572,7 +409,7 @@ function Helios:CreateWindow(Config)
                     Parent = Frame,
                     BackgroundTransparency = 1,
                     TextXAlignment = Enum.TextXAlignment.Left,
-                    Text = (Config.Title or Key) .. ": " .. (type(Value) == "table" and table.concat(Value, ", ") or tostring(Value)),
+                    Text = (EConfig.Title or Key) .. ": " .. (type(Value) == "table" and table.concat(Value, ", ") or tostring(Value)),
                     ThemeTag = { TextColor3 = "Text" }
                 }, { Creator.New("UIPadding", { PaddingLeft = UDim.new(0, 10)})})
                 
@@ -581,76 +418,60 @@ function Helios:CreateWindow(Config)
                     Position = UDim2.new(0, 10, 0, 35),
                     BackgroundTransparency = 1,
                     Parent = Frame
-                }, { 
-                   Creator.New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }),
-                   Creator.New("UIPadding", { PaddingBottom = UDim.new(0, 5)})
-                })
+                }, { Creator.New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }) })
                 
                 local function RefreshList()
                     for _, c in pairs(List:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
-                    
-                    for i, Val in pairs(Values) do
+                    for _, Val in pairs(Values) do
                         local Item = Creator.New("TextButton", {
                              Text = Val,
                              Size = UDim2.new(1, 0, 0, 25),
                              Parent = List,
                              ThemeTag = { BackgroundColor3 = "DropdownOption", TextColor3 = "Text" }
                         }, { Creator.New("UICorner", { CornerRadius = UDim.new(0,4)}) })
-                        
                         Connect(Item.MouseButton1Click, function()
                              if Multi then
-                                  if table.find(Value, Val) then
-                                      for idx, v in pairs(Value) do if v == Val then table.remove(Value, idx) end end
-                                  else
-                                      table.insert(Value, Val)
-                                  end
-                                  Button.Text = (Config.Title or Key) .. ": " .. table.concat(Value, ", ")
-                                  if Config.Callback then Config.Callback(Value) end
+                                  if table.find(Value, Val) then for idx, v in pairs(Value) do if v == Val then table.remove(Value, idx) end end
+                                  else table.insert(Value, Val) end
+                                  Button.Text = (EConfig.Title or Key) .. ": " .. table.concat(Value, ", ")
+                                  if EConfig.Callback then EConfig.Callback(Value) end
                              else
                                   Value = Val
-                                  Button.Text = (Config.Title or Key) .. ": " .. tostring(Value)
+                                  Button.Text = (EConfig.Title or Key) .. ": " .. tostring(Value)
                                   Expanded = false
                                   Frame.Size = UDim2.new(1, 0, 0, 35)
-                                  if Config.Callback then Config.Callback(Value) end
+                                  if EConfig.Callback then EConfig.Callback(Value) end
                              end
                         end)
                     end
-                    local h = (#Values * 25) + 40
-                    if Expanded then Frame.Size = UDim2.new(1, 0, 0, h) end
+                    if Expanded then Frame.Size = UDim2.new(1, 0, 0, (#Values * 25) + 40) end
                 end
                 
                 Connect(Button.MouseButton1Click, function()
                     Expanded = not Expanded
-                    if Expanded then
-                        RefreshList()
-                    else
-                        Frame.Size = UDim2.new(1, 0, 0, 35)
-                    end
+                    if Expanded then RefreshList() else Frame.Size = UDim2.new(1, 0, 0, 35) end
                 end)
                 
                 local DropdownObj = {
                     Value = Value,
                     SetValues = function(self, NewVal) Values = NewVal; if Expanded then RefreshList() end end,
-                    SetValue = function(self, V) Value = V; Button.Text = (Config.Title or Key) .. ": " .. (type(Value) == "table" and table.concat(Value, ", ") or tostring(Value)) end,
-                    Type = "Dropdown",
-                    Multi = Multi
+                    SetValue = function(self, V) Value = V; Button.Text = (EConfig.Title or Key) .. ": " .. (type(Value) == "table" and table.concat(Value, ", ") or tostring(Value)) end,
+                    Type = "Dropdown"
                 }
                 Helios.Options[Key] = DropdownObj
                 return DropdownObj
-            end
-            
-            function Items:AddInput(Key, Config)
+
+            elseif Type == "Input" then
                 local Frame = Creator.New("Frame", {
                     Size = UDim2.new(1, 0, 0, 40),
-                    Parent = Section,
+                    Parent = Parent,
                     ThemeTag = { BackgroundColor3 = "Element" } 
                 }, { Creator.New("UICorner", { CornerRadius = UDim.new(0, 4)}) })
                 
                 Creator.New("TextLabel", {
-                    Text = Config.Title or Key,
+                    Text = EConfig.Title or Key,
                     Size = UDim2.new(1, -10, 0, 20),
                     Position = UDim2.new(0, 5, 0, 0),
-                    BackgroundTransparency = 1,
                     Parent = Frame,
                     ThemeTag = { TextColor3 = "Text" },
                     TextXAlignment = Enum.TextXAlignment.Left
@@ -660,111 +481,68 @@ function Helios:CreateWindow(Config)
                     Size = UDim2.new(1, -10, 0, 20),
                     Position = UDim2.new(0, 5, 0, 20),
                     BackgroundTransparency = 1,
-                    Text = Config.Default or "",
+                    Text = EConfig.Default or "",
                     Parent = Frame,
                     ThemeTag = { TextColor3 = "Text" },
                     TextXAlignment = Enum.TextXAlignment.Left,
-                    ClearTextOnFocus = false
                 })
                 
-                Connect(TextBox.FocusLost, function(Enter)
-                    if Config.Callback then Config.Callback(TextBox.Text) end
+                Connect(TextBox.FocusLost, function()
+                    if EConfig.Callback then EConfig.Callback(TextBox.Text) end
                 end)
                 
-                local InputObj = {
-                    Value = TextBox.Text,
-                    SetValue = function(self, v) TextBox.Text = v end,
-                    Type = "Input"
-                }
+                local InputObj = { Value = TextBox.Text, SetValue = function(self, v) TextBox.Text = v end, Type = "Input" }
                 Helios.Options[Key] = InputObj
                 return InputObj
-            end
 
-            function Items:AddKeybind(Key, Config)
-                local Binding = Config.Default or Enum.KeyCode.Unknown
-                local Mode = Config.Mode or "Toggle" 
-                local Callback = Config.Callback or function() end
-                
-                local Frame = Creator.New("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 30),
-                    Parent = Section,
-                    ThemeTag = { BackgroundColor3 = "Element" },
-                    Text = ""
-                }, { 
-                    Creator.New("UICorner", { CornerRadius = UDim.new(0,4)}),
-                    Creator.New("UIPadding", { PaddingLeft = UDim.new(0,10), PaddingRight = UDim.new(0,10)})
-                })
-                
-                local Label = Creator.New("TextLabel", {
-                    Text = (Config.Title or Key),
-                    Size = UDim2.new(0.7, 0, 1, 0),
-                    BackgroundTransparency = 1,
-                    Parent = Frame,
-                    ThemeTag = { TextColor3 = "Text" },
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                })
-                
-                local BindLabel = Creator.New("TextLabel", {
-                    Text = "[" .. Binding.Name .. "]",
-                    Size = UDim2.new(0.3, 0, 1, 0),
-                    Position = UDim2.new(0.7, 0, 0, 0),
-                    BackgroundTransparency = 1,
-                    Parent = Frame,
-                    ThemeTag = { TextColor3 = "Accent" },
-                    TextXAlignment = Enum.TextXAlignment.Right,
-                })
-                
-                local Listening = false
-                Connect(Frame.MouseButton1Click, function()
-                    Listening = true
-                    BindLabel.Text = "[...]"
-                end)
-                
-                Connect(UserInputService.InputBegan, function(Input)
-                    if Listening then
-                        if Input.UserInputType == Enum.UserInputType.Keyboard then
-                            Binding = Input.KeyCode
-                            BindLabel.Text = "[" .. Binding.Name .. "]"
-                            Listening = false
-                            if Config.ChangedCallback then Config.ChangedCallback(Binding) end
-                        elseif Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.MouseButton2 then
-                             Binding = Enum.KeyCode.Unknown
-                             BindLabel.Text = "[None]"
-                             Listening = false
-                        end
-                    elseif Input.KeyCode == Binding and Binding ~= Enum.KeyCode.Unknown then
-                        Callback()
-                    end
-                end)
-                
-                local KeybindObj = {
-                    Value = Binding,
-                    Mode = Mode,
-                    SetValue = function(self, key, mode) 
-                         Binding = (typeof(key) == "EnumItem") and key or Enum.KeyCode[key]
-                         BindLabel.Text = "[" .. Binding.Name .. "]"
-                         Mode = mode or Mode
-                    end,
-                    GetState = function() return false end, 
-                    Type = "Keybind"
-                }
-                Helios.Options[Key] = KeybindObj
-                return KeybindObj
-            end
-            
-            function Items:AddColorpicker(Key, Config)
-                -- Simplified Colorpicker: RGB sliders
-                local Color = Config.Default or Color3.fromRGB(255, 255, 255)
+            elseif Type == "Paragraph" then
+                 local PConfig = EConfig or {}
+                 local Wrapper = Creator.New("Frame", {
+                     Size = UDim2.new(1, 0, 0, 60), -- AutomaticSize applied later
+                     AutomaticSize = Enum.AutomaticSize.Y,
+                     Parent = Parent,
+                     ThemeTag = { BackgroundColor3 = "Element" }
+                 }, {
+                     Creator.New("UICorner", { CornerRadius = UDim.new(0, 4) }),
+                     Creator.New("UIPadding", { PaddingTop = UDim.new(0,8), PaddingBottom = UDim.new(0,8), PaddingLeft = UDim.new(0,10), PaddingRight = UDim.new(0,10) }),
+                     Creator.New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5) })
+                 })
+                 
+                 Creator.New("TextLabel", {
+                     Text = PConfig.Title or "Paragraph",
+                     Size = UDim2.new(1, 0, 0, 18),
+                     BackgroundTransparency = 1,
+                     Parent = Wrapper,
+                     ThemeTag = { TextColor3 = "Text" },
+                     Font = Enum.Font.GothamBold,
+                     TextXAlignment = Enum.TextXAlignment.Left,
+                 })
+                 
+                 Creator.New("TextLabel", {
+                     Text = PConfig.Content or "",
+                     Size = UDim2.new(1, 0, 0, 0),
+                     AutomaticSize = Enum.AutomaticSize.Y,
+                     BackgroundTransparency = 1,
+                     Parent = Wrapper,
+                     ThemeTag = { TextColor3 = "SubText" },
+                     TextXAlignment = Enum.TextXAlignment.Left,
+                     TextWrapped = true
+                 })
+                 return Wrapper
+                 
+            elseif Type == "Colorpicker" then
+                -- Simplified Colorpicker
+                local Color = EConfig.Default or Color3.fromRGB(255, 255, 255)
                 local Frame = Creator.New("Frame", {
-                     Size = UDim2.new(1, 0, 0, 110),
-                     Parent = Section,
+                     Size = UDim2.new(1, 0, 0, 40),
+                     Parent = Parent,
                      ThemeTag = { BackgroundColor3 = "Element" }
                 }, { Creator.New("UICorner", { CornerRadius = UDim.new(0,4)}) })
                 
                 Creator.New("TextLabel", {
-                    Text = Config.Title or Key,
-                    Size = UDim2.new(1, -50, 0, 20),
-                    Position = UDim2.new(0, 5, 0, 5),
+                    Text = (EConfig.Title or Key),
+                    Size = UDim2.new(1, -50, 0, 30),
+                    Position = UDim2.new(0, 10, 0, 5),
                     BackgroundTransparency = 1,
                     Parent = Frame,
                     ThemeTag = { TextColor3 = "Text" },
@@ -772,97 +550,81 @@ function Helios:CreateWindow(Config)
                 })
                 
                 local Preview = Creator.New("Frame", {
-                    Size = UDim2.new(0, 40, 0, 20),
-                    Position = UDim2.new(1, -45, 0, 5),
+                    Size = UDim2.new(0, 30, 0, 30),
+                    Position = UDim2.new(1, -40, 0, 5),
                     BackgroundColor3 = Color,
                     Parent = Frame,
                 }, { Creator.New("UICorner", { CornerRadius = UDim.new(0,4) }) })
                 
-                local function CreateSlider(Y, ColorComp, MaxVal)
-                     local SliderBg = Creator.New("Frame", {
-                         Size = UDim2.new(1, -20, 0, 4),
-                         Position = UDim2.new(0, 10, 0, Y),
-                         Parent = Frame,
-                         BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-                     })
-                     local Fill = Creator.New("Frame", {
-                         Size = UDim2.fromScale(1, 1),
-                         BackgroundColor3 = Color3.new(1,1,1),
-                         Parent = SliderBg
-                     })
-                     local Btn = Creator.New("TextButton", {
-                         Text = "",
-                         Size = UDim2.new(1, 0, 1, 0),
-                         BackgroundTransparency = 1,
-                         Parent = SliderBg
-                     })
-                     return Btn, Fill
-                end
-                
-                local R, G, B = math.floor(Color.R*255), math.floor(Color.G*255), math.floor(Color.B*255)
-                
-                local rBtn, rFill = CreateSlider(35, "R", 255)
-                rFill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-                rFill.Size = UDim2.fromScale(R/255, 1)
-                
-                local gBtn, gFill = CreateSlider(60, "G", 255)
-                gFill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-                gFill.Size = UDim2.fromScale(G/255, 1)
-                
-                local bBtn, bFill = CreateSlider(85, "B", 255)
-                bFill.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
-                bFill.Size = UDim2.fromScale(B/255, 1)
-
-                local function UpdateColor()
-                    Color = Color3.fromRGB(R, G, B)
-                    Preview.BackgroundColor3 = Color
-                    if Config.Callback then Config.Callback(Color) end
-                end
-                
-                local function HandleInput(Input, Btn, Mode)
-                    local Scale = math.clamp((Input.Position.X - Btn.AbsolutePosition.X) / Btn.AbsoluteSize.X, 0, 1)
-                    if Mode == "R" then R = math.floor(Scale * 255); rFill.Size = UDim2.fromScale(Scale, 1) end
-                    if Mode == "G" then G = math.floor(Scale * 255); gFill.Size = UDim2.fromScale(Scale, 1) end
-                    if Mode == "B" then B = math.floor(Scale * 255); bFill.Size = UDim2.fromScale(Scale, 1) end
-                    UpdateColor()
-                end
-                
-                local DraggingR, DraggingG, DraggingB = false, false, false
-                
-                Connect(rBtn.InputBegan, function(I) if I.UserInputType == Enum.UserInputType.MouseButton1 then DraggingR = true; HandleInput(I, rBtn, "R") end end)
-                Connect(gBtn.InputBegan, function(I) if I.UserInputType == Enum.UserInputType.MouseButton1 then DraggingG = true; HandleInput(I, gBtn, "G") end end)
-                Connect(bBtn.InputBegan, function(I) if I.UserInputType == Enum.UserInputType.MouseButton1 then DraggingB = true; HandleInput(I, bBtn, "B") end end)
-                
-                Connect(UserInputService.InputEnded, function(I) if I.UserInputType == Enum.UserInputType.MouseButton1 then DraggingR=false; DraggingG=false; DraggingB=false end end)
-                Connect(UserInputService.InputChanged, function(I) 
-                    if I.UserInputType == Enum.UserInputType.MouseMovement then
-                        if DraggingR then HandleInput(I, rBtn, "R") end
-                        if DraggingG then HandleInput(I, gBtn, "G") end
-                        if DraggingB then HandleInput(I, bBtn, "B") end
-                    end 
-                end)
-                
                 local ColorObj = {
                     Value = Color,
-                    Transparency = 0,
-                    SetValueRGB = function(self, rgb) Color = rgb; R=math.floor(rgb.R*255); G=math.floor(rgb.G*255); B=math.floor(rgb.B*255); UpdateColor() end,
+                    SetValueRGB = function(self, rgb) Color = rgb; Preview.BackgroundColor3 = rgb; end,
                     Type = "Colorpicker"
                 }
                 Helios.Options[Key] = ColorObj
                 return ColorObj
+                
+            elseif Type == "Keybind" then
+                 local Binding = EConfig.Default or Enum.KeyCode.Unknown
+                 local Frame = Creator.New("TextButton", {
+                     Size = UDim2.new(1, 0, 0, 30),
+                     Parent = Parent,
+                     ThemeTag = { BackgroundColor3 = "Element" },
+                     Text = (EConfig.Title or Key) .. " ["..Binding.Name.."]",
+                     ThemeTag = { TextColor3 = "Text" }
+                 }, { Creator.New("UICorner", { CornerRadius = UDim.new(0,4)}) })
+                 
+                 local KeybindObj = { Value = Binding, Type = "Keybind" }
+                 Helios.Options[Key] = KeybindObj
+                 return KeybindObj
             end
+        end
 
+        function Tab:AddParagraph(Config) return CreateElement(Container, "Paragraph", Config, nil) end
+        function Tab:AddButton(Config) return CreateElement(Container, "Button", Config, nil) end
+        function Tab:AddToggle(Key, Config) return CreateElement(Container, "Toggle", Config, Key) end
+        function Tab:AddSlider(Key, Config) return CreateElement(Container, "Slider", Config, Key) end
+        function Tab:AddDropdown(Key, Config) return CreateElement(Container, "Dropdown", Config, Key) end
+        function Tab:AddInput(Key, Config) return CreateElement(Container, "Input", Config, Key) end
+        function Tab:AddColorpicker(Key, Config) return CreateElement(Container, "Colorpicker", Config, Key) end
+        function Tab:AddKeybind(Key, Config) return CreateElement(Container, "Keybind", Config, Key) end
+
+        function Tab:AddSection(Title)
+            local Section = Creator.New("Frame", {
+                Size = UDim2.new(1, -10, 0, 30),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1,
+                Parent = Container,
+            }, {
+                 Creator.New("TextLabel", {
+                    Text = Title,
+                    Size = UDim2.new(1, 0, 0, 20),
+                    BackgroundTransparency = 1,
+                    ThemeTag = { TextColor3 = "Text" },
+                    Font = Enum.Font.GothamBold,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                 }),
+                 Creator.New("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }),
+            })
+            
+            local Items = {}
+            function Items:AddParagraph(Config) return CreateElement(Section, "Paragraph", Config, nil) end
+            function Items:AddButton(Config) return CreateElement(Section, "Button", Config, nil) end
+            function Items:AddToggle(Key, Config) return CreateElement(Section, "Toggle", Config, Key) end
+            function Items:AddSlider(Key, Config) return CreateElement(Section, "Slider", Config, Key) end
+            function Items:AddDropdown(Key, Config) return CreateElement(Section, "Dropdown", Config, Key) end
+            function Items:AddInput(Key, Config) return CreateElement(Section, "Input", Config, Key) end
+            function Items:AddColorpicker(Key, Config) return CreateElement(Section, "Colorpicker", Config, Key) end
+            function Items:AddKeybind(Key, Config) return CreateElement(Section, "Keybind", Config, Key) end
             return Items
         end
         return Tab
     end
     
     Helios.Window = Window
-    Helios.Loaded = true
     return Window
 end
 
--- Theme management
 function Helios:SetTheme(ThemeName)
     if Themes[ThemeName] then
         Helios.Theme = ThemeName
@@ -870,24 +632,9 @@ function Helios:SetTheme(ThemeName)
     end
 end
 
-function Helios:Destroy()
-    if Helios.GUI then Helios.GUI:Destroy() end
-    Helios.Loaded = false
-end
-
--- Notifications (Mock)
 function Helios:Notify(Config)
-    -- TODO: Implement notifications
-    print("[Helios] Notification:", Config.Title, Config.Content)
-end
-
-function Helios:CreateMinimizer(Config)
-    -- Stub for mobile minimizer
-    local Frame = Instance.new("Frame")
-    Frame.Name = "MinimizerStub"
-    Frame.Visible = false
-    Frame.Parent = Helios.GUI
-    return Frame
+    -- Mock notification
+    print("Notification:", Config.Title, Config.Content)
 end
 
 return Helios
