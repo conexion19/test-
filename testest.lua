@@ -1,5 +1,5 @@
 local Helios = {
-    Version = "1.2.0-FluentInspired",
+    Version = "1",
 }
 
 -- [Services]
