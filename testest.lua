@@ -1,3 +1,21 @@
+-- [Bypass Anti-Cheat]
+if not getgenv().HeliosBypass then
+    getgenv().HeliosBypass = true
+    pcall(function()
+        local mt = getrawmetatable(game)
+        local oldNamecall = mt.__namecall
+        setreadonly(mt, false)
+        mt.__namecall = newcclosure(function(self, ...)
+            local method = getnamecallmethod()
+            if method == "Kick" or method == "kick" then
+                return
+            end
+            return oldNamecall(self, ...)
+        end)
+        setreadonly(mt, true)
+    end)
+end
+
 local Helios = {
     Version = "Inspired",
 }
@@ -255,17 +273,18 @@ function Helios:CreateWindow(Config)
         Parent = Root,
     })
     
-    -- Bottom Right Info (FPS, Ping, Time)
-    local BottomInfoLabel = Creator.New("TextLabel", {
+    -- Top Right Info (FPS, Ping, Time)
+    local TopInfoLabel = Creator.New("TextLabel", {
         Size = UDim2.new(0, 0, 0, 20),
-        Position = UDim2.new(0, 15, 1, -25), -- Left bottom corner padding
+        Position = UDim2.new(1, -15, 0, 10), -- Top right corner padding
+        AnchorPoint = Vector2.new(1, 0),
         AutomaticSize = Enum.AutomaticSize.X,
         BackgroundTransparency = 1,
         Parent = Root,
         ThemeTag = { TextColor3 = "SubText" },
         Font = Enum.Font.GothamMedium,
         TextSize = 12,
-        TextXAlignment = Enum.TextXAlignment.Left,
+        TextXAlignment = Enum.TextXAlignment.Right,
         ZIndex = 50
     })
 
@@ -279,7 +298,7 @@ function Helios:CreateWindow(Config)
             if not ScreenGui or not ScreenGui.Parent then break end
             local ping = 0
             pcall(function() ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) end)
-            BottomInfoLabel.Text = string.format("FPS: %d   |   Ping: %dms   |   %s", FrameCount, ping, os.date("%H:%M:%S"))
+            TopInfoLabel.Text = string.format("FPS: %d   |   Ping: %dms   |   %s", FrameCount, ping, os.date("%H:%M:%S"))
             FrameCount = 0
         end
     end)
@@ -291,6 +310,17 @@ function Helios:CreateWindow(Config)
         if tab and type(tab.Show) == "function" then
             tab.Show()
         end
+    end
+
+    -- Window aliases
+    function Window:BuildInterfaceSection(Config)
+        if #self.Tabs == 0 then self:AddTab({Title="Tab"}) end
+        local Title = type(Config) == "table" and (Config.Title or Config.Name) or Config
+        return self.Tabs[#self.Tabs]:AddSection(Title)
+    end
+    
+    function Window:BuildInterfaceCategory(Config)
+        return self:AddTab(type(Config) == "table" and Config or {Title = Config})
     end
 
     function Window:AddTab(Config)
@@ -812,7 +842,7 @@ function Helios:CreateWindow(Config)
                     Text = Title,
                     Size = UDim2.new(1, 0, 0, 20),
                     BackgroundTransparency = 1,
-                    ThemeTag = { TextColor3 = "SubText" }, -- Section headers often subtle
+                    ThemeTag = { TextColor3 = "SubText" },
                     Font = Enum.Font.GothamBold,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     TextSize = 13
@@ -829,11 +859,14 @@ function Helios:CreateWindow(Config)
             function Items:AddInput(Key, Config) return CreateElement(SectionCont, "Input", Config, Key) end
             function Items:AddColorpicker(Key, Config) return CreateElement(SectionCont, "Colorpicker", Config, Key) end
             function Items:AddKeybind(Key, Config) return CreateElement(SectionCont, "Keybind", Config, Key) end
+            
+            Items.BuildInterfaceSection = function(self, Title) return Tab:AddSection(Title) end
+            
             return Items
         end
         
-        -- Aliases for compatibility
         Tab.BuildInterfaceSection = Tab.AddSection
+        Tab.BuildInterfaceCategory = function(self, Config) return Window:AddTab(Config) end
         
         return Tab
     end
