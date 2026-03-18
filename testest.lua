@@ -1550,74 +1550,277 @@ function Helios:CreateWindow(Config)
                 local Values = EConfig.Values or {}
                 local Default = EConfig.Default
                 local Multi = EConfig.Multi or false
+                local AllowNull = EConfig.AllowNull or false
                 local Value = Default or (Multi and {} or nil)
                 local Expanded = false
+                local Search = (EConfig.Search == nil) and true or EConfig.Search
 
                 local Frame = Creator.New("Frame", {
-                    Size = UDim2.new(1, 0, 0, 40),
+                    Size = UDim2.new(1, 0, 0, 52),
                     Parent = Parent,
                     ThemeTag = { BackgroundColor3 = "Element" },
-                    ClipsDescendants = true
+                    BackgroundTransparency = 0,
                 }, { 
                     Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
-                    Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 })
+                    Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
+                    Creator.New("TextLabel", {
+                        Name = "TitleLabel",
+                        Text = EConfig.Title or Key,
+                        Size = UDim2.new(1, -20, 0, 20),
+                        Position = UDim2.fromOffset(10, 8),
+                        BackgroundTransparency = 1,
+                        ThemeTag = { TextColor3 = "Text" },
+                        Font = Enum.Font.Gotham,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        TextSize = 14
+                    })
                 })
                 
-                local Button = Creator.New("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 40),
-                    Parent = Frame,
-                    BackgroundTransparency = 1,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Text = (EConfig.Title or Key),
-                    ThemeTag = { TextColor3 = "Text" },
-                    Font = Enum.Font.Gotham
-                }, { Creator.New("UIPadding", { PaddingLeft = UDim.new(0, 10)})})
+                if EConfig.Description and EConfig.Description ~= "" then
+                    Creator.New("TextLabel", {
+                        Text = EConfig.Description,
+                        Size = UDim2.new(1, -20, 0, 14),
+                        Position = UDim2.fromOffset(10, 28),
+                        BackgroundTransparency = 1,
+                        ThemeTag = { TextColor3 = "SubText" },
+                        Font = Enum.Font.Gotham,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        TextSize = 12,
+                        Parent = Frame
+                    })
+                else
+                    Frame.Size = UDim2.new(1, 0, 0, 36)
+                    Frame.TitleLabel.Size = UDim2.new(1, -170, 1, 0)
+                    Frame.TitleLabel.Position = UDim2.fromOffset(10, 0)
+                end
 
-                local ValLabel = Creator.New("TextLabel", {
-                    Text = "None",
-                    Size = UDim2.new(0, 100, 1, 0),
-                    Position = UDim2.new(1, -120, 0, 0),
-                    Parent = Button,
-                    ThemeTag = { TextColor3 = "SubText" },
-                    Font = Enum.Font.Gotham,
-                    TextXAlignment = Enum.TextXAlignment.Right
-                })
-                
-                Creator.New("ImageLabel", {
-                    Image = "rbxassetid://9873138319", -- Chevron Down
-                    Size = UDim2.new(0, 16, 0, 16),
-                    Position = UDim2.new(1, -25, 0.5, -8),
-                    Parent = Button,
-                    ThemeTag = { ImageColor3 = "SubText" }
-                })
-                
-                local List = Creator.New("ScrollingFrame", {
-                    Size = UDim2.new(1, -20, 1, -45),
-                    Position = UDim2.new(0, 10, 0, 40),
+                local DropdownDisplay = Creator.New("TextLabel", {
+                    Text = "",
+                    ThemeTag = { TextColor3 = "Text" },
+                    TextSize = 13,
+                    TextYAlignment = Enum.TextYAlignment.Center,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Size = UDim2.new(1, -30, 0.5, 0),
+                    Position = UDim2.new(0, 8, 0.5, 0),
+                    AnchorPoint = Vector2.new(0, 0.5),
                     BackgroundTransparency = 1,
+                    TextTruncate = Enum.TextTruncate.AtEnd,
+                    Font = Enum.Font.Gotham
+                })
+
+                local DropdownIco = Creator.New("ImageLabel", {
+                    Image = "rbxassetid://10709790948",
+                    Size = UDim2.fromOffset(16, 16),
+                    AnchorPoint = Vector2.new(1, 0.5),
+                    Position = UDim2.new(1, -8, 0.5, 0),
+                    BackgroundTransparency = 1,
+                    Rotation = 180,
+                    ThemeTag = { ImageColor3 = "SubText" },
+                })
+
+                local DropdownInner = Creator.New("TextButton", {
+                    Size = UDim2.fromOffset(160, 30),
+                    Position = UDim2.new(1, -10, 0.5, 0),
+                    AnchorPoint = Vector2.new(1, 0.5),
+                    BackgroundTransparency = 0.9,
                     Parent = Frame,
-                    ScrollBarThickness = 2,
-                    CanvasSize = UDim2.new(0, 0, 0, 0)
-                }, { Creator.New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5) }) })
+                    ThemeTag = { BackgroundColor3 = "DropdownFrame" },
+                    Text = ""
+                }, {
+                    Creator.New("UICorner", { CornerRadius = UDim.new(0, 5) }),
+                    Creator.New("UIStroke", { Transparency = 0.5, ApplyStrokeMode = Enum.ApplyStrokeMode.Border, ThemeTag = { Color = "ElementBorder" } }),
+                    DropdownIco,
+                    DropdownDisplay,
+                })
+
+                local DropdownListLayout = Creator.New("UIListLayout", { Padding = UDim.new(0, 3) })
+
+                local DropdownScrollFrame = Creator.New("ScrollingFrame", {
+                    Size = UDim2.new(1, -5, 1, -10),
+                    Position = UDim2.fromOffset(5, 5),
+                    BackgroundTransparency = 1,
+                    ScrollBarThickness = 5,
+                    BorderSizePixel = 0,
+                    CanvasSize = UDim2.fromScale(0, 0),
+                    ScrollingDirection = Enum.ScrollingDirection.Y,
+                }, { DropdownListLayout })
                 
+                local SearchBar
+                local SearchBox
+                if Search then
+                    SearchBar = Creator.New("Frame", {
+                        Size = UDim2.new(1, -10, 0, 28),
+                        Position = UDim2.fromOffset(5, 5),
+                        BackgroundTransparency = 0.7,
+                        BackgroundColor3 = Color3.fromRGB(20, 20, 20),
+                        ThemeTag = { BackgroundColor3 = "Element" },
+                        ZIndex = 24,
+                    }, { Creator.New("UICorner", { CornerRadius = UDim.new(0, 4) }) })
+
+                    SearchBox = Creator.New("TextBox", {
+                        Font = Enum.Font.Gotham,
+                        TextColor3 = Color3.fromRGB(200, 200, 200),
+                        TextSize = 13,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        TextYAlignment = Enum.TextYAlignment.Center,
+                        BackgroundTransparency = 1,
+                        Size = UDim2.new(1, -36, 1, 0),
+                        Position = UDim2.new(0, 8, 0, 0),
+                        PlaceholderText = "Search...",
+                        PlaceholderColor3 = Color3.fromRGB(120, 120, 120),
+                        ClearTextOnFocus = false,
+                        Text = "",
+                        Parent = SearchBar,
+                        ThemeTag = { TextColor3 = "Text", PlaceholderColor3 = "SubText" },
+                        ZIndex = 24,
+                    })
+
+                    Creator.New("ImageLabel", {
+                        Size = UDim2.fromOffset(16, 16),
+                        Position = UDim2.new(1, -13, 0.5, 0),
+                        AnchorPoint = Vector2.new(0.5, 0.5),
+                        BackgroundTransparency = 1,
+                        Image = "rbxassetid://10734943674",
+                        Parent = SearchBar,
+                        ImageTransparency = 0.3,
+                        ZIndex = 25,
+                        ThemeTag = { ImageColor3 = "SubText" },
+                    })
+
+                    DropdownScrollFrame.Position = UDim2.fromOffset(5, 38)
+                    DropdownScrollFrame.Size = UDim2.new(1, -5, 1, -43)
+                end
+
+                local DropdownHolderFrame = Creator.New("Frame", {
+                    Size = UDim2.fromScale(1, 0),
+                    ClipsDescendants = true,
+                    BackgroundTransparency = 1,
+                }, {
+                    Creator.New("Frame", {
+                        Size = UDim2.fromScale(1, 1),
+                        ThemeTag = { BackgroundColor3 = "Element" },
+                    }, {
+                        SearchBar,
+                        DropdownScrollFrame,
+                        Creator.New("UICorner", { CornerRadius = UDim.new(0, 7) }),
+                        Creator.New("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, ThemeTag = { Color = "ElementBorder" } }),
+                        Creator.New("ImageLabel", {
+                            BackgroundTransparency = 1,
+                            Image = "rbxassetid://5554236805",
+                            ScaleType = Enum.ScaleType.Slice,
+                            SliceCenter = Rect.new(23, 23, 277, 277),
+                            Size = UDim2.new(1, 30, 1, 30),
+                            Position = UDim2.fromOffset(-15, -15),
+                            ImageColor3 = Color3.fromRGB(0, 0, 0),
+                            ImageTransparency = 0.1,
+                            ZIndex = 0
+                        }),
+                    })
+                })
+
+                local DropdownHolderCanvas = Creator.New("Frame", {
+                    BackgroundTransparency = 1,
+                    Size = UDim2.fromOffset(170, 0),
+                    Parent = Helios.Window and Helios.Window.Screen or nil,
+                    Visible = false,
+                    ZIndex = 1000, 
+                }, { DropdownHolderFrame, Creator.New("UISizeConstraint", { MinSize = Vector2.new(170, 0) }) })
+                
+                table.insert(OpenFrames, DropdownHolderCanvas)
+
                 local function UpdateLabel()
                     if Multi then
-                        ValLabel.Text = (Value == nil or #Value == 0) and "None" or table.concat(Value, ", ")
+                        local temp = {}
+                        for k, v in pairs(Value) do if v then table.insert(temp, k) end end
+                        DropdownDisplay.Text = #temp == 0 and "None" or table.concat(temp, ", ")
                     else
-                        ValLabel.Text = Value == nil and "None" or tostring(Value)
+                        DropdownDisplay.Text = Value == nil and "None" or tostring(Value)
                     end
                 end
-                UpdateLabel()
-                
+
+                local Buttons = {}
+
+                local function RecalculateSize()
+                    local cnt = 0
+                    for _, v in pairs(DropdownScrollFrame:GetChildren()) do
+                        if v:IsA("TextButton") and v.Visible then cnt = cnt + 1 end
+                    end
+                    local h = (cnt * 35) + 10 + (Search and 38 or 0)
+                    h = math.clamp(h, 40, 250)
+                    DropdownHolderCanvas.Size = UDim2.fromOffset(170, h)
+                    DropdownScrollFrame.CanvasSize = UDim2.fromOffset(0, DropdownListLayout.AbsoluteContentSize.Y)
+                end
+
+                local function RecalculatePos()
+                    if DropdownInner and DropdownHolderCanvas.Parent then
+                        local AbsPos = DropdownInner.AbsolutePosition
+                        local AbsSize = DropdownInner.AbsoluteSize
+                        local RootPos = DropdownInner.Parent.AbsolutePosition
+                        
+                        -- Place right below dropdown
+                        DropdownHolderCanvas.Position = UDim2.fromOffset(AbsPos.X, AbsPos.Y + AbsSize.Y + 2)
+                    end
+                end
+
+                local function CloseDropdown()
+                    Expanded = false
+                    TweenService:Create(DropdownIco, TweenInfo.new(0.3), { Rotation = 180 }):Play()
+                    local tween = TweenService:Create(DropdownHolderFrame, TweenInfo.new(0.2), { Size = UDim2.fromScale(1, 0) })
+                    tween:Play()
+                    tween.Completed:Connect(function()
+                        if not Expanded then DropdownHolderCanvas.Visible = false end
+                    end)
+                    if SearchBox then SearchBox.Text = "" end
+                end
+
+                local function OpenDropdown()
+                    Expanded = true
+                    for _, f in pairs(OpenFrames) do
+                        if f ~= DropdownHolderCanvas and f.Visible then f.Visible = false end
+                    end
+                    RecalculatePos()
+                    RecalculateSize()
+                    DropdownHolderCanvas.Visible = true
+                    TweenService:Create(DropdownIco, TweenInfo.new(0.3), { Rotation = 0 }):Play()
+                    TweenService:Create(DropdownHolderFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.fromScale(1, 1) }):Play()
+                end
+
+                Connect(DropdownInner.MouseButton1Click, function()
+                    if Expanded then CloseDropdown() else OpenDropdown() end
+                end)
+
+                if SearchBox then
+                    Connect(SearchBox:GetPropertyChangedSignal("Text"), function()
+                        local q = SearchBox.Text:lower()
+                        for val, item in pairs(Buttons) do
+                            item.Visible = (q == "" or val:lower():find(q) ~= nil)
+                        end
+                        RecalculateSize()
+                    end)
+                end
+
+                Connect(UserInputService.InputBegan, function(Input)
+                    if Expanded and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
+                        local mPos = UserInputService:GetMouseLocation()
+                        local dA, dS = DropdownHolderCanvas.AbsolutePosition, DropdownHolderCanvas.AbsoluteSize
+                        local iA, iS = DropdownInner.AbsolutePosition, DropdownInner.AbsoluteSize
+                        
+                        local inD = (mPos.X >= dA.X and mPos.X <= dA.X + dS.X and mPos.Y >= dA.Y and mPos.Y <= dA.Y + dS.Y)
+                        local inI = (mPos.X >= iA.X and mPos.X <= iA.X + iS.X and mPos.Y >= iA.Y and mPos.Y <= iA.Y + iS.Y)
+                        
+                        if not inD and not inI then CloseDropdown() end
+                    end
+                end)
+
                 local function RefreshList()
-                    for _, c in pairs(List:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
-                    local count = 0
+                    for _, c in pairs(DropdownScrollFrame:GetChildren()) do
+                        if c:IsA("TextButton") then c:Destroy() end
+                    end
+                    table.clear(Buttons)
+
                     for _, Val in pairs(Values) do
-                        count = count + 1
-                        
-                        -- Replicate Nexus Dropdown look
-                        local Selected = Multi and (table.find(Value, Val) ~= nil) or (Value == Val)
-                        
+                        local Selected = Multi and Value[Val] or (Value == Val)
+
                         local ButtonSelector = Creator.New("Frame", {
                             Size = UDim2.new(0, 4, 0, Selected and 14 or 6),
                             Position = UDim2.new(0, -1, 0.5, 0),
@@ -1628,8 +1831,8 @@ function Helios:CreateWindow(Config)
 
                         local Item = Creator.New("TextButton", {
                              Text = "",
-                             Size = UDim2.new(1, 0, 0, 28),
-                             Parent = List,
+                             Size = UDim2.new(1, 0, 0, 32),
+                             Parent = DropdownScrollFrame,
                              ThemeTag = { BackgroundColor3 = "Hover" },
                              BackgroundTransparency = Selected and 0.85 or 1
                         }, { 
@@ -1647,36 +1850,49 @@ function Helios:CreateWindow(Config)
                              })
                         })
                         
+                        Buttons[Val] = Item
+
                         Connect(Item.MouseButton1Click, function()
                              if Multi then
-                                  local idx = table.find(Value, Val)
-                                  if idx then table.remove(Value, idx) else table.insert(Value, Val) end
-                                  if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
+                                  Value[Val] = not Value[Val]
                              else
-                                  if not EConfig.AllowNull and Value == Val then return end
-                                  Value = (Value == Val and EConfig.AllowNull) and nil or Val
-                                  Expanded = false
-                                  TweenService:Create(Frame, TweenInfo.new(0.2), { Size = UDim2.new(1, 0, 0, 40) }):Play()
-                                  if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
+                                  if Value == Val and not AllowNull then return end
+                                  Value = (Value == Val and AllowNull) and nil or Val
+                                  CloseDropdown()
                              end
+                             
+                             if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
                              UpdateLabel()
-                             RefreshList() -- Redraw selectors
+                             
+                             -- Animate Selection Checkbox without full recount
+                             for vName, vItem in pairs(Buttons) do
+                                 local IsSel = Multi and Value[vName] or (Value == vName)
+                                 TweenService:Create(vItem, TweenInfo.new(0.2), { BackgroundTransparency = IsSel and 0.85 or 1 }):Play()
+                                 local Ind = vItem:FindFirstChildOfClass("Frame")
+                                 TweenService:Create(Ind, TweenInfo.new(0.2), {
+                                    Size = UDim2.new(0, 4, 0, IsSel and 14 or 6),
+                                    BackgroundTransparency = IsSel and 0 or 1
+                                 }):Play()
+                             end
                         end)
                     end
-                    List.CanvasSize = UDim2.new(0, 0, 0, count * 33)
-                    if Expanded then 
-                        local h = math.clamp((count * 33) + 50, 40, 180)
-                        TweenService:Create(Frame, TweenInfo.new(0.2), { Size = UDim2.new(1, 0, 0, h) }):Play()
-                    end
+                    RecalculateSize()
                 end
                 
-                Connect(Button.MouseButton1Click, function()
-                    Expanded = not Expanded
-                    if Expanded then RefreshList() else 
-                        TweenService:Create(Frame, TweenInfo.new(0.2), { Size = UDim2.new(1, 0, 0, 40) }):Play()
-                    end
-                end)
-                
+                Connect(DropdownListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), RecalculateSize)
+                if Helios.Window and Helios.Window.Root then
+                    Connect(Helios.Window.Root:GetPropertyChangedSignal("AbsolutePosition"), RecalculatePos)
+                end
+
+                if Default == nil and Multi then Value = {} end
+                if Multi and type(Default) == "table" then
+                     Value = {}
+                     for _, v in pairs(Default) do Value[v] = true end
+                end
+
+                UpdateLabel()
+                RefreshList()
+
                 local DropdownObj = {
                     Value = Value,
                     Values = Values,
@@ -1685,8 +1901,8 @@ function Helios:CreateWindow(Config)
                     SetValue = function(self, v)
                         Value = v
                         UpdateLabel()
-                        if type(EConfig.Callback) == "function" then EConfig.Callback(v) end
                         RefreshList()
+                        if type(EConfig.Callback) == "function" then EConfig.Callback(v) end
                     end,
                     SetValues = function(self, newValues)
                         self.Values = newValues or {}
