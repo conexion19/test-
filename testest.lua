@@ -1,5 +1,5 @@
 local Helios = {
-    Version = "1",
+    Version = "1.2.0-FluentInspired",
 }
 
 -- [Services]
@@ -14,12 +14,12 @@ local HttpService = game:GetService("HttpService")
 local OpenFrames = {}
 local Options = {}
 Helios.Options = Options
-Helios.Theme = "Slate"
+Helios.Theme = "S"
 Helios.Window = nil
 
 local Themes = {
     Dark = {
-        Name = "Slate",
+        Name = "Dark",
         Accent = Color3.fromRGB(0, 255, 214), -- Fluent Cyan-ish
         AcrylicMain = Color3.fromRGB(25, 25, 25),
         AcrylicBorder = Color3.fromRGB(60, 60, 60),
@@ -108,25 +108,17 @@ end
 function Helios:CreateWindow(Config)
     -- Check if window exists and is valid (not destroyed)
     if Helios.Window and Helios.Window.Root and Helios.Window.Root.Parent then
-        Helios.Window.Root:Destroy() -- Force cleanup of old window if exists
+        helios.Window.Root:Destroy() -- Force cleanup of old window if exists
         Helios.Window = nil
     end
     
     local Window = { Tabs = {} }
     
     -- [Anti-Cheat / Security]
-    -- Try to use CoreGui (Secure), fallback to PlayerGui if failed
-    local ProtectedParent = nil
-    pcall(function()
-        ProtectedParent = game:GetService("CoreGui")
-        if cloneref then
-            ProtectedParent = cloneref(ProtectedParent)
-        end
-    end)
-    
-    -- Fallback for environments where CoreGui is restricted
-    if not ProtectedParent then
-        ProtectedParent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    -- Secure CoreGui reference via cloneref (Standard modern protection)
+    local ProtectedParent = game:GetService("CoreGui")
+    if cloneref then
+        ProtectedParent = cloneref(ProtectedParent)
     end
     
     -- Randomize the name to avoid detection by name scanning
@@ -237,14 +229,6 @@ function Helios:CreateWindow(Config)
     
     Window.Root = Root
     
-    function Window:SelectTab(TabInfo)
-        if type(TabInfo) == "number" and Window.Tabs[TabInfo] then
-            Window.Tabs[TabInfo]:Select()
-        elseif type(TabInfo) == "table" and TabInfo.Select then
-            TabInfo:Select()
-        end
-    end
-
     function Window:AddTab(Config)
         local TabTitle = Config.Title or "Tab"
         local IconID = Icons[Config.Icon] or Icons.default
@@ -311,9 +295,6 @@ function Helios:CreateWindow(Config)
         end
         
         local Tab = { Container = Container, Button = TabButton }
-        function Tab:Select()
-            Select()
-        end
         table.insert(Window.Tabs, Tab)
 
         -- [Element Creator Helper]
