@@ -101,8 +101,8 @@ end
 
 function Helios:CreateWindow(Config)
     -- Check if window exists and is valid (not destroyed)
-    if Helios.Window and Helios.Window.Root and Helios.Window.Root.Parent then
-        Helios.Window.Root:Destroy() -- Force cleanup of old window if exists
+    if Helios.Window and Helios.Window.Screen and Helios.Window.Screen.Parent then
+        Helios.Window.Screen:Destroy() -- Force cleanup of old window if exists
         Helios.Window = nil
     end
     
@@ -121,13 +121,20 @@ function Helios:CreateWindow(Config)
     local SubTitle = Config.SubTitle or ""
     local Size = Config.Size or UDim2.fromOffset(580, 460)
     
+    local Screen = Creator.New("ScreenGui", {
+        Name = "HeliosUI",
+        Parent = ProtectedParent,
+        IgnoreGuiInset = true,
+        ResetOnSpawn = false
+    })
+
     -- Main Window Frame
     local Root = Creator.New("Frame", {
         Name = Title,
         Size = Size,
         Position = UDim2.fromScale(0.5, 0.5),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Parent = ProtectedParent,
+        Parent = Screen,
         ThemeTag = { BackgroundColor3 = "AcrylicMain" }
     }, {
         Creator.New("UICorner", { CornerRadius = UDim.new(0, 8) }),
@@ -229,6 +236,7 @@ function Helios:CreateWindow(Config)
     })
     
     Window.Root = Root
+    Window.Screen = Screen
     
     function Window:SelectTab(TabInfo)
         if type(TabInfo) == "number" and Window.Tabs[TabInfo] then
