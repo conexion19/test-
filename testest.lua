@@ -7,16 +7,8 @@ if not getgenv().HeliosBypass then
             oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
                 local method = getnamecallmethod()
                 if not checkcaller() and (method == "Kick" or method == "kick") then
-                    -- Если античит кикает раз за разом и получает отказ - он уходит в вечный цикл, что ведет к крашу.
-                    -- Решение: вырубаем сам локальный скрипт античита на лету.
-                    pcall(function()
-                        local caller = getcallingscript()
-                        if caller and typeof(caller) == "Instance" then
-                            caller.Disabled = true
-                        end
-                    end)
-                    -- Жестко обрываем работу потока через error(), чтобы не сработали проверки C-стека на yielding
-                    error("Kick Prevented", 0)
+                    -- Тихо замораживаем скрипт античита, не вызывая error(), который отслеживается (LogService/ScriptContext)
+                    return coroutine.yield()
                 end
                 return oldNamecall(self, ...)
             end))
@@ -128,9 +120,11 @@ local function GetSafeParent()
         return CoreGui
     end
     
-    -- Фальбэк для экзекуторов без gethui: прячем UI внутрь легитимного RobloxGui
-    -- (Многие античиты вроде Adonis сканируют только корень CoreGui)
+    -- Фальбэк для экзекуторов без gethui: прячем UI как можно глубже
     local fallback = CoreGui:FindFirstChild("RobloxGui")
+    if fallback and fallback:FindFirstChild("Modules") then
+        return fallback.Modules
+    end
     return fallback or CoreGui
 end
 
@@ -140,9 +134,16 @@ local function ProtectInstance(instance)
     end
 end
 
+local function GetStealthName()
+    -- Рандомные легитимные имена, чтобы обойти античиты (например, Adonis),
+    -- которые детектят 32-значные хэш-строки (GUID) как эксплойты.
+    local names = {"RobloxNetworkGui", "RobloxPromptGui", "ThemeProvider", "DevConsoleUI", "TeleportGui", "PurchasePromptApp"}
+    return names[math.random(1, #names)]
+end
+
 -- [Main GUI]
 local ScreenGui = Creator.New("ScreenGui", {
-    Name = HttpService:GenerateGUID(false):gsub("-", ""),
+    Name = GetStealthName(),
     Parent = GetSafeParent(),
 })
 ProtectInstance(ScreenGui)
@@ -978,12 +979,12 @@ local MinimizerScreen
 function Helios:CreateMinimizer(Config)
     -- Creates a standalone GUI button to toggle the Window
     MinimizerScreen = Instance.new("ScreenGui")
-    MinimizerScreen.Name = HttpService:GenerateGUID(false):gsub("-", "")
+    MinimizerScreen.Name = GetStealthName() .. "Mini"
     MinimizerScreen.Parent = GetSafeParent()
     ProtectInstance(MinimizerScreen)
     
     local Button = Creator.New("ImageButton", {
-        Name = "MinimizerBtn",
+        Name = "Icon",
         Position = Config.Position or UDim2.new(0, 10, 0, 10),
         Size = Config.Size or UDim2.fromOffset(40, 40),
         Parent = MinimizerScreen,
