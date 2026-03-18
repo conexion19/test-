@@ -203,6 +203,44 @@ function Helios:CreateWindow(Config)
         })
     })
 
+    -- Window Controls (Close & Minimize)
+    local CloseBtn = Creator.New("TextButton", {
+        Size = UDim2.new(0, 30, 0, 30),
+        Position = UDim2.new(1, -5, 0.5, 0),
+        AnchorPoint = Vector2.new(1, 0.5),
+        Parent = TopBar,
+        Text = "✕",
+        Font = Enum.Font.GothamBold,
+        ThemeTag = { TextColor3 = "SubText" },
+        BackgroundTransparency = 1,
+        TextSize = 14
+    })
+    
+    local MinBtn = Creator.New("TextButton", {
+        Size = UDim2.new(0, 30, 0, 30),
+        Position = UDim2.new(1, -35, 0.5, 0),
+        AnchorPoint = Vector2.new(1, 0.5),
+        Parent = TopBar,
+        Text = "—",
+        Font = Enum.Font.GothamBold,
+        ThemeTag = { TextColor3 = "SubText" },
+        BackgroundTransparency = 1,
+        TextSize = 14
+    })
+    
+    Connect(CloseBtn.MouseButton1Click, function()
+        Helios:Destroy()
+    end)
+    
+    Connect(MinBtn.MouseButton1Click, function()
+        Root.Visible = false
+    end)
+    
+    Connect(CloseBtn.MouseEnter, function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 75, 75)}):Play() end)
+    Connect(CloseBtn.MouseLeave, function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 155)}):Play() end)
+    Connect(MinBtn.MouseEnter, function() TweenService:Create(MinBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(250, 250, 250)}):Play() end)
+    Connect(MinBtn.MouseLeave, function() TweenService:Create(MinBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 155)}):Play() end)
+
     -- Pulse Animation
     task.spawn(function()
         local dot = TopBar:FindFirstChild("PulseDot")
@@ -275,7 +313,7 @@ function Helios:CreateWindow(Config)
     -- Top Right Info (FPS, Ping, Time)
     local TopInfoLabel = Creator.New("TextLabel", {
         Size = UDim2.new(0, 0, 0, 20),
-        Position = UDim2.new(1, -15, 0, 10), -- Top right corner padding
+        Position = UDim2.new(1, -75, 0, 10), -- Shifted left to make room for buttons
         AnchorPoint = Vector2.new(1, 0),
         AutomaticSize = Enum.AutomaticSize.X,
         BackgroundTransparency = 1,
