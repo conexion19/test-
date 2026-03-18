@@ -20,23 +20,24 @@ Helios.Window = nil
 local Themes = {
     Dark = {
         Name = "Slate",
-        Accent = Color3.fromRGB(0, 255, 214), -- Fluent Cyan-ish
-        AcrylicMain = Color3.fromRGB(25, 25, 25),
-        AcrylicBorder = Color3.fromRGB(60, 60, 60),
-        Background = Color3.fromRGB(32, 32, 32),
-        TitleBarLine = Color3.fromRGB(60, 60, 60),
-        Tab = Color3.fromRGB(45, 45, 45),
-        TabHover = Color3.fromRGB(55, 55, 55),
-        Element = Color3.fromRGB(38, 38, 38),
-        ElementBorder = Color3.fromRGB(50, 50, 50),
-        Divider = Color3.fromRGB(50, 50, 50),
-        SliderRail = Color3.fromRGB(60, 60, 60),
-        Text = Color3.fromRGB(240, 240, 240),
-        SubText = Color3.fromRGB(160, 160, 160),
-        Hover = Color3.fromRGB(45, 45, 45),
+        Accent = Color3.fromRGB(114, 137, 218), -- Modern Blurple
+        AcrylicMain = Color3.fromRGB(18, 18, 20),
+        AcrylicBorder = Color3.fromRGB(45, 45, 50),
+        Background = Color3.fromRGB(13, 13, 15),
+        TitleBarLine = Color3.fromRGB(35, 35, 40),
+        Tab = Color3.fromRGB(22, 22, 25),
+        TabHover = Color3.fromRGB(30, 30, 35),
+        Element = Color3.fromRGB(26, 26, 30),
+        ElementBorder = Color3.fromRGB(45, 45, 50),
+        Divider = Color3.fromRGB(38, 38, 42),
+        SliderRail = Color3.fromRGB(35, 35, 40),
+        Text = Color3.fromRGB(250, 250, 250),
+        SubText = Color3.fromRGB(150, 150, 155),
+        Hover = Color3.fromRGB(35, 35, 40),
     }
 }
 Helios.Themes = Themes
+Helios.MinimizeKeybind = "LeftAlt"
 
 -- [Icons Map] (Simple mapping for common names to RBX Assets)
 local Icons = {
@@ -125,8 +126,19 @@ function Helios:CreateWindow(Config)
         Parent = ScreenGui,
         ThemeTag = { BackgroundColor3 = "AcrylicMain" }
     }, {
-        Creator.New("UICorner", { CornerRadius = UDim.new(0, 8) }),
+        Creator.New("UICorner", { CornerRadius = UDim.new(0, 10) }),
         Creator.New("UIStroke", { ThemeTag = { Color = "AcrylicBorder" }, Thickness = 1 }),
+        Creator.New("ImageLabel", {
+            Name = "Shadow",
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 40, 1, 40),
+            Position = UDim2.new(0, -20, 0, -20),
+            ZIndex = -1,
+            Image = "rbxassetid://6015536814",
+            ImageColor3 = Color3.new(0, 0, 0),
+            ImageTransparency = 0.4,
+            SliceCenter = Rect.new(49, 49, 450, 450)
+        })
     })
     
     -- Top Bar (Drag Area)
@@ -297,17 +309,18 @@ function Helios:CreateWindow(Config)
             if Type == "Button" then
                  local BtnFrame = Creator.New("TextButton", {
                     Text = "",
-                    Size = UDim2.new(1, 0, 0, 32),
+                    Size = UDim2.new(1, 0, 0, 34),
                     Parent = Parent,
                     ThemeTag = { BackgroundColor3 = "Element" }
                 }, { 
-                    Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
+                    Creator.New("UICorner", { CornerRadius = UDim.new(0, 8) }),
                     Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
                     Creator.New("TextLabel", {
                         Text = EConfig.Title or "Button",
                         Size = UDim2.new(1, 0, 1, 0),
                         ThemeTag = { TextColor3 = "Text" },
-                        Font = Enum.Font.Gotham,
+                        Font = Enum.Font.GothamMedium,
+                        TextSize = 13,
                     })
                 })
                 Connect(BtnFrame.MouseButton1Click, EConfig.Callback or function() end)
@@ -317,18 +330,19 @@ function Helios:CreateWindow(Config)
                 local Toggled = EConfig.Default or false
                 local Btn = Creator.New("TextButton", {
                     Text = "",
-                    Size = UDim2.new(1, 0, 0, 36),
+                    Size = UDim2.new(1, 0, 0, 38),
                     Parent = Parent,
                     ThemeTag = { BackgroundColor3 = "Element" },
                 }, { 
-                    Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
+                    Creator.New("UICorner", { CornerRadius = UDim.new(0, 8) }),
                     Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
                     Creator.New("TextLabel", {
                         Text = (EConfig.Title or Key),
                         Size = UDim2.new(1, -50, 1, 0),
-                        Position = UDim2.new(0, 10, 0, 0),
+                        Position = UDim2.new(0, 12, 0, 0),
                         ThemeTag = { TextColor3 = "Text" },
-                        Font = Enum.Font.Gotham,
+                        Font = Enum.Font.GothamMedium,
+                        TextSize = 13,
                         TextXAlignment = Enum.TextXAlignment.Left,
                     })
                 })
@@ -660,39 +674,70 @@ function Helios:CreateWindow(Config)
                 return ColorObj
                 
             elseif Type == "Keybind" then
-                 local Binding = EConfig.Default or Enum.KeyCode.Unknown
+                 local Binding = EConfig.Default
+                 if type(Binding) == "string" then
+                     Binding = Enum.KeyCode[Binding] or Enum.KeyCode.Unknown
+                 end
                  local Frame = Creator.New("TextButton", {
                      Size = UDim2.new(1, 0, 0, 40),
                      Parent = Parent,
                      ThemeTag = { BackgroundColor3 = "Element" },
                      Text = "",
                  }, { 
-                     Creator.New("UICorner", { CornerRadius = UDim.new(0,6) }),
+                     Creator.New("UICorner", { CornerRadius = UDim.new(0,8) }),
                      Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
                  })
                  
                  Creator.New("TextLabel", {
                      Text = (EConfig.Title or Key),
                      Size = UDim2.new(1, -60, 1, 0),
-                     Position = UDim2.new(0,10,0,0),
+                     Position = UDim2.new(0,12,0,0),
                      ThemeTag = { TextColor3 = "Text" },
-                     Font = Enum.Font.Gotham,
+                     Font = Enum.Font.GothamMedium,
+                     TextSize = 13,
                      TextXAlignment = Enum.TextXAlignment.Left,
                      Parent = Frame
                  })
 
-                 Creator.New("TextLabel", {
-                     Text = "["..Binding.Name.."]",
+                 local BindLabel = Creator.New("TextLabel", {
+                     Text = "["..(Binding.Name or "None").."]",
                      Size = UDim2.new(0, 60, 1, 0),
                      Position = UDim2.new(1,-70,0,0),
                      ThemeTag = { TextColor3 = "SubText" },
-                     Font = Enum.Font.Gotham,
+                     Font = Enum.Font.GothamMedium,
+                     TextSize = 13,
                      TextXAlignment = Enum.TextXAlignment.Right,
                      Parent = Frame
                  })
                  
                  local KeybindObj = { Value = Binding, Type = "Keybind" }
+                 
+                 local Listening = false
+                 Connect(Frame.MouseButton1Click, function()
+                     Listening = true
+                     BindLabel.Text = "[...]"
+                 end)
+                 
+                 Connect(UserInputService.InputBegan, function(Input)
+                     if Listening and Input.UserInputType == Enum.UserInputType.Keyboard then
+                         Listening = false
+                         Binding = Input.KeyCode
+                         KeybindObj.Value = Binding
+                         BindLabel.Text = "["..Binding.Name.."]"
+                         if EConfig.Callback then
+                             pcall(EConfig.Callback, Binding.Name)
+                         end
+                     end
+                 end)
+                 
                  Helios.Options[Key] = KeybindObj
+                 function KeybindObj:SetValue(keyName)
+                     pcall(function()
+                         Binding = Enum.KeyCode[keyName]
+                         KeybindObj.Value = Binding
+                         BindLabel.Text = "["..Binding.Name.."]"
+                     end)
+                 end
                  return KeybindObj
             end
         end
@@ -739,6 +784,22 @@ function Helios:CreateWindow(Config)
         return Tab
     end
     
+    Connect(UserInputService.InputBegan, function(Input, Processed)
+        if type(Helios.MinimizeKeybind) == "string" then
+            if Input.KeyCode.Name == Helios.MinimizeKeybind or Input.KeyCode.Value == Helios.MinimizeKeybind then
+                if Window and Window.Root then
+                    Window.Root.Visible = not Window.Root.Visible
+                end
+            end
+        elseif type(Helios.MinimizeKeybind) == "table" and Helios.MinimizeKeybind.Value then
+            if Input.KeyCode.Name == Helios.MinimizeKeybind.Value or Input.KeyCode.Value == Helios.MinimizeKeybind.Value then
+                if Window and Window.Root then
+                    Window.Root.Visible = not Window.Root.Visible
+                end
+            end
+        end
+    end)
+
     Helios.Window = Window
     return Window
 end
