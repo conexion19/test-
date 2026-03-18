@@ -2,17 +2,16 @@
 if not getgenv().HeliosBypass then
     getgenv().HeliosBypass = true
     pcall(function()
-        local mt = getrawmetatable(game)
-        local oldNamecall = mt.__namecall
-        setreadonly(mt, false)
-        mt.__namecall = newcclosure(function(self, ...)
-            local method = getnamecallmethod()
-            if method == "Kick" or method == "kick" then
-                return
-            end
-            return oldNamecall(self, ...)
-        end)
-        setreadonly(mt, true)
+        if hookmetamethod then
+            local oldNamecall
+            oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+                local method = getnamecallmethod()
+                if not checkcaller() and (method == "Kick" or method == "kick") then
+                    return
+                end
+                return oldNamecall(self, ...)
+            end))
+        end
     end)
 end
 
@@ -131,7 +130,7 @@ end
 
 -- [Main GUI]
 local ScreenGui = Creator.New("ScreenGui", {
-    Name = "HeliosUI",
+    Name = HttpService:GenerateGUID(false):gsub("-", ""),
     Parent = GetSafeParent(),
 })
 ProtectInstance(ScreenGui)
@@ -931,7 +930,7 @@ local MinimizerScreen
 function Helios:CreateMinimizer(Config)
     -- Creates a standalone GUI button to toggle the Window
     MinimizerScreen = Instance.new("ScreenGui")
-    MinimizerScreen.Name = "HeliosMinimizer"
+    MinimizerScreen.Name = HttpService:GenerateGUID(false):gsub("-", "")
     MinimizerScreen.Parent = GetSafeParent()
     ProtectInstance(MinimizerScreen)
     
