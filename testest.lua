@@ -39,18 +39,6 @@ local Themes = {
 Helios.Themes = Themes
 Helios.MinimizeKeybind = "LeftAlt"
 
--- [Icons Map] (Simple mapping for common names to RBX Assets)
-local Icons = {
-    home = "rbxassetid://10709782430",
-    flame = "rbxassetid://10709768128",
-    move = "rbxassetid://10709791537",
-    skull = "rbxassetid://10709819149",
-    paintbrush = "rbxassetid://10709797382",
-    ["settings-2"] = "rbxassetid://10734950309",
-    settings = "rbxassetid://10734950309",
-    default = "rbxassetid://10709782430"
-}
-
 -- [Creator Implementation]
 local Creator = {
     Registry = {},
@@ -103,11 +91,32 @@ local function Connect(Signal, Function)
     return Conn
 end
 
+-- [Security / Protection]
+local function GetSafeParent()
+    if RunService:IsStudio() then
+        return game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    end
+    local target = CoreGui
+    if gethui then
+        target = gethui()
+    elseif syn and syn.protect_gui then
+        target = CoreGui
+    end
+    return target
+end
+
+local function ProtectInstance(instance)
+    if not RunService:IsStudio() and syn and syn.protect_gui then
+        pcall(function() syn.protect_gui(instance) end)
+    end
+end
+
 -- [Main GUI]
 local ScreenGui = Creator.New("ScreenGui", {
     Name = "HeliosUI",
-    Parent = RunService:IsStudio() and game.Players.LocalPlayer:WaitForChild("PlayerGui") or CoreGui,
+    Parent = GetSafeParent(),
 })
+ProtectInstance(ScreenGui)
 
 function Helios:CreateWindow(Config)
     if Helios.Window then return Helios.Window end
@@ -128,17 +137,6 @@ function Helios:CreateWindow(Config)
     }, {
         Creator.New("UICorner", { CornerRadius = UDim.new(0, 10) }),
         Creator.New("UIStroke", { ThemeTag = { Color = "AcrylicBorder" }, Thickness = 1 }),
-        Creator.New("ImageLabel", {
-            Name = "Shadow",
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 40, 1, 40),
-            Position = UDim2.new(0, -20, 0, -20),
-            ZIndex = -1,
-            Image = "rbxassetid://6015536814",
-            ImageColor3 = Color3.new(0, 0, 0),
-            ImageTransparency = 0.4,
-            SliceCenter = Rect.new(49, 49, 450, 450)
-        })
     })
     
     -- Top Bar (Drag Area)
@@ -224,6 +222,48 @@ function Helios:CreateWindow(Config)
         Parent = Root,
     })
     
+    -- Bottom Right Info (FPS, Ping, Time)
+    local BottomInfoFrame = Creator.New("Frame", {
+        Size = UDim2.new(0, 0, 0, 22),
+        Position = UDim2.new(1, -12, 1, -12),
+        AnchorPoint = Vector2.new(1, 1),
+        Parent = Root,
+        AutomaticSize = Enum.AutomaticSize.X,
+        ThemeTag = { BackgroundColor3 = "Element" },
+        ZIndex = 50
+    }, {
+        Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
+        Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder" }, Thickness = 1 }),
+        Creator.New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) })
+    })
+
+    local BottomInfoLabel = Creator.New("TextLabel", {
+        Size = UDim2.new(0, 0, 1, 0),
+        AutomaticSize = Enum.AutomaticSize.X,
+        BackgroundTransparency = 1,
+        Parent = BottomInfoFrame,
+        ThemeTag = { TextColor3 = "SubText" },
+        Font = Enum.Font.GothamMedium,
+        TextSize = 11,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 50
+    })
+
+    local FrameCount = 0
+    Connect(RunService.RenderStepped, function()
+        FrameCount = FrameCount + 1
+    end)
+
+    task.spawn(function()
+        while task.wait(1) do
+            if not ScreenGui or not ScreenGui.Parent then break end
+            local ping = 0
+            pcall(function() ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) end)
+            BottomInfoLabel.Text = string.format("FPS: %d   •   Ping: %dms   •   %s", FrameCount, ping, os.date("%H:%M:%S"))
+            FrameCount = 0
+        end
+    end)
+    
     Window.Root = Root
     
     function Window:SelectTab(Index)
@@ -235,7 +275,6 @@ function Helios:CreateWindow(Config)
 
     function Window:AddTab(Config)
         local TabTitle = Config.Title or "Tab"
-        local IconID = Icons[Config.Icon] or Icons.default
         
         local TabButton = Creator.New("TextButton", {
             Text = "",
@@ -247,18 +286,12 @@ function Helios:CreateWindow(Config)
             Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
             Creator.New("TextLabel", {
                  Text = TabTitle,
-                 Size = UDim2.new(1, -30, 1, 0),
-                 Position = UDim2.new(0, 40, 0, 0),
+                 Size = UDim2.new(1, -20, 1, 0),
+                 Position = UDim2.new(0, 10, 0, 0),
                  ThemeTag = { TextColor3 = "Text" },
                  TextXAlignment = Enum.TextXAlignment.Left,
                  Font = Enum.Font.GothamMedium,
                  TextSize = 14
-            }),
-            Creator.New("ImageLabel", {
-                 Image = IconID,
-                 Size = UDim2.new(0, 20, 0, 20),
-                 Position = UDim2.new(0, 10, 0.5, -10),
-                 ThemeTag = { ImageColor3 = "Text" }
             })
         })
         
@@ -279,12 +312,10 @@ function Helios:CreateWindow(Config)
                  T.Container.Visible = false 
                  TweenService:Create(T.Button, TweenInfo.new(0.2), { BackgroundTransparency = 1 }):Play()
                  T.Button.TextLabel.TextColor3 = Themes.Dark.SubText
-                 T.Button.ImageLabel.ImageColor3 = Themes.Dark.SubText
              end
              Container.Visible = true
              TweenService:Create(TabButton, TweenInfo.new(0.2), { BackgroundTransparency = 0.92 }):Play() -- Subtle highlight
              TabButton.TextLabel.TextColor3 = Themes.Dark.Text
-             TabButton.ImageLabel.ImageColor3 = Themes.Dark.Text
         end
 
         Connect(TabButton.MouseButton1Click, Select)
@@ -295,7 +326,6 @@ function Helios:CreateWindow(Config)
             TweenService:Create(TabButton, TweenInfo.new(0), { BackgroundTransparency = 0.92 }):Play()
         else
             TabButton.TextLabel.TextColor3 = Themes.Dark.SubText
-            TabButton.ImageLabel.ImageColor3 = Themes.Dark.SubText
         end
         
         local Tab = { Container = Container, Button = TabButton, Show = Select }
@@ -804,12 +834,15 @@ function Helios:CreateWindow(Config)
     return Window
 end
 
+local MinimizerScreen
+
 -- [CreateMinimizer Implementation]
 function Helios:CreateMinimizer(Config)
     -- Creates a standalone GUI button to toggle the Window
-    local MinimizerScreen = Instance.new("ScreenGui")
+    MinimizerScreen = Instance.new("ScreenGui")
     MinimizerScreen.Name = "HeliosMinimizer"
-    MinimizerScreen.Parent = RunService:IsStudio() and game.Players.LocalPlayer:WaitForChild("PlayerGui") or CoreGui
+    MinimizerScreen.Parent = GetSafeParent()
+    ProtectInstance(MinimizerScreen)
     
     local Button = Creator.New("ImageButton", {
         Name = "MinimizerBtn",
@@ -879,5 +912,25 @@ function Helios:Notify(Config)
         NotifyFrame:Destroy()
     end)
 end
+
+function Helios:Destroy()
+    if ScreenGui then
+        ScreenGui:Destroy()
+    end
+    
+    if MinimizerScreen then
+        MinimizerScreen:Destroy()
+    end
+    
+    for _, connection in pairs(Creator.Signals) do
+        if connection.Disconnect then
+            connection:Disconnect()
+        end
+    end
+    
+    Creator.Signals = {}
+    Helios.Window = nil
+end
+Helios.Unload = Helios.Destroy
 
 return Helios
