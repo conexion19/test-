@@ -135,7 +135,6 @@ function Helios:CreateWindow(Config)
         Parent = ScreenGui,
         ThemeTag = { BackgroundColor3 = "AcrylicMain" }
     }, {
-        Creator.New("UICorner", { CornerRadius = UDim.new(0, 10) }),
         Creator.New("UIStroke", { ThemeTag = { Color = "AcrylicBorder" }, Thickness = 1 }),
     })
     
@@ -145,27 +144,61 @@ function Helios:CreateWindow(Config)
          BackgroundTransparency = 1,
          Parent = Root
     }, {
+        -- Creative element: Pulsing Status Dot with Version
+        Creator.New("Frame", {
+            Name = "PulseDot",
+            Size = UDim2.new(0, 8, 0, 8),
+            Position = UDim2.new(0, 16, 0.5, 0),
+            AnchorPoint = Vector2.new(0, 0.5),
+            ThemeTag = { BackgroundColor3 = "Accent" }
+        }, {
+            Creator.New("UICorner", { CornerRadius = UDim.new(1, 0) }),
+            Creator.New("UIStroke", { ThemeTag = { Color = "Accent" }, Thickness = 1, Transparency = 0.2 })
+        }),
+        Creator.New("TextLabel", {
+            Text = "v" .. Helios.Version,
+            Size = UDim2.new(0, 50, 1, 0),
+            Position = UDim2.new(0, 32, 0, 0),
+            Font = Enum.Font.GothamMedium,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ThemeTag = { TextColor3 = "SubText" },
+            TextSize = 11
+        }),
+        
+        -- Centered Titles
         Creator.New("TextLabel", {
             Text = Title,
-            Size = UDim2.new(0, 0, 1, 0),
-            Position = UDim2.new(0, 15, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.X,
+            Size = UDim2.new(1, 0, 0, 20),
+            Position = UDim2.new(0, 0, 0, 4),
             Font = Enum.Font.GothamBold,
-            TextXAlignment = Enum.TextXAlignment.Left,
+            TextXAlignment = Enum.TextXAlignment.Center,
             ThemeTag = { TextColor3 = "Text" },
-            TextSize = 16
+            TextSize = 15
         }),
         Creator.New("TextLabel", {
             Text = SubTitle,
-            Size = UDim2.new(0, 0, 1, 0),
-            Position = UDim2.new(0, 15 + (#Title * 10) + 15, 0, 0), -- Rough offset
-            AutomaticSize = Enum.AutomaticSize.X,
-            Font = Enum.Font.Gotham,
-            TextXAlignment = Enum.TextXAlignment.Left,
+            Size = UDim2.new(1, 0, 0, 15),
+            Position = UDim2.new(0, 0, 0, 22),
+            Font = Enum.Font.GothamMedium,
+            TextXAlignment = Enum.TextXAlignment.Center,
             ThemeTag = { TextColor3 = "SubText" },
-            TextSize = 14
+            TextSize = 12
         })
     })
+
+    -- Pulse Animation
+    task.spawn(function()
+        local dot = TopBar:FindFirstChild("PulseDot")
+        if dot then
+            local stroke = dot:FindFirstChildOfClass("UIStroke")
+            while task.wait(1.5) do
+                if not dot.Parent or not stroke then break end
+                pcall(function()
+                    TweenService:Create(stroke, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, true), { Thickness = 6, Transparency = 1 }):Play()
+                end)
+            end
+        end
+    end)
 
     -- Divider below Top Bar
     Creator.New("Frame", {
@@ -223,29 +256,16 @@ function Helios:CreateWindow(Config)
     })
     
     -- Bottom Right Info (FPS, Ping, Time)
-    local BottomInfoFrame = Creator.New("Frame", {
-        Size = UDim2.new(0, 0, 0, 22),
-        Position = UDim2.new(1, -12, 1, -12),
-        AnchorPoint = Vector2.new(1, 1),
-        Parent = Root,
-        AutomaticSize = Enum.AutomaticSize.X,
-        ThemeTag = { BackgroundColor3 = "Element" },
-        ZIndex = 50
-    }, {
-        Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
-        Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder" }, Thickness = 1 }),
-        Creator.New("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) })
-    })
-
     local BottomInfoLabel = Creator.New("TextLabel", {
-        Size = UDim2.new(0, 0, 1, 0),
+        Size = UDim2.new(0, 0, 0, 20),
+        Position = UDim2.new(0, 15, 1, -25), -- Left bottom corner padding
         AutomaticSize = Enum.AutomaticSize.X,
         BackgroundTransparency = 1,
-        Parent = BottomInfoFrame,
+        Parent = Root,
         ThemeTag = { TextColor3 = "SubText" },
         Font = Enum.Font.GothamMedium,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Center,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
         ZIndex = 50
     })
 
@@ -259,7 +279,7 @@ function Helios:CreateWindow(Config)
             if not ScreenGui or not ScreenGui.Parent then break end
             local ping = 0
             pcall(function() ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) end)
-            BottomInfoLabel.Text = string.format("FPS: %d   •   Ping: %dms   •   %s", FrameCount, ping, os.date("%H:%M:%S"))
+            BottomInfoLabel.Text = string.format("FPS: %d   |   Ping: %dms   |   %s", FrameCount, ping, os.date("%H:%M:%S"))
             FrameCount = 0
         end
     end)
