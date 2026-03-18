@@ -831,6 +831,10 @@ function Helios:CreateWindow(Config)
             function Items:AddKeybind(Key, Config) return CreateElement(SectionCont, "Keybind", Config, Key) end
             return Items
         end
+        
+        -- Aliases for compatibility
+        Tab.BuildInterfaceSection = Tab.AddSection
+        
         return Tab
     end
     
