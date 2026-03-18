@@ -1,20 +1,3 @@
--- [Bypass Anti-Cheat]
-if not getgenv().HeliosBypass then
-    getgenv().HeliosBypass = true
-    pcall(function()
-        if hookmetamethod then
-            local oldNamecall
-            oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-                local method = getnamecallmethod()
-                if not checkcaller() and (method == "Kick" or method == "kick") then
-                    -- Тихо замораживаем скрипт античита, не вызывая error(), который отслеживается (LogService/ScriptContext)
-                    return coroutine.yield()
-                end
-                return oldNamecall(self, ...)
-            end))
-        end
-    end)
-end
 
 local Helios = {
     Version = "Inspired",
