@@ -998,7 +998,6 @@ function Helios:CreateWindow(Config)
         BackgroundTransparency = 1,
         TextColor3 = Color3.fromRGB(255, 255, 255),
     })
-
     local CheckGradient = Creator.New("UIGradient", {
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
@@ -1066,30 +1065,7 @@ function Helios:CreateWindow(Config)
     end
 
     CreateBarButton("rbxassetid://10709791437", UDim2.new(1, -4, 0.5, 0), function()
-        if Helios.Window and Helios.Window.Dialog then
-            Helios.Window:Dialog({
-                Title = "Close",
-                Content = "Are you sure you want to unload the interface?",
-                Buttons = {
-                    {
-                        Title = "Yes",
-                        Callback = function()
-                            if Helios.Window.Screen then
-                                Helios.Window.Screen:Destroy()
-                                Helios.Window = nil
-                            end
-                        end,
-                    },
-                    {
-                        Title = "No",
-                        Callback = function() end 
-                    },
-                },
-            })
-        else
-            Root.Visible = false
-            if Helios.Window and Helios.Window.Screen then Helios.Window.Screen:Destroy() end
-        end
+        Root.Visible = false
     end)
     
     CreateBarButton("rbxassetid://10709796032", UDim2.new(1, -42, 0.5, 0), function()
@@ -1155,100 +1131,6 @@ function Helios:CreateWindow(Config)
     
     Window.Root = Root
     Window.Screen = Screen
-
-    -- Dialog Implementation
-    function Window:Dialog(DConfig)
-        local DialogFrame = Creator.New("Frame", {
-            Size = UDim2.fromScale(1, 1),
-            BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-            BackgroundTransparency = 1,
-            Parent = Root,
-            ZIndex = 50
-        })
-
-        local DialogBox = Creator.New("Frame", {
-            Size = UDim2.fromOffset(300, 150),
-            Position = UDim2.fromScale(0.5, 0.5),
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            ThemeTag = { BackgroundColor3 = "Element" },
-            Parent = DialogFrame,
-            ZIndex = 51
-        }, {
-            Creator.New("UICorner", { CornerRadius = UDim.new(0, 8) }),
-            Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder" }, Thickness = 1 })
-        })
-
-        Creator.New("TextLabel", {
-            Text = DConfig.Title or "Dialog",
-            Size = UDim2.new(1, 0, 0, 40),
-            BackgroundTransparency = 1,
-            Font = Enum.Font.GothamBold,
-            TextSize = 16,
-            ThemeTag = { TextColor3 = "Text" },
-            Parent = DialogBox,
-            ZIndex = 52
-        })
-
-        Creator.New("TextLabel", {
-            Text = DConfig.Content or "",
-            Size = UDim2.new(1, -40, 1, -100),
-            Position = UDim2.fromOffset(20, 40),
-            BackgroundTransparency = 1,
-            Font = Enum.Font.Gotham,
-            TextSize = 14,
-            TextWrapped = true,
-            ThemeTag = { TextColor3 = "SubText" },
-            Parent = DialogBox,
-            ZIndex = 52
-        })
-
-        local ButtonContainer = Creator.New("Frame", {
-            Size = UDim2.new(1, -40, 0, 40),
-            Position = UDim2.new(0, 20, 1, -50),
-            BackgroundTransparency = 1,
-            Parent = DialogBox,
-            ZIndex = 52
-        }, {
-            Creator.New("UIListLayout", {
-                FillDirection = Enum.FillDirection.Horizontal,
-                HorizontalAlignment = Enum.HorizontalAlignment.Center,
-                Padding = UDim.new(0, 10),
-                SortOrder = Enum.SortOrder.LayoutOrder
-            })
-        })
-
-        TweenService:Create(DialogFrame, TweenInfo.new(0.2), { BackgroundTransparency = 0.5 }):Play()
-
-        local function closeDialog()
-            TweenService:Create(DialogFrame, TweenInfo.new(0.2), { BackgroundTransparency = 1 }):Play()
-            local tw = TweenService:Create(DialogBox, TweenInfo.new(0.2), { Size = UDim2.fromOffset(300, 0) })
-            tw:Play()
-            tw.Completed:Connect(function() DialogFrame:Destroy() end)
-        end
-
-        for _, btnData in ipairs(DConfig.Buttons or {}) do
-            local btn = Creator.New("TextButton", {
-                Size = UDim2.new(0.5, -5, 1, 0),
-                ThemeTag = { BackgroundColor3 = "Hover" },
-                Text = btnData.Title or "Button",
-                Font = Enum.Font.Gotham,
-                TextSize = 14,
-                ThemeTag = { TextColor3 = "Text" },
-                Parent = ButtonContainer,
-                ZIndex = 53
-            }, {
-                Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
-                Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder" }, Thickness = 1 })
-            })
-
-            Connect(btn.MouseButton1Click, function()
-                closeDialog()
-                if type(btnData.Callback) == "function" then
-                    btnData.Callback()
-                end
-            end)
-        end
-    end
     
     function Window:SelectTab(TabInfo)
         if type(TabInfo) == "number" and Window.Tabs[TabInfo] then
@@ -1287,8 +1169,6 @@ function Helios:CreateWindow(Config)
             })
         })
         
-        local ContainerLayout = Creator.New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder })
-        
         local Container = Creator.New("ScrollingFrame", {
             Size = UDim2.fromScale(1, 1),
             BackgroundTransparency = 1,
@@ -1298,13 +1178,9 @@ function Helios:CreateWindow(Config)
             ElasticBehavior = Enum.ElasticBehavior.Never,
             CanvasSize = UDim2.new(0, 0, 0, 0)
         }, {
-            ContainerLayout,
+            Creator.New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }),
             Creator.New("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), PaddingBottom = UDim.new(0, 10) })
         })
-
-        Connect(ContainerLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-            Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y + 20)
-        end)
 
         local Tab = { Container = Container, Button = TabButton, Selected = false }
         
@@ -1371,19 +1247,9 @@ function Helios:CreateWindow(Config)
                     Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
                     Creator.New("TextLabel", {
                         Text = EConfig.Title or "Button",
-                        Size = UDim2.new(1, -30, 1, 0),
-                        Position = UDim2.fromOffset(10, 0),
+                        Size = UDim2.new(1, 0, 1, 0),
                         ThemeTag = { TextColor3 = "Text" },
                         Font = Enum.Font.Gotham,
-                        TextXAlignment = Enum.TextXAlignment.Left
-                    }),
-                    Creator.New("ImageLabel", {
-                        Image = "rbxassetid://10709791437",
-                        Size = UDim2.fromOffset(16, 16),
-                        AnchorPoint = Vector2.new(1, 0.5),
-                        Position = UDim2.new(1, -10, 0.5, 0),
-                        BackgroundTransparency = 1,
-                        ThemeTag = { ImageColor3 = "Text" }
                     })
                 })
                 
@@ -1550,384 +1416,154 @@ function Helios:CreateWindow(Config)
                 local Values = EConfig.Values or {}
                 local Default = EConfig.Default
                 local Multi = EConfig.Multi or false
-                local AllowNull = EConfig.AllowNull or false
                 local Value = Default or (Multi and {} or nil)
                 local Expanded = false
-                local Search = (EConfig.Search == nil) and false or EConfig.Search
-                
-                -- Create primary frame
+
                 local Frame = Creator.New("Frame", {
-                    Size = UDim2.new(1, 0, 0, EConfig.Description and 52 or 36),
+                    Size = UDim2.new(1, 0, 0, 40),
                     Parent = Parent,
                     ThemeTag = { BackgroundColor3 = "Element" },
-                    BackgroundTransparency = 0,
-                    ClipsDescendants = false,
-                    ZIndex = 1
+                    ClipsDescendants = true
                 }, { 
                     Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
-                    Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
+                    Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 })
                 })
                 
-                local TitleSize = EConfig.Description and UDim2.new(1, -20, 0, 20) or UDim2.new(1, -170, 1, 0)
-                local TitlePos = EConfig.Description and UDim2.fromOffset(10, 8) or UDim2.fromOffset(10, 0)
-
-                local TitleLabel = Creator.New("TextLabel", {
-                    Text = EConfig.Title or Key,
-                    Size = TitleSize, Position = TitlePos,
-                    BackgroundTransparency = 1,
-                    ThemeTag = { TextColor3 = "Text" },
-                    Font = Enum.Font.Gotham,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    TextSize = 14,
-                    Parent = Frame
-                })
-
-                if EConfig.Description then
-                    Creator.New("TextLabel", {
-                        Text = EConfig.Description,
-                        Size = UDim2.new(1, -20, 0, 14), Position = UDim2.fromOffset(10, 28),
-                        BackgroundTransparency = 1,
-                        ThemeTag = { TextColor3 = "SubText" },
-                        Font = Enum.Font.Gotham,
-                        TextXAlignment = Enum.TextXAlignment.Left,
-                        TextSize = 12, Parent = Frame
-                    })
-                end
-
-                local DropdownInner = Creator.New("TextButton", {
-                    Size = UDim2.new(0, 160, 0, 24),
-                    Position = UDim2.new(1, -10, 0, (Frame.Size.Y.Offset - 24) / 2),
-                    AnchorPoint = Vector2.new(1, 0),
-                    BackgroundTransparency = 0.5,
+                local Button = Creator.New("TextButton", {
+                    Size = UDim2.new(1, 0, 0, 40),
                     Parent = Frame,
-                    ThemeTag = { BackgroundColor3 = "DropdownFrame" },
-                    Text = ""
-                }, {
-                    Creator.New("UICorner", { CornerRadius = UDim.new(0, 4) }),
-                    Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder" }, Transparency = 0.5 }),
-                })
-
-                local DropdownDisplay = Creator.New("TextLabel", {
-                    Text = "--",
-                    ThemeTag = { TextColor3 = "Text" },
-                    TextSize = 12, TextTruncate = Enum.TextTruncate.AtEnd,
-                    Size = UDim2.new(1, -30, 1, 0), Position = UDim2.fromOffset(8, 0),
-                    BackgroundTransparency = 1, Font = Enum.Font.Gotham,
-                    TextXAlignment = Enum.TextXAlignment.Left, Parent = DropdownInner
-                })
-
-                local DropdownIco = Creator.New("ImageLabel", {
-                    Image = "rbxassetid://10709790948", Size = UDim2.fromOffset(16, 16),
-                    AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -6, 0.5, 0),
-                    BackgroundTransparency = 1, Rotation = 180,
-                    ThemeTag = { ImageColor3 = "SubText" }, Parent = DropdownInner
-                })
-
-                local DropdownHolderCanvas = Creator.New("Frame", {
                     BackgroundTransparency = 1,
-                    Size = UDim2.fromOffset(160, 0),
-                    Parent = Helios.Window and Helios.Window.Screen or nil,
-                    Visible = false,
-                    ZIndex = 1000, 
-                }, { 
-                    Creator.New("Frame", {
-                        Size = UDim2.fromScale(1, 1),
-                        ThemeTag = { BackgroundColor3 = "Element" },
-                        ClipsDescendants = true
-                    }, {
-                        Creator.New("UICorner", { CornerRadius = UDim.new(0, 5) }),
-                        Creator.New("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, ThemeTag = { Color = "ElementBorder" } }),
-                        Creator.New("ImageLabel", {
-                            BackgroundTransparency = 1,
-                            Image = "rbxassetid://5554236805",
-                            ScaleType = Enum.ScaleType.Slice,
-                            SliceCenter = Rect.new(23, 23, 277, 277),
-                            Size = UDim2.new(1, 30, 1, 30),
-                            Position = UDim2.fromOffset(-15, -15),
-                            ImageColor3 = Color3.fromRGB(0, 0, 0),
-                            ImageTransparency = 0.1,
-                            ZIndex = 0
-                        }),
-                    })
-                })
-                table.insert(OpenFrames, DropdownHolderCanvas)
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Text = (EConfig.Title or Key),
+                    ThemeTag = { TextColor3 = "Text" },
+                    Font = Enum.Font.Gotham
+                }, { Creator.New("UIPadding", { PaddingLeft = UDim.new(0, 10)})})
 
-                local DropdownHolderFrame = DropdownHolderCanvas:FindFirstChildOfClass("Frame")
-                local DropdownListLayout = Creator.New("UIListLayout", { Padding = UDim.new(0, 2) })
-                local DropdownScrollFrame = Creator.New("ScrollingFrame", {
-                    Size = UDim2.new(1, -4, 1, -4), Position = UDim2.fromOffset(2, 2),
-                    BackgroundTransparency = 1, ScrollBarThickness = 3, BorderSizePixel = 0,
-                    CanvasSize = UDim2.fromScale(0, 0), Parent = DropdownHolderFrame,
-                    ZIndex = 1001,
-                }, { DropdownListLayout })
+                local ValLabel = Creator.New("TextLabel", {
+                    Text = "None",
+                    Size = UDim2.new(0, 100, 1, 0),
+                    Position = UDim2.new(1, -120, 0, 0),
+                    Parent = Button,
+                    ThemeTag = { TextColor3 = "SubText" },
+                    Font = Enum.Font.Gotham,
+                    TextXAlignment = Enum.TextXAlignment.Right
+                })
                 
-                local Buttons = {}
+                Creator.New("ImageLabel", {
+                    Image = "rbxassetid://9873138319", -- Chevron Down
+                    Size = UDim2.new(0, 16, 0, 16),
+                    Position = UDim2.new(1, -25, 0.5, -8),
+                    Parent = Button,
+                    ThemeTag = { ImageColor3 = "SubText" }
+                })
+                
+                local List = Creator.New("ScrollingFrame", {
+                    Size = UDim2.new(1, -20, 1, -45),
+                    Position = UDim2.new(0, 10, 0, 40),
+                    BackgroundTransparency = 1,
+                    Parent = Frame,
+                    ScrollBarThickness = 2,
+                    CanvasSize = UDim2.new(0, 0, 0, 0)
+                }, { Creator.New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5) }) })
                 
                 local function UpdateLabel()
                     if Multi then
-                        local temp = {}
-                        for k, v in pairs(Value) do if v then table.insert(temp, k) end end
-                        DropdownDisplay.Text = #temp == 0 and "None" or table.concat(temp, ", ")
+                        ValLabel.Text = (Value == nil or #Value == 0) and "None" or table.concat(Value, ", ")
                     else
-                        DropdownDisplay.Text = Value == nil and "None" or tostring(Value)
+                        ValLabel.Text = Value == nil and "None" or tostring(Value)
                     end
                 end
-
-                local function RecalculateSize()
-                    local cnt = 0
-                    for _, v in pairs(DropdownScrollFrame:GetChildren()) do
-                        if v:IsA("TextButton") and v.Visible then cnt = cnt + 1 end
-                    end
-                    local h = (cnt * 26) + 4
-                    h = math.clamp(h, 30, 150)
-                    DropdownHolderCanvas.Size = UDim2.fromOffset(160, h)
-                    DropdownScrollFrame.CanvasSize = UDim2.fromOffset(0, DropdownListLayout.AbsoluteContentSize.Y)
-                end
-
-                local function RecalculatePos()
-                    if DropdownInner and DropdownHolderCanvas.Parent then
-                        local AbsPos = DropdownInner.AbsolutePosition
-                        local AbsSize = DropdownInner.AbsoluteSize
-                        DropdownHolderCanvas.Position = UDim2.fromOffset(AbsPos.X, AbsPos.Y + AbsSize.Y + 2)
-                    end
-                end
-
-                local DropdownObj = {
-                    Value = Value, Type = "Dropdown",
-                    Active = false,
-                    SetValues = function(self, NewValues)
-                        Values = NewValues
-                        for _, c in pairs(DropdownScrollFrame:GetChildren()) do
-                            if c:IsA("TextButton") then c:Destroy() end
-                        end
-                        table.clear(Buttons)
-
-                        for _, Val in pairs(Values) do
-                            local Selected = Multi and Value[Val] or (Value == Val)
-
-                            local ButtonSelector = Creator.New("Frame", {
-                                Size = UDim2.new(0, 4, 0, Selected and 14 or 6),
-                                Position = UDim2.new(0, -1, 0.5, 0),
-                                AnchorPoint = Vector2.new(0, 0.5),
-                                BackgroundTransparency = Selected and 0 or 1,
-                                ThemeTag = { BackgroundColor3 = "Accent" },
-                                ZIndex = 1002
-                            }, { Creator.New("UICorner", { CornerRadius = UDim.new(0, 2) }) })
-
-                            local Item = Creator.New("TextButton", {
-                                Text = "", Size = UDim2.new(1, 0, 0, 24),
-                                Parent = DropdownScrollFrame,
-                                ThemeTag = { BackgroundColor3 = "Hover" },
-                                BackgroundTransparency = Selected and 0.85 or 1,
-                                ZIndex = 1001
-                            }, { 
-                                Creator.New("UICorner", { CornerRadius = UDim.new(0, 4) }),
-                                ButtonSelector,
-                                Creator.New("TextLabel", {
-                                    Text = Val,
-                                    Size = UDim2.new(1, -15, 1, 0), Position = UDim2.new(0, 10, 0, 0),
-                                    BackgroundTransparency = 1, ThemeTag = { TextColor3 = "Text" },
-                                    Font = Enum.Font.Gotham, TextSize = 12,
-                                    TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 1002
-                                })
-                            })
-                            Buttons[Val] = Item
-
-                            Connect(Item.MouseButton1Click, function()
-                                if Multi then
-                                    Value[Val] = not Value[Val]
-                                else
-                                    if Value == Val and not AllowNull then return end
-                                    Value = (Value == Val and AllowNull) and nil or Val
-                                    self:Toggle()
-                                end
-                                
-                                if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
-                                UpdateLabel()
-                                
-                                for vName, vItem in pairs(Buttons) do
-                                    local IsSel = Multi and Value[vName] or (Value == vName)
-                                    TweenService:Create(vItem, TweenInfo.new(0.2), { BackgroundTransparency = IsSel and 0.85 or 1 }):Play()
-                                    local Ind = vItem:FindFirstChildOfClass("Frame")
-                                    TweenService:Create(Ind, TweenInfo.new(0.2), {
-                                        Size = UDim2.new(0, 4, 0, IsSel and 14 or 6),
-                                        BackgroundTransparency = IsSel and 0 or 1
-                                    }):Play()
-                                end
-                            end)
-                        end
-                        RecalculateSize()
-                        self:SetValue(AllowNull and nil or Values[1])
-                    end,
-                    SetValue = function(self, Val)
-                        Value = Val
-                        UpdateLabel()
-                        if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
+                UpdateLabel()
+                
+                local function RefreshList()
+                    for _, c in pairs(List:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+                    local count = 0
+                    for _, Val in pairs(Values) do
+                        count = count + 1
                         
-                        for vName, vItem in pairs(Buttons) do
-                            local IsSel = Multi and Value[vName] or (Value == vName)
-                            TweenService:Create(vItem, TweenInfo.new(0.2), { BackgroundTransparency = IsSel and 0.85 or 1 }):Play()
-                            local Ind = vItem:FindFirstChildOfClass("Frame")
-                            TweenService:Create(Ind, TweenInfo.new(0.2), {
-                                Size = UDim2.new(0, 4, 0, IsSel and 14 or 6),
-                                BackgroundTransparency = IsSel and 0 or 1
-                            }):Play()
-                        end
-                    end,
-                    Toggle = function(self)
-                        self.Active = not self.Active
-                        for _, f in pairs(OpenFrames) do
-                            if f ~= DropdownHolderCanvas and f.Visible then f.Visible = false end
-                        end
-                        if self.Active then
-                            RecalculatePos()
-                            DropdownHolderCanvas.Visible = true
-                        else
-                            DropdownHolderCanvas.Visible = false
-                        end
-                        TweenService:Create(DropdownIco, TweenInfo.new(0.2), { Rotation = self.Active and 0 or 180 }):Play()
-                    end
-                }
+                        -- Replicate Nexus Dropdown look
+                        local Selected = Multi and (table.find(Value, Val) ~= nil) or (Value == Val)
+                        
+                        local ButtonSelector = Creator.New("Frame", {
+                            Size = UDim2.new(0, 4, 0, Selected and 14 or 6),
+                            Position = UDim2.new(0, -1, 0.5, 0),
+                            AnchorPoint = Vector2.new(0, 0.5),
+                            BackgroundTransparency = Selected and 0 or 1,
+                            ThemeTag = { BackgroundColor3 = "Accent" }
+                        }, { Creator.New("UICorner", { CornerRadius = UDim.new(0, 2) }) })
 
-                Connect(DropdownInner.MouseButton1Click, function() DropdownObj:Toggle() end)
-                if Default == nil and Multi then Value = {} end
-                if Multi and type(Default) == "table" then
-                     Value = {}
-                     for _, v in pairs(Default) do Value[v] = true end
+                        local Item = Creator.New("TextButton", {
+                             Text = "",
+                             Size = UDim2.new(1, 0, 0, 28),
+                             Parent = List,
+                             ThemeTag = { BackgroundColor3 = "Hover" },
+                             BackgroundTransparency = Selected and 0.85 or 1
+                        }, { 
+                             Creator.New("UICorner", { CornerRadius = UDim.new(0, 4) }),
+                             ButtonSelector,
+                             Creator.New("TextLabel", {
+                                 Text = Val,
+                                 Size = UDim2.new(1, -15, 1, 0),
+                                 Position = UDim2.new(0, 10, 0, 0),
+                                 BackgroundTransparency = 1,
+                                 ThemeTag = { TextColor3 = "Text" },
+                                 Font = Enum.Font.Gotham,
+                                 TextSize = 13,
+                                 TextXAlignment = Enum.TextXAlignment.Left
+                             })
+                        })
+                        
+                        Connect(Item.MouseButton1Click, function()
+                             if Multi then
+                                  local idx = table.find(Value, Val)
+                                  if idx then table.remove(Value, idx) else table.insert(Value, Val) end
+                                  if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
+                             else
+                                  if not EConfig.AllowNull and Value == Val then return end
+                                  Value = (Value == Val and EConfig.AllowNull) and nil or Val
+                                  Expanded = false
+                                  TweenService:Create(Frame, TweenInfo.new(0.2), { Size = UDim2.new(1, 0, 0, 40) }):Play()
+                                  if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
+                             end
+                             UpdateLabel()
+                             RefreshList() -- Redraw selectors
+                        end)
+                    end
+                    List.CanvasSize = UDim2.new(0, 0, 0, count * 33)
+                    if Expanded then 
+                        local h = math.clamp((count * 33) + 50, 40, 180)
+                        TweenService:Create(Frame, TweenInfo.new(0.2), { Size = UDim2.new(1, 0, 0, h) }):Play()
+                    end
                 end
                 
-                Connect(DropdownListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), RecalculateSize)
-                if Helios.Window and Helios.Window.Root then
-                    Connect(Helios.Window.Root:GetPropertyChangedSignal("AbsolutePosition"), RecalculatePos)
-                end
-                Connect(UserInputService.InputBegan, function(Input)
-                    if DropdownObj.Active and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
-                        local mPos = UserInputService:GetMouseLocation()
-                        local dA, dS = DropdownHolderCanvas.AbsolutePosition, DropdownHolderCanvas.AbsoluteSize
-                        local iA, iS = DropdownInner.AbsolutePosition, DropdownInner.AbsoluteSize
-                        local inD = (mPos.X >= dA.X and mPos.X <= dA.X + dS.X and mPos.Y >= dA.Y and mPos.Y <= dA.Y + dS.Y)
-                        local inI = (mPos.X >= iA.X and mPos.X <= iA.X + iS.X and mPos.Y >= iA.Y and mPos.Y <= iA.Y + iS.Y)
-                        if not inD and not inI then DropdownObj:Toggle() end
+                Connect(Button.MouseButton1Click, function()
+                    Expanded = not Expanded
+                    if Expanded then RefreshList() else 
+                        TweenService:Create(Frame, TweenInfo.new(0.2), { Size = UDim2.new(1, 0, 0, 40) }):Play()
                     end
                 end)
-
-                DropdownObj:SetValues(Values)
-                if Default ~= nil then DropdownObj:SetValue(Default) end
+                
+                local DropdownObj = {
+                    Value = Value,
+                    Values = Values,
+                    Multi = Multi,
+                    Type = "Dropdown",
+                    SetValue = function(self, v)
+                        Value = v
+                        UpdateLabel()
+                        if type(EConfig.Callback) == "function" then EConfig.Callback(v) end
+                        RefreshList()
+                    end,
+                    SetValues = function(self, newValues)
+                        self.Values = newValues or {}
+                        Values = self.Values
+                        RefreshList()
+                    end
+                }
                 Helios.Options[Key] = DropdownObj
                 return DropdownObj
 
-            elseif Type == "Keybind" then
-                 local Binding = EConfig.Default or Enum.KeyCode.Unknown
-                 local Frame = Creator.New("Frame", {
-                     Size = UDim2.new(1, 0, 0, EConfig.Description and 52 or 36),
-                     Parent = Parent,
-                     ThemeTag = { BackgroundColor3 = "Element" },
-                     BackgroundTransparency = 0,
-                 }, { 
-                     Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
-                     Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
-                 })
-                 
-                 local TitleSize = EConfig.Description and UDim2.new(1, -20, 0, 20) or UDim2.new(1, -120, 1, 0)
-                 local TitlePos = EConfig.Description and UDim2.fromOffset(10, 8) or UDim2.fromOffset(10, 0)
-
-                 Creator.New("TextLabel", {
-                     Text = (EConfig.Title or Key),
-                     Size = TitleSize, Position = TitlePos,
-                     ThemeTag = { TextColor3 = "Text" },
-                     Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left,
-                     TextSize = 14, BackgroundTransparency = 1, Parent = Frame
-                 })
-
-                 if EConfig.Description then
-                    Creator.New("TextLabel", {
-                        Text = EConfig.Description,
-                        Size = UDim2.new(1, -20, 0, 14), Position = UDim2.fromOffset(10, 28),
-                        BackgroundTransparency = 1,
-                        ThemeTag = { TextColor3 = "SubText" },
-                        Font = Enum.Font.Gotham,
-                        TextXAlignment = Enum.TextXAlignment.Left,
-                        TextSize = 12, Parent = Frame
-                    })
-                 end
-
-                 local BindPill = Creator.New("TextButton", {
-                     Size = UDim2.fromOffset(80, 24),
-                     Position = UDim2.new(1, -10, 0, (Frame.Size.Y.Offset - 24) / 2),
-                     AnchorPoint = Vector2.new(1, 0),
-                     BackgroundTransparency = 0.5,
-                     ThemeTag = { BackgroundColor3 = "DropdownFrame" },
-                     Text = "", Parent = Frame
-                 }, {
-                     Creator.New("UICorner", { CornerRadius = UDim.new(0, 4) }),
-                     Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder" }, Transparency = 0.5 }),
-                 })
-
-                 local function GetKeyName(key)
-                     if typeof(key) == "EnumItem" then
-                         if key.EnumType == Enum.UserInputType then
-                             if key == Enum.UserInputType.MouseButton1 then return "MB1" end
-                             if key == Enum.UserInputType.MouseButton2 then return "MB2" end
-                             if key == Enum.UserInputType.MouseButton3 then return "MB3" end
-                             return key.Name
-                         end
-                         return key.Name
-                     end
-                     return tostring(key)
-                 end
-
-                 local KeyLabel = Creator.New("TextLabel", {
-                     Text = GetKeyName(Binding),
-                     Size = UDim2.new(1, 0, 1, 0),
-                     ThemeTag = { TextColor3 = "Text" },
-                     Font = Enum.Font.GothamMedium, TextSize = 12,
-                     BackgroundTransparency = 1, Parent = BindPill
-                 })
-                 
-                 local BindingMode = false
-                 local KeybindObj = { 
-                     Value = Binding, Type = "Keybind",
-                     SetValue = function(self, key)
-                         if typeof(key) == "string" then 
-                             key = Enum.KeyCode[key] or Enum.UserInputType[key] or key 
-                         end
-                         self.Value = key
-                         KeyLabel.Text = GetKeyName(key)
-                         
-                         local textSize = game:GetService("TextService"):GetTextSize(KeyLabel.Text, 12, Enum.Font.GothamMedium, Vector2.new(1000, 24))
-                         TweenService:Create(BindPill, TweenInfo.new(0.1), { Size = UDim2.fromOffset(math.max(40, textSize.X + 16), 24) }):Play()
-                         
-                         if type(EConfig.Callback) == "function" then EConfig.Callback(key) end
-                     end
-                 }
-                 
-                 KeybindObj:SetValue(Binding) -- Initial size update
-
-                 Connect(BindPill.MouseButton1Click, function()
-                     BindingMode = true
-                     KeyLabel.Text = "..."
-                     TweenService:Create(BindPill, TweenInfo.new(0.1), { Size = UDim2.fromOffset(40, 24) }):Play()
-                 end)
-                 
-                 Connect(UserInputService.InputBegan, function(Input)
-                     if BindingMode then
-                         if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name ~= "Unknown" then
-                             if Input.KeyCode ~= Enum.KeyCode.Escape then
-                                 BindingMode = false
-                                 KeybindObj:SetValue(Input.KeyCode)
-                             else
-                                 BindingMode = false
-                                 KeybindObj:SetValue("None")
-                             end
-                         elseif Input.UserInputType.Name:find("MouseButton") then
-                             BindingMode = false
-                             KeybindObj:SetValue(Input.UserInputType)
-                         end
-                     end
-                 end)
-                 
-                 Helios.Options[Key] = KeybindObj
-                 return KeybindObj
+            elseif Type == "Input" then
                 local Frame = Creator.New("Frame", {
                     Size = UDim2.new(1, 0, 0, 40),
                     Parent = Parent,
@@ -2053,118 +1689,61 @@ function Helios:CreateWindow(Config)
                 
             elseif Type == "Keybind" then
                  local Binding = EConfig.Default or Enum.KeyCode.Unknown
-                 if typeof(Binding) == "string" then
-                     local s,k = pcall(function() return Enum.KeyCode[Binding] end)
-                     if s and k then Binding = k else Binding = Enum.UserInputType[Binding] or Binding end
-                 end
-
-                 local Frame = Creator.New("Frame", {
-                     Size = UDim2.new(1, 0, 0, EConfig.Description and 52 or 36),
+                 local Frame = Creator.New("TextButton", {
+                     Size = UDim2.new(1, 0, 0, 40),
                      Parent = Parent,
                      ThemeTag = { BackgroundColor3 = "Element" },
-                     BackgroundTransparency = 0,
+                     Text = "",
                  }, { 
-                     Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
+                     Creator.New("UICorner", { CornerRadius = UDim.new(0,6) }),
                      Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
                  })
                  
-                 local TitleSize = EConfig.Description and UDim2.new(1, -20, 0, 20) or UDim2.new(1, -120, 1, 0)
-                 local TitlePos = EConfig.Description and UDim2.fromOffset(10, 8) or UDim2.fromOffset(10, 0)
-
                  Creator.New("TextLabel", {
                      Text = (EConfig.Title or Key),
-                     Size = TitleSize, Position = TitlePos,
+                     Size = UDim2.new(1, -60, 1, 0),
+                     Position = UDim2.new(0,10,0,0),
                      ThemeTag = { TextColor3 = "Text" },
-                     Font = Enum.Font.Gotham, TextXAlignment = Enum.TextXAlignment.Left,
-                     TextSize = 14, BackgroundTransparency = 1, Parent = Frame
+                     Font = Enum.Font.Gotham,
+                     TextXAlignment = Enum.TextXAlignment.Left,
+                     Parent = Frame
                  })
-                 
-                 if EConfig.Description then
-                    Creator.New("TextLabel", {
-                        Text = EConfig.Description,
-                        Size = UDim2.new(1, -20, 0, 14), Position = UDim2.fromOffset(10, 28),
-                        BackgroundTransparency = 1,
-                        ThemeTag = { TextColor3 = "SubText" },
-                        Font = Enum.Font.Gotham,
-                        TextXAlignment = Enum.TextXAlignment.Left,
-                        TextSize = 12, Parent = Frame
-                    })
-                 end
-
-                 local BindPill = Creator.New("TextButton", {
-                     Size = UDim2.fromOffset(80, 24),
-                     Position = UDim2.new(1, -10, 0, (Frame.Size.Y.Offset - 24) / 2),
-                     AnchorPoint = Vector2.new(1, 0),
-                     BackgroundTransparency = 0.5,
-                     ThemeTag = { BackgroundColor3 = "DropdownFrame" },
-                     Text = "", Parent = Frame
-                 }, {
-                     Creator.New("UICorner", { CornerRadius = UDim.new(0, 4) }),
-                     Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder" }, Transparency = 0.5 }),
-                 })
-
-                 local function GetKeyName(key)
-                     if typeof(key) == "EnumItem" then
-                         if key.EnumType == Enum.UserInputType then
-                             if key == Enum.UserInputType.MouseButton1 then return "MB1" end
-                             if key == Enum.UserInputType.MouseButton2 then return "MB2" end
-                             if key == Enum.UserInputType.MouseButton3 then return "MB3" end
-                             return key.Name
-                         end
-                         return key.Name
-                     end
-                     return tostring(key)
-                 end
 
                  local KeyLabel = Creator.New("TextLabel", {
-                     Text = GetKeyName(Binding),
-                     Size = UDim2.new(1, 0, 1, 0),
-                     ThemeTag = { TextColor3 = "Text" },
-                     Font = Enum.Font.GothamMedium, TextSize = 12,
-                     BackgroundTransparency = 1, Parent = BindPill
+                     Text = "["..Binding.Name.."]",
+                     Size = UDim2.new(0, 60, 1, 0),
+                     Position = UDim2.new(1,-70,0,0),
+                     ThemeTag = { TextColor3 = "SubText" },
+                     Font = Enum.Font.Gotham,
+                     TextXAlignment = Enum.TextXAlignment.Right,
+                     Parent = Frame
                  })
-
+                 
                  local BindingMode = false
                  local KeybindObj = { 
                      Value = Binding, 
                      Type = "Keybind",
                      SetValue = function(self, key, mode)
-                         if typeof(key) == "string" then 
-                             local s,k = pcall(function() return Enum.KeyCode[key] end)
-                             if s and k then key = k else key = Enum.UserInputType[key] or key end
-                         end
+                         if typeof(key) == "string" then key = Enum.KeyCode[key] or key end
                          self.Value = key
-                         KeyLabel.Text = GetKeyName(key)
-                         
-                         local textSize = game:GetService("TextService"):GetTextSize(KeyLabel.Text, 12, Enum.Font.GothamMedium, Vector2.new(1000, 24))
-                         TweenService:Create(BindPill, TweenInfo.new(0.1), { Size = UDim2.fromOffset(math.max(40, textSize.X + 16), 24) }):Play()
-
-                         if type(EConfig.Callback) == "function" then EConfig.Callback((typeof(key) == "EnumItem") and key.Name or key) end
+                         if typeof(key) == "EnumItem" then
+                             KeyLabel.Text = "["..key.Name.."]"
+                         else
+                             KeyLabel.Text = "["..tostring(key).."]"
+                         end
+                         if type(EConfig.Callback) == "function" then EConfig.Callback(key) end
                      end
                  }
                  
-                 KeybindObj:SetValue(Binding)
-
-                 Connect(BindPill.MouseButton1Click, function()
+                 Connect(Frame.MouseButton1Click, function()
                      BindingMode = true
-                     KeyLabel.Text = "..."
-                     TweenService:Create(BindPill, TweenInfo.new(0.1), { Size = UDim2.fromOffset(40, 24) }):Play()
+                     KeyLabel.Text = "[...]"
                  end)
                  
                  Connect(UserInputService.InputBegan, function(Input)
-                     if BindingMode then
-                         if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name ~= "Unknown" then
-                             if Input.KeyCode ~= Enum.KeyCode.Escape then
-                                 BindingMode = false
-                                 KeybindObj:SetValue(Input.KeyCode)
-                             else
-                                 BindingMode = false
-                                 KeybindObj:SetValue("None")
-                             end
-                         elseif Input.UserInputType.Name:find("MouseButton") then
-                             BindingMode = false
-                             KeybindObj:SetValue(Input.UserInputType)
-                         end
+                     if BindingMode and Input.UserInputType == Enum.UserInputType.Keyboard then
+                         BindingMode = false
+                         KeybindObj:SetValue(Input.KeyCode)
                      end
                  end)
                  Helios.Options[Key] = KeybindObj
@@ -2215,34 +1794,14 @@ function Helios:CreateWindow(Config)
     end
     
     Helios.Window = Window
-    Helios.MinimizeKeybind = Enum.KeyCode.LeftAlt
+    Helios.MinimizeKeybind = Enum.KeyCode.RightControl
     
     Connect(UserInputService.InputBegan, function(Input, Processed)
-        local CurrentBind = Helios.MinimizeKeybind
-        if type(CurrentBind) == "string" then
-            local s, k = pcall(function() return Enum.KeyCode[CurrentBind] end)
-            if s and k then 
-                CurrentBind = k 
-                Helios.MinimizeKeybind = k
-            else
-                local s2, m = pcall(function() return Enum.UserInputType[CurrentBind] end)
-                if s2 and m then
-                    CurrentBind = m
-                    Helios.MinimizeKeybind = m
-                end
-            end
+        if type(Helios.MinimizeKeybind) == "string" then
+            local s, k = pcall(function() return Enum.KeyCode[Helios.MinimizeKeybind] end)
+            if s and k then Helios.MinimizeKeybind = k end
         end
-        
-        local isBound = false
-        if typeof(CurrentBind) == "EnumItem" then
-            if CurrentBind.EnumType == Enum.KeyCode and Input.KeyCode == CurrentBind then
-                isBound = true
-            elseif CurrentBind.EnumType == Enum.UserInputType and Input.UserInputType == CurrentBind then
-                isBound = true
-            end
-        end
-
-        if not Processed and isBound then
+        if not Processed and Input.KeyCode == Helios.MinimizeKeybind then
             if Helios.Window and Helios.Window.Root then
                 if Helios.Window.Root.Visible then
                     TweenService:Create(Helios.Window.Root.UIScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), { Scale = 0.8 }):Play()
