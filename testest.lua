@@ -19,7 +19,7 @@ Helios.Window = nil
 
 local Themes = {
     Dark = {
-        Name = "Dark",
+        Name = "Slate",
         Accent = Color3.fromRGB(0, 255, 214), -- Fluent Cyan-ish
         AcrylicMain = Color3.fromRGB(25, 25, 25),
         AcrylicBorder = Color3.fromRGB(60, 60, 60),
