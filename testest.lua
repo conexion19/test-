@@ -1,8 +1,7 @@
 local Helios = {
-    Version = "1.2.0-FluentInspired",
+    Version = "red",
 }
 
--- [Services]
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -100,9 +99,6 @@ local function Connect(Signal, Function)
     return Conn
 end
 
--- [Main GUI Logic]
--- Secure parent selection: Default to CoreGui with reference protection
-
 function Helios:CreateWindow(Config)
     -- Check if window exists and is valid (not destroyed)
     if Helios.Window and Helios.Window.Root and Helios.Window.Root.Parent then
@@ -112,25 +108,13 @@ function Helios:CreateWindow(Config)
     
     local Window = { Tabs = {} }
     
-    -- [Anti-Cheat / Security]
-    -- Try to use CoreGui (Secure), fallback to PlayerGui if failed
     local ProtectedParent = nil
     pcall(function()
         ProtectedParent = game:GetService("CoreGui")
-        if cloneref then
-            ProtectedParent = cloneref(ProtectedParent)
-        end
     end)
     
-    -- Fallback for environments where CoreGui is restricted
     if not ProtectedParent then
         ProtectedParent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-    end
-    
-    -- Randomize the name to avoid detection by name scanning
-    local RandomName = ""
-    for i = 1, math.random(12, 20) do
-        RandomName = RandomName .. string.char(math.random(97, 122))
     end
     
     local Title = Config.Title or "Library"
@@ -139,7 +123,7 @@ function Helios:CreateWindow(Config)
     
     -- Main Window Frame
     local Root = Creator.New("Frame", {
-        Name = RandomName, -- Randomized Name
+        Name = Title,
         Size = Size,
         Position = UDim2.fromScale(0.5, 0.5),
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -878,13 +862,11 @@ end
 
 -- [CreateMinimizer Implementation]
 function Helios:CreateMinimizer(Config)
-    -- Protect Parent Reference
     local ProtectedParent = game:GetService("CoreGui")
-    if cloneref then ProtectedParent = cloneref(ProtectedParent) end
 
     -- Creates a standalone GUI button to toggle the Window
     local MinimizerScreen = Instance.new("ScreenGui")
-    MinimizerScreen.Name = string.char(math.random(97, 122)) .. string.char(math.random(97, 122)) .. string.char(math.random(97, 122)) -- Random Name
+    MinimizerScreen.Name = "HeliosMinimizer"
     MinimizerScreen.Parent = ProtectedParent
     
     local Button = Creator.New("ImageButton", {
@@ -942,7 +924,6 @@ function Helios:Notify(Config)
         ParentFrame = Helios.Window.Root.Parent
     else
         ParentFrame = game:GetService("CoreGui")
-        if cloneref then ParentFrame = cloneref(ParentFrame) end
     end
 
     local NotifyFrame = Creator.New("Frame", {
@@ -982,5 +963,4 @@ function Helios:Notify(Config)
     end)
 end
 
-setmetatable(Helios, { __metatable = "Helios Library" })
 return Helios
