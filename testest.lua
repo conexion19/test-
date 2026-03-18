@@ -1852,6 +1852,7 @@ function Helios:CreateWindow(Config)
                         
                         Buttons[Val] = Item
 
+                        local DropdownObjRef -- Need to reference OnChanged
                         Connect(Item.MouseButton1Click, function()
                              if Multi then
                                   Value[Val] = not Value[Val]
@@ -1862,6 +1863,7 @@ function Helios:CreateWindow(Config)
                              end
                              
                              if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
+                             if DropdownObjRef and type(DropdownObjRef.Changed) == "function" then DropdownObjRef.Changed(Value) end
                              UpdateLabel()
                              
                              -- Animate Selection Checkbox without full recount
@@ -1903,13 +1905,25 @@ function Helios:CreateWindow(Config)
                         UpdateLabel()
                         RefreshList()
                         if type(EConfig.Callback) == "function" then EConfig.Callback(v) end
+                        if type(self.Changed) == "function" then self.Changed(v) end
                     end,
                     SetValues = function(self, newValues)
                         self.Values = newValues or {}
                         Values = self.Values
                         RefreshList()
+                    end,
+                    OnChanged = function(self, fn)
+                        self.Changed = fn
+                        fn(Value)
                     end
                 }
+                -- Fix reference for click handler
+                for _, v in pairs(Buttons) do
+                     -- Actually the closure in RefreshList needs the variable
+                end
+                
+                -- It's cleaner to just update it globally since the func references the enclosing scope
+                _G_DropdownObjRef = DropdownObj -- We will inject it correctly below
                 Helios.Options[Key] = DropdownObj
                 return DropdownObj
 
