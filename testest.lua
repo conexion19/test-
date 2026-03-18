@@ -214,6 +214,13 @@ function Helios:CreateWindow(Config)
     
     Window.Root = Root
     
+    function Window:SelectTab(Index)
+        local tab = self.Tabs[Index]
+        if tab and type(tab.Show) == "function" then
+            tab.Show()
+        end
+    end
+
     function Window:AddTab(Config)
         local TabTitle = Config.Title or "Tab"
         local IconID = Icons[Config.Icon] or Icons.default
@@ -279,10 +286,13 @@ function Helios:CreateWindow(Config)
             TabButton.ImageLabel.ImageColor3 = Themes.Dark.SubText
         end
         
-        local Tab = { Container = Container, Button = TabButton }
+        local Tab = { Container = Container, Button = TabButton, Show = Select }
         table.insert(Window.Tabs, Tab)
 
-        -- [Element Creator Helper]
+        function Tab:Select()
+            self.Show()
+        end
+
         local function CreateElement(Parent, Type, EConfig, Key)
             if Type == "Button" then
                  local BtnFrame = Creator.New("TextButton", {
