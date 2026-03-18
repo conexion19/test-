@@ -207,28 +207,26 @@ function Helios:CreateWindow(Config)
     })
 
     -- Window Controls (Close & Minimize)
-    local CloseBtn = Creator.New("TextButton", {
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(1, -5, 0.5, 0),
+    local CloseBtn = Creator.New("ImageButton", {
+        Size = UDim2.new(0, 18, 0, 18),
+        Position = UDim2.new(1, -12, 0.5, 0),
         AnchorPoint = Vector2.new(1, 0.5),
         Parent = TopBar,
-        Text = "✕",
-        Font = Enum.Font.GothamBold,
-        ThemeTag = { TextColor3 = "SubText" },
+        Image = "rbxassetid://9886659671",
+        ThemeTag = { ImageColor3 = "SubText" },
         BackgroundTransparency = 1,
-        TextSize = 14
+        AutoButtonColor = false
     })
     
-    local MinBtn = Creator.New("TextButton", {
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(1, -35, 0.5, 0),
+    local MinBtn = Creator.New("ImageButton", {
+        Size = UDim2.new(0, 18, 0, 18),
+        Position = UDim2.new(1, -40, 0.5, 0),
         AnchorPoint = Vector2.new(1, 0.5),
         Parent = TopBar,
-        Text = "—",
-        Font = Enum.Font.GothamBold,
-        ThemeTag = { TextColor3 = "SubText" },
+        Image = "rbxassetid://9886659276",
+        ThemeTag = { ImageColor3 = "SubText" },
         BackgroundTransparency = 1,
-        TextSize = 14
+        AutoButtonColor = false
     })
     
     Connect(CloseBtn.MouseButton1Click, function()
@@ -239,10 +237,10 @@ function Helios:CreateWindow(Config)
         Root.Visible = false
     end)
     
-    Connect(CloseBtn.MouseEnter, function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 75, 75)}):Play() end)
-    Connect(CloseBtn.MouseLeave, function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 155)}):Play() end)
-    Connect(MinBtn.MouseEnter, function() TweenService:Create(MinBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(250, 250, 250)}):Play() end)
-    Connect(MinBtn.MouseLeave, function() TweenService:Create(MinBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 155)}):Play() end)
+    Connect(CloseBtn.MouseEnter, function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(255, 75, 75)}):Play() end)
+    Connect(CloseBtn.MouseLeave, function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(150, 150, 155)}):Play() end)
+    Connect(MinBtn.MouseEnter, function() TweenService:Create(MinBtn, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(250, 250, 250)}):Play() end)
+    Connect(MinBtn.MouseLeave, function() TweenService:Create(MinBtn, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(150, 150, 155)}):Play() end)
 
     -- Pulse Animation
     task.spawn(function()
