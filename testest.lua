@@ -1066,7 +1066,30 @@ function Helios:CreateWindow(Config)
     end
 
     CreateBarButton("rbxassetid://10709791437", UDim2.new(1, -4, 0.5, 0), function()
-        Root.Visible = false
+        if Helios.Window and Helios.Window.Dialog then
+            Helios.Window:Dialog({
+                Title = "Close",
+                Content = "Are you sure you want to unload the interface?",
+                Buttons = {
+                    {
+                        Title = "Yes",
+                        Callback = function()
+                            if Helios.Window.Screen then
+                                Helios.Window.Screen:Destroy()
+                                Helios.Window = nil
+                            end
+                        end,
+                    },
+                    {
+                        Title = "No",
+                        Callback = function() end 
+                    },
+                },
+            })
+        else
+            Root.Visible = false
+            if Helios.Window and Helios.Window.Screen then Helios.Window.Screen:Destroy() end
+        end
     end)
     
     CreateBarButton("rbxassetid://10709796032", UDim2.new(1, -42, 0.5, 0), function()
@@ -1132,6 +1155,100 @@ function Helios:CreateWindow(Config)
     
     Window.Root = Root
     Window.Screen = Screen
+
+    -- Dialog Implementation
+    function Window:Dialog(DConfig)
+        local DialogFrame = Creator.New("Frame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+            BackgroundTransparency = 1,
+            Parent = Root,
+            ZIndex = 50
+        })
+
+        local DialogBox = Creator.New("Frame", {
+            Size = UDim2.fromOffset(300, 150),
+            Position = UDim2.fromScale(0.5, 0.5),
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            ThemeTag = { BackgroundColor3 = "Element" },
+            Parent = DialogFrame,
+            ZIndex = 51
+        }, {
+            Creator.New("UICorner", { CornerRadius = UDim.new(0, 8) }),
+            Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder" }, Thickness = 1 })
+        })
+
+        Creator.New("TextLabel", {
+            Text = DConfig.Title or "Dialog",
+            Size = UDim2.new(1, 0, 0, 40),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamBold,
+            TextSize = 16,
+            ThemeTag = { TextColor3 = "Text" },
+            Parent = DialogBox,
+            ZIndex = 52
+        })
+
+        Creator.New("TextLabel", {
+            Text = DConfig.Content or "",
+            Size = UDim2.new(1, -40, 1, -100),
+            Position = UDim2.fromOffset(20, 40),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.Gotham,
+            TextSize = 14,
+            TextWrapped = true,
+            ThemeTag = { TextColor3 = "SubText" },
+            Parent = DialogBox,
+            ZIndex = 52
+        })
+
+        local ButtonContainer = Creator.New("Frame", {
+            Size = UDim2.new(1, -40, 0, 40),
+            Position = UDim2.new(0, 20, 1, -50),
+            BackgroundTransparency = 1,
+            Parent = DialogBox,
+            ZIndex = 52
+        }, {
+            Creator.New("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                Padding = UDim.new(0, 10),
+                SortOrder = Enum.SortOrder.LayoutOrder
+            })
+        })
+
+        TweenService:Create(DialogFrame, TweenInfo.new(0.2), { BackgroundTransparency = 0.5 }):Play()
+
+        local function closeDialog()
+            TweenService:Create(DialogFrame, TweenInfo.new(0.2), { BackgroundTransparency = 1 }):Play()
+            local tw = TweenService:Create(DialogBox, TweenInfo.new(0.2), { Size = UDim2.fromOffset(300, 0) })
+            tw:Play()
+            tw.Completed:Connect(function() DialogFrame:Destroy() end)
+        end
+
+        for _, btnData in ipairs(DConfig.Buttons or {}) do
+            local btn = Creator.New("TextButton", {
+                Size = UDim2.new(0.5, -5, 1, 0),
+                ThemeTag = { BackgroundColor3 = "Hover" },
+                Text = btnData.Title or "Button",
+                Font = Enum.Font.Gotham,
+                TextSize = 14,
+                ThemeTag = { TextColor3 = "Text" },
+                Parent = ButtonContainer,
+                ZIndex = 53
+            }, {
+                Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
+                Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder" }, Thickness = 1 })
+            })
+
+            Connect(btn.MouseButton1Click, function()
+                closeDialog()
+                if type(btnData.Callback) == "function" then
+                    btnData.Callback()
+                end
+            end)
+        end
+    end
     
     function Window:SelectTab(TabInfo)
         if type(TabInfo) == "number" and Window.Tabs[TabInfo] then
@@ -1170,6 +1287,8 @@ function Helios:CreateWindow(Config)
             })
         })
         
+        local ContainerLayout = Creator.New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder })
+        
         local Container = Creator.New("ScrollingFrame", {
             Size = UDim2.fromScale(1, 1),
             BackgroundTransparency = 1,
@@ -1179,9 +1298,13 @@ function Helios:CreateWindow(Config)
             ElasticBehavior = Enum.ElasticBehavior.Never,
             CanvasSize = UDim2.new(0, 0, 0, 0)
         }, {
-            Creator.New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }),
+            ContainerLayout,
             Creator.New("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), PaddingBottom = UDim.new(0, 10) })
         })
+
+        Connect(ContainerLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+            Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y + 20)
+        end)
 
         local Tab = { Container = Container, Button = TabButton, Selected = false }
         
@@ -1248,9 +1371,19 @@ function Helios:CreateWindow(Config)
                     Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
                     Creator.New("TextLabel", {
                         Text = EConfig.Title or "Button",
-                        Size = UDim2.new(1, 0, 1, 0),
+                        Size = UDim2.new(1, -30, 1, 0),
+                        Position = UDim2.fromOffset(10, 0),
                         ThemeTag = { TextColor3 = "Text" },
                         Font = Enum.Font.Gotham,
+                        TextXAlignment = Enum.TextXAlignment.Left
+                    }),
+                    Creator.New("ImageLabel", {
+                        Image = "rbxassetid://10709791437",
+                        Size = UDim2.fromOffset(16, 16),
+                        AnchorPoint = Vector2.new(1, 0.5),
+                        Position = UDim2.new(1, -10, 0.5, 0),
+                        BackgroundTransparency = 1,
+                        ThemeTag = { ImageColor3 = "Text" }
                     })
                 })
                 
