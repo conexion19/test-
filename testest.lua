@@ -101,8 +101,8 @@ end
 
 function Helios:CreateWindow(Config)
     -- Check if window exists and is valid (not destroyed)
-    if Helios.Window and Helios.Window.Screen and Helios.Window.Screen.Parent then
-        Helios.Window.Screen:Destroy() -- Force cleanup of old window if exists
+    if Helios.Window and Helios.Window.Root and Helios.Window.Root.Parent then
+        Helios.Window.Root:Destroy() -- Force cleanup of old window if exists
         Helios.Window = nil
     end
     
@@ -121,22 +121,16 @@ function Helios:CreateWindow(Config)
     local SubTitle = Config.SubTitle or ""
     local Size = Config.Size or UDim2.fromOffset(580, 460)
     
-    local Screen = Creator.New("ScreenGui", {
-        Name = "HeliosUI",
-        Parent = ProtectedParent,
-        IgnoreGuiInset = true,
-        ResetOnSpawn = false
-    })
-
     -- Main Window Frame
     local Root = Creator.New("Frame", {
         Name = Title,
         Size = Size,
         Position = UDim2.fromScale(0.5, 0.5),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Parent = Screen,
+        Parent = ProtectedParent,
         ThemeTag = { BackgroundColor3 = "AcrylicMain" }
     }, {
+        Creator.New("UICorner", { CornerRadius = UDim.new(0, 8) }),
         Creator.New("UIStroke", { ThemeTag = { Color = "AcrylicBorder" }, Thickness = 1 }),
         Creator.New("UIScale", { Scale = 0.8 })
     })
@@ -146,20 +140,20 @@ function Helios:CreateWindow(Config)
     
     -- Top Bar (Drag Area)
     local TopBar = Creator.New("Frame", {
-         Size = UDim2.new(1, 0, 0, 48),
+         Size = UDim2.new(1, 0, 0, 40),
          BackgroundTransparency = 1,
          Parent = Root
     }, {
         Creator.New("UIListLayout", {
-            FillDirection = Enum.FillDirection.Vertical,
+            FillDirection = Enum.FillDirection.Horizontal,
             HorizontalAlignment = Enum.HorizontalAlignment.Center,
             VerticalAlignment = Enum.VerticalAlignment.Center,
             SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 2)
+            Padding = UDim.new(0, 6)
         }),
         Creator.New("TextLabel", {
             Text = Title,
-            Size = UDim2.new(0, 0, 0, 16),
+            Size = UDim2.new(0, 0, 1, 0),
             AutomaticSize = Enum.AutomaticSize.X,
             Font = Enum.Font.GothamBold,
             TextXAlignment = Enum.TextXAlignment.Center,
@@ -169,12 +163,12 @@ function Helios:CreateWindow(Config)
         }),
         Creator.New("TextLabel", {
             Text = SubTitle,
-            Size = UDim2.new(0, 0, 0, 14),
+            Size = UDim2.new(0, 0, 1, 0),
             AutomaticSize = Enum.AutomaticSize.X,
             Font = Enum.Font.Gotham,
             TextXAlignment = Enum.TextXAlignment.Center,
             ThemeTag = { TextColor3 = "SubText" },
-            TextSize = 13,
+            TextSize = 14,
             LayoutOrder = 2
         })
     })
@@ -182,7 +176,7 @@ function Helios:CreateWindow(Config)
     -- Divider below Top Bar
     Creator.New("Frame", {
         Size = UDim2.new(1, 0, 0, 1),
-        Position = UDim2.new(0, 0, 0, 48),
+        Position = UDim2.new(0, 0, 0, 40),
         Parent = Root,
         ThemeTag = { BackgroundColor3 = "TitleBarLine" }
     })
@@ -208,8 +202,8 @@ function Helios:CreateWindow(Config)
     -- Content Layout
     local TabHolder = Creator.New("ScrollingFrame", {
         Name = "TabHolder",
-        Size = UDim2.new(0, 160, 1, -49),
-        Position = UDim2.new(0, 0, 0, 49),
+        Size = UDim2.new(0, 160, 1, -41),
+        Position = UDim2.new(0, 0, 0, 41),
         BackgroundTransparency = 1,
         Parent = Root,
         ScrollBarThickness = 0 
@@ -220,22 +214,21 @@ function Helios:CreateWindow(Config)
 
     -- Sidebar Divider
     Creator.New("Frame", {
-        Size = UDim2.new(0, 1, 1, -49),
-        Position = UDim2.new(0, 160, 0, 49),
+        Size = UDim2.new(0, 1, 1, -41),
+        Position = UDim2.new(0, 160, 0, 41),
         Parent = Root,
         ThemeTag = { BackgroundColor3 = "TitleBarLine" }
     })
     
     local ContainerHolder = Creator.New("Frame", {
         Name = "ContainerHolder",
-        Size = UDim2.new(1, -161, 1, -49),
-        Position = UDim2.new(0, 161, 0, 49),
+        Size = UDim2.new(1, -161, 1, -41),
+        Position = UDim2.new(0, 161, 0, 41),
         BackgroundTransparency = 1,
         Parent = Root,
     })
     
     Window.Root = Root
-    Window.Screen = Screen
     
     function Window:SelectTab(TabInfo)
         if type(TabInfo) == "number" and Window.Tabs[TabInfo] then
@@ -295,11 +288,7 @@ function Helios:CreateWindow(Config)
                  T.Button.ImageLabel.ImageColor3 = Themes.Slate.SubText
                  T.Selected = false
              end
-             
              Container.Visible = true
-             Container.Position = UDim2.fromOffset(0, 15)
-             TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.fromScale(0, 0) }):Play()
-             
              Tab.Selected = true
              TweenService:Create(TabButton, TweenInfo.new(0.2), { BackgroundTransparency = 0.92 }):Play() -- Subtle highlight
              TabButton.TextLabel.TextColor3 = Themes.Slate.Text
@@ -470,18 +459,7 @@ function Helios:CreateWindow(Config)
                      Size = UDim2.fromScale((Value - Min)/(Max - Min), 1),
                      ThemeTag = { BackgroundColor3 = "Accent" },
                      Parent = SliderBar
-                 }, { 
-                     Creator.New("UICorner", { CornerRadius = UDim.new(1, 0) }),
-                     Creator.New("Frame", { -- Knob
-                         Size = UDim2.new(0, 12, 0, 12),
-                         Position = UDim2.new(1, 0, 0.5, 0),
-                         AnchorPoint = Vector2.new(0.5, 0.5),
-                         BackgroundColor3 = Color3.fromRGB(240, 240, 240),
-                     }, { 
-                         Creator.New("UICorner", { CornerRadius = UDim.new(1, 0) }),
-                         Creator.New("UIStroke", { Thickness = 1, Color = Color3.fromRGB(20, 20, 20), Transparency = 0.5 })
-                     })
-                 })
+                 }, { Creator.New("UICorner", { CornerRadius = UDim.new(1, 0) }) })
                  
                  local function Update(Input)
                      local Scale = math.clamp((Input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
