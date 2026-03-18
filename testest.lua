@@ -135,6 +135,7 @@ function Helios:CreateWindow(Config)
         Position = UDim2.fromScale(0.5, 0.5),
         AnchorPoint = Vector2.new(0.5, 0.5),
         Parent = Screen,
+        BackgroundTransparency = 0,
         ThemeTag = { BackgroundColor3 = "AcrylicMain" }
     }, {
         Creator.New("UIStroke", { ThemeTag = { Color = "AcrylicBorder" }, Thickness = 1 }),
@@ -145,39 +146,102 @@ function Helios:CreateWindow(Config)
     TweenService:Create(Root.UIScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
     
     -- Top Bar (Drag Area)
+    local UserInfoSubtitle = Config.UserInfoSubtitle or "Freemium"
+    local LogoIcon = Creator.New("ImageLabel", {
+        Name = "Logo",
+        Size = UDim2.new(0, 36, 0, 36),
+        Position = UDim2.new(0, 8, 0.5, -18),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://113682947140762",
+        ImageColor3 = Color3.fromRGB(255, 255, 255),
+    })
+
+    local SubtitleLabel = Creator.New("TextLabel", {
+        Name = "UserSubtitle",
+        Text = UserInfoSubtitle,
+        TextTransparency = 0,
+        Font = Enum.Font.Gotham,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Size = UDim2.new(0, 150, 0, 15),
+        Position = UDim2.new(0, 50, 0.5, -7), 
+        BackgroundTransparency = 1,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+    })
+
+    local CheckGradient = Creator.New("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 150, 150)),
+            ColorSequenceKeypoint.new(0.8, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+        }),
+        Parent = SubtitleLabel,
+    })
+    task.spawn(function()
+        while task.wait(3) do
+            if not SubtitleLabel.Parent then break end
+            CheckGradient.Offset = Vector2.new(-1, 0)
+            TweenService:Create(CheckGradient, TweenInfo.new(3, Enum.EasingStyle.Linear), {Offset = Vector2.new(1, 0)}):Play()
+        end
+    end)
+
     local TopBar = Creator.New("Frame", {
          Size = UDim2.new(1, 0, 0, 48),
          BackgroundTransparency = 1,
          Parent = Root
     }, {
-        Creator.New("UIListLayout", {
-            FillDirection = Enum.FillDirection.Vertical,
-            HorizontalAlignment = Enum.HorizontalAlignment.Center,
-            VerticalAlignment = Enum.VerticalAlignment.Center,
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 2)
-        }),
+        LogoIcon,
+        SubtitleLabel,
         Creator.New("TextLabel", {
             Text = Title,
-            Size = UDim2.new(0, 0, 0, 16),
-            AutomaticSize = Enum.AutomaticSize.X,
+            Size = UDim2.new(1, 0, 0, 48),
+            Position = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1,
             Font = Enum.Font.GothamBold,
             TextXAlignment = Enum.TextXAlignment.Center,
             ThemeTag = { TextColor3 = "Text" },
             TextSize = 16,
-            LayoutOrder = 1
-        }),
-        Creator.New("TextLabel", {
-            Text = SubTitle,
-            Size = UDim2.new(0, 0, 0, 14),
-            AutomaticSize = Enum.AutomaticSize.X,
-            Font = Enum.Font.Gotham,
-            TextXAlignment = Enum.TextXAlignment.Center,
-            ThemeTag = { TextColor3 = "SubText" },
-            TextSize = 13,
-            LayoutOrder = 2
         })
     })
+
+    -- Add Top Bar Buttons (Close / Hide)
+    local function CreateBarButton(IconId, Pos, Callback)
+        local btn = Creator.New("TextButton", {
+            Size = UDim2.new(0, 34, 1, -14),
+            AnchorPoint = Vector2.new(1, 0.5),
+            Position = Pos,
+            BackgroundTransparency = 1,
+            Parent = TopBar,
+            Text = "",
+            ThemeTag = { BackgroundColor3 = "Text" },
+        }, {
+            Creator.New("UICorner", { CornerRadius = UDim.new(0, 7) }),
+            Creator.New("ImageLabel", {
+                Image = IconId,
+                Size = UDim2.fromOffset(16, 16),
+                Position = UDim2.fromScale(0.5, 0.5),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundTransparency = 1,
+                ThemeTag = { ImageColor3 = "Text" },
+            })
+        })
+        Connect(btn.MouseEnter, function() TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0.94}):Play() end)
+        Connect(btn.MouseLeave, function() TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play() end)
+        Connect(btn.MouseButton1Down, function() TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.96}):Play() end)
+        Connect(btn.MouseButton1Up, function() TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundTransparency = 0.94}):Play() end)
+        Connect(btn.MouseButton1Click, Callback)
+        return btn
+    end
+
+    CreateBarButton("rbxassetid://10709791437", UDim2.new(1, -4, 0.5, 0), function()
+        Root.Visible = false
+    end)
+    
+    CreateBarButton("rbxassetid://10709796032", UDim2.new(1, -42, 0.5, 0), function()
+        Root.Visible = false
+    end)
 
     -- Divider below Top Bar
     Creator.New("Frame", {
@@ -212,7 +276,9 @@ function Helios:CreateWindow(Config)
         Position = UDim2.new(0, 0, 0, 49),
         BackgroundTransparency = 1,
         Parent = Root,
-        ScrollBarThickness = 0 
+        ScrollBarThickness = 0,
+        ElasticBehavior = Enum.ElasticBehavior.Never,
+        CanvasSize = UDim2.new(0, 0, 0, 0)
     }, {
         Creator.New("UIListLayout", { Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder }),
         Creator.New("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) })
@@ -280,6 +346,8 @@ function Helios:CreateWindow(Config)
             Parent = ContainerHolder,
             Visible = false,
             ScrollBarThickness = 2,
+            ElasticBehavior = Enum.ElasticBehavior.Never,
+            CanvasSize = UDim2.new(0, 0, 0, 0)
         }, {
             Creator.New("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }),
             Creator.New("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), PaddingBottom = UDim.new(0, 10) })
@@ -519,7 +587,7 @@ function Helios:CreateWindow(Config)
                 local Values = EConfig.Values or {}
                 local Default = EConfig.Default
                 local Multi = EConfig.Multi or false
-                local Value = Default or (Multi and {} or Values[1])
+                local Value = Default or (Multi and {} or nil)
                 local Expanded = false
 
                 local Frame = Creator.New("Frame", {
@@ -543,7 +611,7 @@ function Helios:CreateWindow(Config)
                 }, { Creator.New("UIPadding", { PaddingLeft = UDim.new(0, 10)})})
 
                 local ValLabel = Creator.New("TextLabel", {
-                    Text = (type(Value) == "table" and table.concat(Value, ", ") or tostring(Value)),
+                    Text = "None",
                     Size = UDim2.new(0, 100, 1, 0),
                     Position = UDim2.new(1, -120, 0, 0),
                     Parent = Button,
@@ -560,41 +628,81 @@ function Helios:CreateWindow(Config)
                     ThemeTag = { ImageColor3 = "SubText" }
                 })
                 
-                local List = Creator.New("Frame", {
-                    Size = UDim2.new(1, -20, 0, 0),
-                    Position = UDim2.new(0, 10, 0, 45),
+                local List = Creator.New("ScrollingFrame", {
+                    Size = UDim2.new(1, -20, 1, -45),
+                    Position = UDim2.new(0, 10, 0, 40),
                     BackgroundTransparency = 1,
-                    Parent = Frame
+                    Parent = Frame,
+                    ScrollBarThickness = 2,
+                    CanvasSize = UDim2.new(0, 0, 0, 0)
                 }, { Creator.New("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5) }) })
+                
+                local function UpdateLabel()
+                    if Multi then
+                        ValLabel.Text = (Value == nil or #Value == 0) and "None" or table.concat(Value, ", ")
+                    else
+                        ValLabel.Text = Value == nil and "None" or tostring(Value)
+                    end
+                end
+                UpdateLabel()
                 
                 local function RefreshList()
                     for _, c in pairs(List:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+                    local count = 0
                     for _, Val in pairs(Values) do
+                        count = count + 1
+                        
+                        -- Replicate Nexus Dropdown look
+                        local Selected = Multi and (table.find(Value, Val) ~= nil) or (Value == Val)
+                        
+                        local ButtonSelector = Creator.New("Frame", {
+                            Size = UDim2.new(0, 4, 0, Selected and 14 or 6),
+                            Position = UDim2.new(0, -1, 0.5, 0),
+                            AnchorPoint = Vector2.new(0, 0.5),
+                            BackgroundTransparency = Selected and 0 or 1,
+                            ThemeTag = { BackgroundColor3 = "Accent" }
+                        }, { Creator.New("UICorner", { CornerRadius = UDim.new(0, 2) }) })
+
                         local Item = Creator.New("TextButton", {
-                             Text = Val,
-                             Size = UDim2.new(1, 0, 0, 25),
+                             Text = "",
+                             Size = UDim2.new(1, 0, 0, 28),
                              Parent = List,
-                             ThemeTag = { BackgroundColor3 = "Element", TextColor3 = "SubText" },
-                             Font = Enum.Font.Gotham,
-                             BackgroundTransparency = 0.5
-                        }, { Creator.New("UICorner", { CornerRadius = UDim.new(0, 4)}) })
+                             ThemeTag = { BackgroundColor3 = "Hover" },
+                             BackgroundTransparency = Selected and 0.85 or 1
+                        }, { 
+                             Creator.New("UICorner", { CornerRadius = UDim.new(0, 4) }),
+                             ButtonSelector,
+                             Creator.New("TextLabel", {
+                                 Text = Val,
+                                 Size = UDim2.new(1, -15, 1, 0),
+                                 Position = UDim2.new(0, 10, 0, 0),
+                                 BackgroundTransparency = 1,
+                                 ThemeTag = { TextColor3 = "Text" },
+                                 Font = Enum.Font.Gotham,
+                                 TextSize = 13,
+                                 TextXAlignment = Enum.TextXAlignment.Left
+                             })
+                        })
+                        
                         Connect(Item.MouseButton1Click, function()
                              if Multi then
-                                  if table.find(Value, Val) then for idx, v in pairs(Value) do if v == Val then table.remove(Value, idx) end end
-                                  else table.insert(Value, Val) end
-                                  ValLabel.Text = table.concat(Value, ", ")
+                                  local idx = table.find(Value, Val)
+                                  if idx then table.remove(Value, idx) else table.insert(Value, Val) end
                                   if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
                              else
-                                  Value = Val
-                                  ValLabel.Text = tostring(Value)
+                                  if not EConfig.AllowNull and Value == Val then return end
+                                  Value = (Value == Val and EConfig.AllowNull) and nil or Val
                                   Expanded = false
                                   TweenService:Create(Frame, TweenInfo.new(0.2), { Size = UDim2.new(1, 0, 0, 40) }):Play()
                                   if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
                              end
+                             UpdateLabel()
+                             RefreshList() -- Redraw selectors
                         end)
                     end
+                    List.CanvasSize = UDim2.new(0, 0, 0, count * 33)
                     if Expanded then 
-                        local h = (#Values * 30) + 50
+                        local h = math.clamp((count * 33) + 50, 40, 180)
                         TweenService:Create(Frame, TweenInfo.new(0.2), { Size = UDim2.new(1, 0, 0, h) }):Play()
                     end
                 end
@@ -608,19 +716,18 @@ function Helios:CreateWindow(Config)
                 
                 local DropdownObj = {
                     Value = Value,
+                    Values = Values,
                     Multi = Multi,
                     Type = "Dropdown",
                     SetValue = function(self, v)
                         Value = v
-                        if v == nil then
-                            ValLabel.Text = "None"
-                        else
-                            ValLabel.Text = (type(v) == "table" and table.concat(v, ", ") or tostring(v))
-                        end
+                        UpdateLabel()
                         if type(EConfig.Callback) == "function" then EConfig.Callback(v) end
+                        RefreshList()
                     end,
                     SetValues = function(self, newValues)
-                        Values = newValues
+                        self.Values = newValues or {}
+                        Values = self.Values
                         RefreshList()
                     end
                 }
