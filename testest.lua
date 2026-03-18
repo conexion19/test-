@@ -1,7 +1,8 @@
 local Helios = {
-    Version = "red",
+    Version = "Inspired",
 }
 
+-- [Services]
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -17,26 +18,27 @@ Helios.Theme = "Slate"
 Helios.Window = nil
 
 local Themes = {
-    Slate = {
-        Name = "Slate",
-		Accent = Color3.fromRGB(255, 105, 180),
-		AcrylicMain = Color3.fromRGB(40, 20, 25),
-		AcrylicBorder = Color3.fromRGB(60, 30, 40),
-		Background = Color3.fromRGB(30, 15, 20),
-		TitleBarLine = Color3.fromRGB(80, 40, 50),
-		Tab = Color3.fromRGB(100, 50, 60),
-		TabHover = Color3.fromRGB(120, 60, 70),
-		Element = Color3.fromRGB(40, 20, 25),
-		ElementBorder = Color3.fromRGB(60, 30, 40),
-		Divider = Color3.fromRGB(60, 30, 40),
-		SliderRail = Color3.fromRGB(80, 40, 50),
-		Text = Color3.fromRGB(255, 255, 255),
-		SubText = Color3.fromRGB(200, 160, 170),
-		Hover = Color3.fromRGB(80, 40, 50),
+    Dark = {
+        Name = "Dark",
+        Accent = Color3.fromRGB(0, 255, 214), -- Fluent Cyan-ish
+        AcrylicMain = Color3.fromRGB(25, 25, 25),
+        AcrylicBorder = Color3.fromRGB(60, 60, 60),
+        Background = Color3.fromRGB(32, 32, 32),
+        TitleBarLine = Color3.fromRGB(60, 60, 60),
+        Tab = Color3.fromRGB(45, 45, 45),
+        TabHover = Color3.fromRGB(55, 55, 55),
+        Element = Color3.fromRGB(38, 38, 38),
+        ElementBorder = Color3.fromRGB(50, 50, 50),
+        Divider = Color3.fromRGB(50, 50, 50),
+        SliderRail = Color3.fromRGB(60, 60, 60),
+        Text = Color3.fromRGB(240, 240, 240),
+        SubText = Color3.fromRGB(160, 160, 160),
+        Hover = Color3.fromRGB(45, 45, 45),
     }
 }
 Helios.Themes = Themes
 
+-- [Icons Map] (Simple mapping for common names to RBX Assets)
 local Icons = {
     home = "rbxassetid://10709782430",
     flame = "rbxassetid://10709768128",
@@ -48,6 +50,7 @@ local Icons = {
     default = "rbxassetid://10709782430"
 }
 
+-- [Creator Implementation]
 local Creator = {
     Registry = {},
     Signals = {},
@@ -85,7 +88,7 @@ function Creator.AddThemeObject(Object, Properties)
 end
 
 function Creator.UpdateTheme()
-    local Theme = Themes[Helios.Theme] or Themes.Slate
+    local Theme = Themes[Helios.Theme] or Themes.Dark
     for Object, Props in pairs(Creator.Registry) do
         for Prop, ThemeKey in pairs(Props) do
             if Theme[ThemeKey] then Object[Prop] = Theme[ThemeKey] end
@@ -99,44 +102,32 @@ local function Connect(Signal, Function)
     return Conn
 end
 
+-- [Main GUI]
+local ScreenGui = Creator.New("ScreenGui", {
+    Name = "HeliosUI",
+    Parent = RunService:IsStudio() and game.Players.LocalPlayer:WaitForChild("PlayerGui") or CoreGui,
+})
+
 function Helios:CreateWindow(Config)
-    -- Check if window exists and is valid (not destroyed)
-    if Helios.Window and Helios.Window.Root and Helios.Window.Root.Parent then
-        Helios.Window.Root:Destroy() -- Force cleanup of old window if exists
-        Helios.Window = nil
-    end
+    if Helios.Window then return Helios.Window end
     
     local Window = { Tabs = {} }
-    
-    local ProtectedParent = nil
-    pcall(function()
-        ProtectedParent = game:GetService("CoreGui")
-    end)
-    
-    if not ProtectedParent then
-        ProtectedParent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-    end
-    
-    local Title = Config.Title or "Library"
+    local Title = Config.Title or "Helios"
     local SubTitle = Config.SubTitle or ""
     local Size = Config.Size or UDim2.fromOffset(580, 460)
     
     -- Main Window Frame
     local Root = Creator.New("Frame", {
-        Name = Title,
+        Name = "Root",
         Size = Size,
         Position = UDim2.fromScale(0.5, 0.5),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Parent = ProtectedParent,
+        Parent = ScreenGui,
         ThemeTag = { BackgroundColor3 = "AcrylicMain" }
     }, {
         Creator.New("UICorner", { CornerRadius = UDim.new(0, 8) }),
         Creator.New("UIStroke", { ThemeTag = { Color = "AcrylicBorder" }, Thickness = 1 }),
-        Creator.New("UIScale", { Scale = 0.8 })
     })
-    
-    -- Window Open Animation
-    TweenService:Create(Root.UIScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
     
     -- Top Bar (Drag Area)
     local TopBar = Creator.New("Frame", {
@@ -144,32 +135,25 @@ function Helios:CreateWindow(Config)
          BackgroundTransparency = 1,
          Parent = Root
     }, {
-        Creator.New("UIListLayout", {
-            FillDirection = Enum.FillDirection.Horizontal,
-            HorizontalAlignment = Enum.HorizontalAlignment.Center,
-            VerticalAlignment = Enum.VerticalAlignment.Center,
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 6)
-        }),
         Creator.New("TextLabel", {
             Text = Title,
             Size = UDim2.new(0, 0, 1, 0),
+            Position = UDim2.new(0, 15, 0, 0),
             AutomaticSize = Enum.AutomaticSize.X,
             Font = Enum.Font.GothamBold,
-            TextXAlignment = Enum.TextXAlignment.Center,
+            TextXAlignment = Enum.TextXAlignment.Left,
             ThemeTag = { TextColor3 = "Text" },
-            TextSize = 16,
-            LayoutOrder = 1
+            TextSize = 16
         }),
         Creator.New("TextLabel", {
             Text = SubTitle,
             Size = UDim2.new(0, 0, 1, 0),
+            Position = UDim2.new(0, 15 + (#Title * 10) + 15, 0, 0), -- Rough offset
             AutomaticSize = Enum.AutomaticSize.X,
             Font = Enum.Font.Gotham,
-            TextXAlignment = Enum.TextXAlignment.Center,
+            TextXAlignment = Enum.TextXAlignment.Left,
             ThemeTag = { TextColor3 = "SubText" },
-            TextSize = 14,
-            LayoutOrder = 2
+            TextSize = 14
         })
     })
 
@@ -230,14 +214,6 @@ function Helios:CreateWindow(Config)
     
     Window.Root = Root
     
-    function Window:SelectTab(TabInfo)
-        if type(TabInfo) == "number" and Window.Tabs[TabInfo] then
-            Window.Tabs[TabInfo]:Select()
-        elseif type(TabInfo) == "table" and TabInfo.Select then
-            TabInfo:Select()
-        end
-    end
-
     function Window:AddTab(Config)
         local TabTitle = Config.Title or "Tab"
         local IconID = Icons[Config.Icon] or Icons.default
@@ -278,51 +254,32 @@ function Helios:CreateWindow(Config)
             Creator.New("UIPadding", { PaddingTop = UDim.new(0, 10), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), PaddingBottom = UDim.new(0, 10) })
         })
 
-        local Tab = { Container = Container, Button = TabButton, Selected = false }
-        
+        -- Tab Selection Logic
         local function Select()
              for _, T in pairs(Window.Tabs) do 
                  T.Container.Visible = false 
                  TweenService:Create(T.Button, TweenInfo.new(0.2), { BackgroundTransparency = 1 }):Play()
-                 T.Button.TextLabel.TextColor3 = Themes.Slate.SubText
-                 T.Button.ImageLabel.ImageColor3 = Themes.Slate.SubText
-                 T.Selected = false
+                 T.Button.TextLabel.TextColor3 = Themes.Dark.SubText
+                 T.Button.ImageLabel.ImageColor3 = Themes.Dark.SubText
              end
              Container.Visible = true
-             Tab.Selected = true
              TweenService:Create(TabButton, TweenInfo.new(0.2), { BackgroundTransparency = 0.92 }):Play() -- Subtle highlight
-             TabButton.TextLabel.TextColor3 = Themes.Slate.Text
-             TabButton.ImageLabel.ImageColor3 = Themes.Slate.Text
+             TabButton.TextLabel.TextColor3 = Themes.Dark.Text
+             TabButton.ImageLabel.ImageColor3 = Themes.Dark.Text
         end
 
-        Connect(TabButton.MouseEnter, function()
-            if not Tab.Selected then
-                TweenService:Create(TabButton, TweenInfo.new(0.2), { BackgroundTransparency = 0.95 }):Play()
-            end
-        end)
-        Connect(TabButton.MouseLeave, function()
-            if not Tab.Selected then
-                TweenService:Create(TabButton, TweenInfo.new(0.2), { BackgroundTransparency = 1 }):Play()
-            end
-        end)
-        
         Connect(TabButton.MouseButton1Click, Select)
         
         -- Default selection
         if #Window.Tabs == 0 then 
             Container.Visible = true 
-            Tab.Selected = true
             TweenService:Create(TabButton, TweenInfo.new(0), { BackgroundTransparency = 0.92 }):Play()
-            TabButton.TextLabel.TextColor3 = Themes.Slate.Text
-            TabButton.ImageLabel.ImageColor3 = Themes.Slate.Text
         else
-            TabButton.TextLabel.TextColor3 = Themes.Slate.SubText
-            TabButton.ImageLabel.ImageColor3 = Themes.Slate.SubText
+            TabButton.TextLabel.TextColor3 = Themes.Dark.SubText
+            TabButton.ImageLabel.ImageColor3 = Themes.Dark.SubText
         end
         
-        function Tab:Select()
-            Select()
-        end
+        local Tab = { Container = Container, Button = TabButton }
         table.insert(Window.Tabs, Tab)
 
         -- [Element Creator Helper]
@@ -332,8 +289,7 @@ function Helios:CreateWindow(Config)
                     Text = "",
                     Size = UDim2.new(1, 0, 0, 32),
                     Parent = Parent,
-                    ThemeTag = { BackgroundColor3 = "Element" },
-                    AutoButtonColor = false
+                    ThemeTag = { BackgroundColor3 = "Element" }
                 }, { 
                     Creator.New("UICorner", { CornerRadius = UDim.new(0, 6) }),
                     Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
@@ -344,24 +300,7 @@ function Helios:CreateWindow(Config)
                         Font = Enum.Font.Gotham,
                     })
                 })
-                
-                Connect(BtnFrame.MouseEnter, function()
-                    TweenService:Create(BtnFrame, TweenInfo.new(0.2), { BackgroundTransparency = 0.2 }):Play()
-                end)
-                Connect(BtnFrame.MouseLeave, function()
-                    TweenService:Create(BtnFrame, TweenInfo.new(0.2), { BackgroundTransparency = 0 }):Play()
-                    TweenService:Create(BtnFrame.UIStroke, TweenInfo.new(0.2), { Thickness = 1 }):Play()
-                end)
-                Connect(BtnFrame.MouseButton1Down, function()
-                    TweenService:Create(BtnFrame.UIStroke, TweenInfo.new(0.1), { Thickness = 2 }):Play()
-                end)
-                Connect(BtnFrame.MouseButton1Up, function()
-                    TweenService:Create(BtnFrame.UIStroke, TweenInfo.new(0.1), { Thickness = 1 }):Play()
-                end)
-                
-                Connect(BtnFrame.MouseButton1Click, function() 
-                    if type(EConfig.Callback) == "function" then EConfig.Callback() end 
-                end)
+                Connect(BtnFrame.MouseButton1Click, EConfig.Callback or function() end)
                 return BtnFrame
 
             elseif Type == "Toggle" then
@@ -389,7 +328,7 @@ function Helios:CreateWindow(Config)
                      Size = UDim2.new(0, 36, 0, 18),
                      Position = UDim2.new(1, -46, 0.5, -9),
                      Parent = Btn,
-                     BackgroundColor3 = Toggled and Themes.Slate.Accent or Color3.fromRGB(60,60,60),
+                     BackgroundColor3 = Toggled and Themes.Dark.Accent or Color3.fromRGB(60,60,60),
                 }, { Creator.New("UICorner", { CornerRadius = UDim.new(1, 0) }) })
                 
                 local SwitchKnob = Creator.New("Frame", {
@@ -400,9 +339,9 @@ function Helios:CreateWindow(Config)
                 }, { Creator.New("UICorner", { CornerRadius = UDim.new(1, 0) }) })
                 
                 local function Update()
-                    TweenService:Create(SwitchBg, TweenInfo.new(0.2), { BackgroundColor3 = Toggled and Themes.Slate.Accent or Color3.fromRGB(60,60,60) }):Play()
+                    TweenService:Create(SwitchBg, TweenInfo.new(0.2), { BackgroundColor3 = Toggled and Themes.Dark.Accent or Color3.fromRGB(60,60,60) }):Play()
                     TweenService:Create(SwitchKnob, TweenInfo.new(0.2), { Position = UDim2.new(0, Toggled and 20 or 2, 0.5, -7) }):Play()
-                    if type(EConfig.Callback) == "function" then EConfig.Callback(Toggled) end
+                    if EConfig.Callback then EConfig.Callback(Toggled) end
                 end
                 
                 Connect(Btn.MouseButton1Click, function() Toggled = not Toggled; Update() end)
@@ -467,9 +406,9 @@ function Helios:CreateWindow(Config)
                      if Rounding == 0 then NewValue = math.floor(NewValue + 0.5)
                      else NewValue = math.floor(NewValue * (10^Rounding) + 0.5) / (10^Rounding) end
                      Value = NewValue
-                     TweenService:Create(Fill, TweenInfo.new(0.1), { Size = UDim2.fromScale(Scale, 1) }):Play()
+                     Fill.Size = UDim2.fromScale(Scale, 1)
                      Frame.ValueLabel.Text = tostring(Value)
-                     if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
+                     if EConfig.Callback then EConfig.Callback(Value) end
                  end
                  
                  local Dragging = false
@@ -482,11 +421,9 @@ function Helios:CreateWindow(Config)
                  local SliderObj = { 
                      Value = Value, 
                      SetValue = function(self, v) 
-                        v = tonumber(v) or v
-                        Value = v; 
-                        TweenService:Create(Fill, TweenInfo.new(0.2), { Size = UDim2.fromScale(math.clamp((Value - Min)/(Max - Min), 0, 1), 1) }):Play()
+                        Value = v; Fill.Size = UDim2.fromScale(math.clamp((Value - Min)/(Max - Min), 0, 1), 1)
                         Frame.ValueLabel.Text = tostring(Value)
-                        if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
+                        if EConfig.Callback then EConfig.Callback(Value) end
                      end,
                      Type = "Slider"
                  }
@@ -561,13 +498,13 @@ function Helios:CreateWindow(Config)
                                   if table.find(Value, Val) then for idx, v in pairs(Value) do if v == Val then table.remove(Value, idx) end end
                                   else table.insert(Value, Val) end
                                   ValLabel.Text = table.concat(Value, ", ")
-                                  if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
+                                  if EConfig.Callback then EConfig.Callback(Value) end
                              else
                                   Value = Val
                                   ValLabel.Text = tostring(Value)
                                   Expanded = false
                                   TweenService:Create(Frame, TweenInfo.new(0.2), { Size = UDim2.new(1, 0, 0, 40) }):Play()
-                                  if type(EConfig.Callback) == "function" then EConfig.Callback(Value) end
+                                  if EConfig.Callback then EConfig.Callback(Value) end
                              end
                         end)
                     end
@@ -586,21 +523,7 @@ function Helios:CreateWindow(Config)
                 
                 local DropdownObj = {
                     Value = Value,
-                    Multi = Multi,
-                    Type = "Dropdown",
-                    SetValue = function(self, v)
-                        Value = v
-                        if v == nil then
-                            ValLabel.Text = "None"
-                        else
-                            ValLabel.Text = (type(v) == "table" and table.concat(v, ", ") or tostring(v))
-                        end
-                        if type(EConfig.Callback) == "function" then EConfig.Callback(v) end
-                    end,
-                    SetValues = function(self, newValues)
-                        Values = newValues
-                        RefreshList()
-                    end
+                    Type = "Dropdown"
                 }
                 Helios.Options[Key] = DropdownObj
                 return DropdownObj
@@ -643,7 +566,7 @@ function Helios:CreateWindow(Config)
                     TextXAlignment = Enum.TextXAlignment.Left,
                 })
                 
-                Connect(TextBox.FocusLost, function() if type(EConfig.Callback) == "function" then EConfig.Callback(TextBox.Text) end end)
+                Connect(TextBox.FocusLost, function() if EConfig.Callback then EConfig.Callback(TextBox.Text) end end)
                 
                 local InputObj = { Value = TextBox.Text, SetValue = function(self, v) TextBox.Text = v end, Type = "Input" }
                 Helios.Options[Key] = InputObj
@@ -720,10 +643,7 @@ function Helios:CreateWindow(Config)
                 
                 local ColorObj = {
                     Value = Color,
-                    SetValueRGB = function(self, rgb) 
-                        Color = rgb
-                        TweenService:Create(Preview, TweenInfo.new(0.2), { BackgroundColor3 = rgb }):Play()
-                    end,
+                    SetValueRGB = function(self, rgb) Color = rgb; Preview.BackgroundColor3 = rgb; end,
                     Type = "Colorpicker"
                 }
                 Helios.Options[Key] = ColorObj
@@ -751,7 +671,7 @@ function Helios:CreateWindow(Config)
                      Parent = Frame
                  })
 
-                 local KeyLabel = Creator.New("TextLabel", {
+                 Creator.New("TextLabel", {
                      Text = "["..Binding.Name.."]",
                      Size = UDim2.new(0, 60, 1, 0),
                      Position = UDim2.new(1,-70,0,0),
@@ -761,33 +681,7 @@ function Helios:CreateWindow(Config)
                      Parent = Frame
                  })
                  
-                 local BindingMode = false
-                 local KeybindObj = { 
-                     Value = Binding, 
-                     Type = "Keybind",
-                     SetValue = function(self, key, mode)
-                         if typeof(key) == "string" then key = Enum.KeyCode[key] or key end
-                         self.Value = key
-                         if typeof(key) == "EnumItem" then
-                             KeyLabel.Text = "["..key.Name.."]"
-                         else
-                             KeyLabel.Text = "["..tostring(key).."]"
-                         end
-                         if type(EConfig.Callback) == "function" then EConfig.Callback(key) end
-                     end
-                 }
-                 
-                 Connect(Frame.MouseButton1Click, function()
-                     BindingMode = true
-                     KeyLabel.Text = "[...]"
-                 end)
-                 
-                 Connect(UserInputService.InputBegan, function(Input)
-                     if BindingMode and Input.UserInputType == Enum.UserInputType.Keyboard then
-                         BindingMode = false
-                         KeybindObj:SetValue(Input.KeyCode)
-                     end
-                 end)
+                 local KeybindObj = { Value = Binding, Type = "Keybind" }
                  Helios.Options[Key] = KeybindObj
                  return KeybindObj
             end
@@ -836,41 +730,18 @@ function Helios:CreateWindow(Config)
     end
     
     Helios.Window = Window
-    Helios.MinimizeKeybind = Enum.KeyCode.RightControl
-    
-    Connect(UserInputService.InputBegan, function(Input, Processed)
-        if type(Helios.MinimizeKeybind) == "string" then
-            local s, k = pcall(function() return Enum.KeyCode[Helios.MinimizeKeybind] end)
-            if s and k then Helios.MinimizeKeybind = k end
-        end
-        if not Processed and Input.KeyCode == Helios.MinimizeKeybind then
-            if Helios.Window and Helios.Window.Root then
-                if Helios.Window.Root.Visible then
-                    TweenService:Create(Helios.Window.Root.UIScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), { Scale = 0.8 }):Play()
-                    task.wait(0.3)
-                    Helios.Window.Root.Visible = false
-                else
-                    Helios.Window.Root.Visible = true
-                    TweenService:Create(Helios.Window.Root.UIScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
-                end
-            end
-        end
-    end)
-    
     return Window
 end
 
 -- [CreateMinimizer Implementation]
 function Helios:CreateMinimizer(Config)
-    local ProtectedParent = game:GetService("CoreGui")
-
     -- Creates a standalone GUI button to toggle the Window
     local MinimizerScreen = Instance.new("ScreenGui")
     MinimizerScreen.Name = "HeliosMinimizer"
-    MinimizerScreen.Parent = ProtectedParent
+    MinimizerScreen.Parent = RunService:IsStudio() and game.Players.LocalPlayer:WaitForChild("PlayerGui") or CoreGui
     
     local Button = Creator.New("ImageButton", {
-        Name = "Btn",
+        Name = "MinimizerBtn",
         Position = Config.Position or UDim2.new(0, 10, 0, 10),
         Size = Config.Size or UDim2.fromOffset(40, 40),
         Parent = MinimizerScreen,
@@ -885,14 +756,7 @@ function Helios:CreateMinimizer(Config)
     
     Connect(Button.MouseButton1Click, function()
         if Helios.Window and Helios.Window.Root then
-            if Helios.Window.Root.Visible then
-                TweenService:Create(Helios.Window.Root.UIScale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), { Scale = 0.8 }):Play()
-                task.wait(0.3)
-                Helios.Window.Root.Visible = false
-            else
-                Helios.Window.Root.Visible = true
-                TweenService:Create(Helios.Window.Root.UIScale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
-            end
+            Helios.Window.Root.Visible = not Helios.Window.Root.Visible
         end
     end)
     
@@ -906,26 +770,8 @@ function Helios:SetTheme(ThemeName)
     end
 end
 
-function Helios:ToggleTransparency(Value)
-    if Helios.Window and Helios.Window.Root then
-        TweenService:Create(Helios.Window.Root, TweenInfo.new(0.2), { BackgroundTransparency = Value and 0.2 or 0 }):Play()
-    end
-end
-
-function Helios:ToggleAcrylic(Value)
-    -- Stub for acrylic blur, we can just alter transparency as fallback
-    Helios:ToggleTransparency(Value)
-end
-
 function Helios:Notify(Config)
-    -- Find a valid parent
-    local ParentFrame = nil
-    if Helios.Window and Helios.Window.Root and Helios.Window.Root.Parent then
-        ParentFrame = Helios.Window.Root.Parent
-    else
-        ParentFrame = game:GetService("CoreGui")
-    end
-
+    local ParentFrame = Helios.Window and Helios.Window.Root and Helios.Window.Root.Parent or ScreenGui
     local NotifyFrame = Creator.New("Frame", {
         Size = UDim2.new(0, 260, 0, 60),
         Position = UDim2.new(1, 300, 0.9, 0), -- Off screen start
