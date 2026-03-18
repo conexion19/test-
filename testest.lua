@@ -5,8 +5,11 @@ if not getgenv().HeliosBypass then
         if hookmetamethod then
             local oldNamecall
             oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-                local method = getnamecallmethod()
-                if not checkcaller() and (method == "Kick" or method == "kick") then
+                if not checkcaller() and getnamecallmethod() == "Kick" then
+                    -- Если просто закрывать Kick (через return), античит может рекурсивно спамить Kick, 
+                    -- из-за чего игра крашится от переполнения/зависания. 
+                    -- Вместо этого мы "вешаем" поток античита, чтобы он ничего не мог сделать дальше.
+                    coroutine.yield()
                     return
                 end
                 return oldNamecall(self, ...)
