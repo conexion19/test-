@@ -347,6 +347,8 @@ function Helios:CreateWindow(Config)
         
         local Container = Creator.New("ScrollingFrame", {
             Size = UDim2.fromScale(1, 1),
+            CanvasSize = UDim2.new(0, 0, 0, 0), -- Fix tab drifting
+            AutomaticCanvasSize = Enum.AutomaticSize.Y, -- Fix tab scrolling limit
             BackgroundTransparency = 1,
             Parent = ContainerHolder,
             Visible = false,
@@ -364,6 +366,7 @@ function Helios:CreateWindow(Config)
                  T.Button.TextLabel.TextColor3 = Themes.Dark.SubText
              end
              Container.Visible = true
+             Container.CanvasPosition = Vector2.new(0, 0) -- Reset scroll explicitly
              TweenService:Create(TabButton, TweenInfo.new(0.2), { BackgroundTransparency = 0.92 }):Play() -- Subtle highlight
              TabButton.TextLabel.TextColor3 = Themes.Dark.Text
         end
@@ -387,6 +390,17 @@ function Helios:CreateWindow(Config)
 
         local function CreateElement(Parent, Type, EConfig, Key)
             if Type == "Button" then
+                 local initText = EConfig.Title or "Button"
+                 if EConfig.Description then initText = initText .. " - " .. EConfig.Description end
+                 
+                 local titleLabel = Creator.New("TextLabel", {
+                        Text = initText,
+                        Size = UDim2.new(1, 0, 1, 0),
+                        ThemeTag = { TextColor3 = "Text" },
+                        Font = Enum.Font.GothamMedium,
+                        TextSize = 13,
+                 })
+                 
                  local BtnFrame = Creator.New("TextButton", {
                     Text = "",
                     Size = UDim2.new(1, 0, 0, 34),
@@ -395,16 +409,16 @@ function Helios:CreateWindow(Config)
                 }, { 
                     Creator.New("UICorner", { CornerRadius = UDim.new(0, 8) }),
                     Creator.New("UIStroke", { ThemeTag = { Color = "ElementBorder"}, Thickness = 1 }),
-                    Creator.New("TextLabel", {
-                        Text = EConfig.Title or "Button",
-                        Size = UDim2.new(1, 0, 1, 0),
-                        ThemeTag = { TextColor3 = "Text" },
-                        Font = Enum.Font.GothamMedium,
-                        TextSize = 13,
-                    })
+                    titleLabel
                 })
                 Connect(BtnFrame.MouseButton1Click, EConfig.Callback or function() end)
-                return BtnFrame
+                
+                local BtnObj = {
+                    SetDesc = function(self, desc)
+                        titleLabel.Text = (EConfig.Title or "Button") .. " - " .. tostring(desc)
+                    end
+                }
+                return BtnObj
 
             elseif Type == "Toggle" then
                 local Toggled = EConfig.Default or false
@@ -627,7 +641,18 @@ function Helios:CreateWindow(Config)
                 
                 local DropdownObj = {
                     Value = Value,
-                    Type = "Dropdown"
+                    Multi = Multi,
+                    Type = "Dropdown",
+                    SetValue = function(self, val)
+                         self.Value = val
+                         Value = val
+                         ValLabel.Text = (type(val) == "table" and table.concat(val, ", ") or tostring(val))
+                         if EConfig.Callback then EConfig.Callback(val) end
+                    end,
+                    SetValues = function(self, newValues)
+                         Values = newValues or {}
+                         if Expanded then RefreshList() end
+                    end
                 }
                 Helios.Options[Key] = DropdownObj
                 return DropdownObj
@@ -670,9 +695,18 @@ function Helios:CreateWindow(Config)
                     TextXAlignment = Enum.TextXAlignment.Left,
                 })
                 
-                Connect(TextBox.FocusLost, function() if EConfig.Callback then EConfig.Callback(TextBox.Text) end end)
+                local InputObj = { Value = TextBox.Text, Type = "Input" }
                 
-                local InputObj = { Value = TextBox.Text, SetValue = function(self, v) TextBox.Text = v end, Type = "Input" }
+                function InputObj:SetValue(v)
+                    TextBox.Text = tostring(v)
+                    self.Value = tostring(v)
+                end
+                
+                Connect(TextBox.FocusLost, function()
+                    InputObj.Value = TextBox.Text
+                    if EConfig.Callback then EConfig.Callback(TextBox.Text) end 
+                end)
+                
                 Helios.Options[Key] = InputObj
                 return InputObj
 
