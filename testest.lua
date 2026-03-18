@@ -7,7 +7,16 @@ if not getgenv().HeliosBypass then
             oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
                 local method = getnamecallmethod()
                 if not checkcaller() and (method == "Kick" or method == "kick") then
-                    return task.wait(9e9)
+                    -- Если античит кикает раз за разом и получает отказ - он уходит в вечный цикл, что ведет к крашу.
+                    -- Решение: вырубаем сам локальный скрипт античита на лету.
+                    pcall(function()
+                        local caller = getcallingscript()
+                        if caller and typeof(caller) == "Instance" then
+                            caller.Disabled = true
+                        end
+                    end)
+                    -- Жестко обрываем работу потока через error(), чтобы не сработали проверки C-стека на yielding
+                    error("Kick Prevented", 0)
                 end
                 return oldNamecall(self, ...)
             end))
@@ -113,13 +122,16 @@ local function GetSafeParent()
     if RunService:IsStudio() then
         return game.Players.LocalPlayer:WaitForChild("PlayerGui")
     end
-    local target = CoreGui
     if gethui then
-        target = gethui()
+        return gethui()
     elseif syn and syn.protect_gui then
-        target = CoreGui
+        return CoreGui
     end
-    return target
+    
+    -- Фальбэк для экзекуторов без gethui: прячем UI внутрь легитимного RobloxGui
+    -- (Многие античиты вроде Adonis сканируют только корень CoreGui)
+    local fallback = CoreGui:FindFirstChild("RobloxGui")
+    return fallback or CoreGui
 end
 
 local function ProtectInstance(instance)
